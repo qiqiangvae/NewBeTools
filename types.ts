@@ -10,8 +10,10 @@ export enum ToolCategory {
 
 export interface ToolDef {
   id: string;
-  name: string;
+  name: string;      // Default (English)
+  nameZh: string;    // Chinese
   description: string;
+  descriptionZh: string;
   category: ToolCategory;
   icon: ReactNode;
   component: ReactNode;
@@ -21,3 +23,6 @@ export interface ToolDef {
 export interface ToolState {
   currentToolId: string | null;
 }
+
+export type Lang = 'zh' | 'en';
+export type Theme = 'light' | 'dark';
