@@ -363,7 +363,7 @@ const App: React.FC = () => {
                         return (
                             <button
                                 key={cat}
-                                onClick={() => { setActiveCategory(cat); setSearchTerm(''); if(!currentToolId) setCurrentToolId(null); }}
+                                onClick={() => { setActiveCategory(cat); setSearchTerm(''); }}
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
                                     isActive 
                                     ? 'bg-primary-50 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400' 
@@ -416,29 +416,32 @@ const App: React.FC = () => {
       </header>
 
       {/* --- SUB HEADER (Row 2): Tool Chips --- */}
-      {/* Only show if not searching and not inside a specific tool (optional, but requested layout implies these are navigation) */}
-      {!currentToolId && (
-        <div className="bg-white/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 backdrop-blur-sm sticky top-16 z-40">
-            <div className="max-w-[1600px] mx-auto px-4 py-2 flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                {getToolsForChipRow().map(tool => {
-                    const toolName = lang === 'zh' ? tool.nameZh : tool.name;
-                    return (
-                        <button 
-                            key={tool.id}
-                            onClick={() => handleToolSelect(tool.id)}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300 transition-colors shadow-sm whitespace-nowrap"
-                        >
-                            <span className="opacity-70">{tool.icon}</span>
-                            {toolName}
-                        </button>
-                    )
-                })}
-                 {getToolsForChipRow().length === 0 && searchTerm && (
-                     <div className="text-xs text-slate-500 px-2 italic">Searching...</div>
-                 )}
-            </div>
-        </div>
-      )}
+      {/* Permanent resident menu - always shown */}
+      <div className="bg-white/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 backdrop-blur-sm sticky top-16 z-40">
+          <div className="max-w-[1600px] mx-auto px-4 py-2 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+              {getToolsForChipRow().map(tool => {
+                  const toolName = lang === 'zh' ? tool.nameZh : tool.name;
+                  const isActive = currentToolId === tool.id;
+                  return (
+                      <button 
+                          key={tool.id}
+                          onClick={() => handleToolSelect(tool.id)}
+                          className={`flex items-center gap-2 px-3 py-1.5 border rounded-full text-xs font-medium transition-colors shadow-sm whitespace-nowrap ${
+                              isActive
+                                ? 'bg-primary-600 border-primary-600 text-white'
+                                : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+                          }`}
+                      >
+                          <span className={`opacity-70 ${isActive ? 'text-white' : ''}`}>{tool.icon}</span>
+                          {toolName}
+                      </button>
+                  )
+              })}
+              {getToolsForChipRow().length === 0 && searchTerm && (
+                  <div className="text-xs text-slate-500 px-2 italic">Searching...</div>
+              )}
+          </div>
+      </div>
 
       {/* --- MAIN CONTENT --- */}
       <main className="flex-1 w-full max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 animate-in fade-in duration-300">
