@@ -4,7 +4,7 @@ import { IconCopy, IconCheck } from '../Icons';
 declare const QRCode: any;
 
 const QrCodeGenerator: React.FC = () => {
-  const [text, setText] = useState('https://ctool.dev');
+  const [text, setText] = useState('https://nbt.qiqiang.online');
   const qrRef = useRef<HTMLDivElement>(null);
   const [qrCodeObj, setQrCodeObj] = useState<any>(null);
 

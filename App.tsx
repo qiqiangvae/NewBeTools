@@ -14,7 +14,7 @@ import {
   IconBrain, 
   IconSearch, 
   IconHome,
-  IconClock,
+  IconClock, 
   IconBinary,
   IconType,
   IconPalette,
@@ -129,14 +129,14 @@ const TOOLS: ToolDef[] = [
   },
   {
     id: 'base64',
-    name: 'Base64',
-    nameZh: 'Base64 编码',
-    description: 'Encode and decode Base64 strings.',
-    descriptionZh: 'Base64 数据的编码与解码。',
+    name: 'Encoding Converter',
+    nameZh: '编码转换',
+    description: 'Convert between Text, Base64, and Base62.',
+    descriptionZh: '文本、Base64、Base62 等格式的相互转换。',
     category: ToolCategory.CONVERTER,
     icon: <IconBase64 className="w-6 h-6" />,
     component: <Base64Converter />,
-    keywords: ['base64', 'encode', 'decode']
+    keywords: ['base64', 'base62', 'encode', 'decode']
   },
   {
     id: 'timestamp',
@@ -290,12 +290,8 @@ const App: React.FC = () => {
         toolDesc.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tool.keywords.some(k => k.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      // If user is searching, show all matches regardless of category tab (optional ux choice)
-      // Or we can just filter matches for current category. 
-      // Let's make search global for better UX.
       if (searchTerm) return matchesSearch;
 
-      // Filter by category tab
       if (activeCategory === 'Common') {
           return COMMON_TOOLS_IDS.includes(tool.id);
       }
@@ -323,7 +319,6 @@ const App: React.FC = () => {
   };
 
   const getToolsForChipRow = () => {
-      // If there is a search term, don't show chips, show results in grid
       if (searchTerm) return [];
       
       if (activeCategory === 'Common') {
@@ -416,7 +411,6 @@ const App: React.FC = () => {
       </header>
 
       {/* --- SUB HEADER (Row 2): Tool Chips --- */}
-      {/* Permanent resident menu - always shown */}
       <div className="bg-white/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 backdrop-blur-sm sticky top-16 z-40">
           <div className="max-w-[1600px] mx-auto px-4 py-2 flex items-center gap-2 overflow-x-auto scrollbar-hide">
               {getToolsForChipRow().map(tool => {
@@ -459,7 +453,10 @@ const App: React.FC = () => {
                  </div>
 
                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm min-h-[600px] flex flex-col">
-                     {currentTool.component}
+                     {/* Pass lang prop to the component */}
+                     {React.isValidElement(currentTool.component) 
+                        ? React.cloneElement(currentTool.component as React.ReactElement<any>, { lang }) 
+                        : currentTool.component}
                  </div>
              </div>
          ) : (

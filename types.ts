@@ -26,3 +26,7 @@ export interface ToolState {
 
 export type Lang = 'zh' | 'en';
 export type Theme = 'light' | 'dark';
+
+export interface ToolComponentProps {
+  lang: Lang;
+}
