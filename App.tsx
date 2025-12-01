@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   ToolCategory, 
@@ -13,8 +14,6 @@ import {
   IconBrain, 
   IconSearch, 
   IconHome,
-  IconMenu,
-  IconX,
   IconClock,
   IconBinary,
   IconType,
@@ -28,7 +27,6 @@ import {
   IconFormat,
   IconSun,
   IconMoon,
-  IconPanelLeft,
   IconLanguage
 } from './components/Icons';
 
@@ -250,10 +248,7 @@ const QUICK_MENU_CATEGORIES = ['Common', ...Object.values(ToolCategory)];
 const App: React.FC = () => {
   const [currentToolId, setCurrentToolId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile toggle
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // Desktop toggle
-  const [activeCategory, setActiveCategory] = useState<string>('All');
-  const [quickMenuCategory, setQuickMenuCategory] = useState<string>('Common');
+  const [activeCategory, setActiveCategory] = useState<string>('Common');
   
   // Settings
   const [lang, setLang] = useState<Lang>('zh');
@@ -261,21 +256,18 @@ const App: React.FC = () => {
 
   // Translations
   const t = {
-    allTools: lang === 'zh' ? '所有工具' : 'All Tools',
     search: lang === 'zh' ? '搜索工具...' : 'Search tools...',
     home: lang === 'zh' ? '首页' : 'Home',
     common: lang === 'zh' ? '常用' : 'Common',
-    nav: lang === 'zh' ? '导航' : 'Navigation',
-    tool: lang === 'zh' ? '工具' : 'Tools',
     welcome: lang === 'zh' ? '开发者工具箱' : 'Developer Utilities Hub',
     desc: lang === 'zh' ? '您的必备开发瑞士军刀。包含 JSON、Base64、正则、AI 助手等多种工具。' : 'Your essential Swiss Army knife for development. Privacy-first, client-side tools for everyday tasks.',
     noResults: lang === 'zh' ? '未找到匹配的工具。' : 'No tools found matching your search.',
     clear: lang === 'zh' ? '清除筛选' : 'Clear filters',
     [ToolCategory.DEVELOPER]: lang === 'zh' ? '开发' : 'Developer',
     [ToolCategory.CONVERTER]: lang === 'zh' ? '转换' : 'Converter',
-    [ToolCategory.CRYPTO]: lang === 'zh' ? '加密/签名' : 'Cryptography',
+    [ToolCategory.CRYPTO]: lang === 'zh' ? '加密' : 'Crypto',
     [ToolCategory.AI]: lang === 'zh' ? 'AI 助手' : 'AI Assistant',
-    [ToolCategory.UTILITY]: lang === 'zh' ? '其他' : 'Utility',
+    [ToolCategory.UTILITY]: lang === 'zh' ? '工具' : 'Utility',
   };
 
   // Theme Effect
@@ -288,7 +280,7 @@ const App: React.FC = () => {
     }
   }, [theme]);
 
-  // Filter tools based on search and category
+  // Filter tools based on search
   const filteredTools = useMemo(() => {
     return TOOLS.filter(tool => {
       const toolName = lang === 'zh' ? tool.nameZh : tool.name;
@@ -298,9 +290,16 @@ const App: React.FC = () => {
         toolDesc.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tool.keywords.some(k => k.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      const matchesCategory = activeCategory === 'All' || tool.category === activeCategory;
+      // If user is searching, show all matches regardless of category tab (optional ux choice)
+      // Or we can just filter matches for current category. 
+      // Let's make search global for better UX.
+      if (searchTerm) return matchesSearch;
 
-      return matchesSearch && matchesCategory;
+      // Filter by category tab
+      if (activeCategory === 'Common') {
+          return COMMON_TOOLS_IDS.includes(tool.id);
+      }
+      return tool.category === activeCategory;
     });
   }, [searchTerm, activeCategory, lang]);
 
@@ -308,278 +307,186 @@ const App: React.FC = () => {
 
   const handleToolSelect = (id: string) => {
     setCurrentToolId(id);
-    setSidebarOpen(false);
     setSearchTerm('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
+    
+    // Switch active category if needed
     const tool = TOOLS.find(t => t.id === id);
-    if (tool) {
-        if (quickMenuCategory === 'Common' && COMMON_TOOLS_IDS.includes(id)) {
-            // keep common
-        } else {
-            setQuickMenuCategory(tool.category);
-        }
+    if (tool && activeCategory !== 'Common' && tool.category !== activeCategory) {
+        setActiveCategory(tool.category);
     }
   };
 
   const handleGoHome = () => {
     setCurrentToolId(null);
-    setSidebarOpen(false);
-    setActiveCategory('All');
+    setSearchTerm('');
   };
 
-  const getToolsForQuickMenu = (category: string) => {
-    if (category === 'Common') {
-        return TOOLS.filter(t => COMMON_TOOLS_IDS.includes(t.id));
-    }
-    return TOOLS.filter(t => t.category === category);
+  const getToolsForChipRow = () => {
+      // If there is a search term, don't show chips, show results in grid
+      if (searchTerm) return [];
+      
+      if (activeCategory === 'Common') {
+          return TOOLS.filter(t => COMMON_TOOLS_IDS.includes(t.id));
+      }
+      return TOOLS.filter(t => t.category === activeCategory);
   };
-
-  const categories = ['All', ...Array.from(new Set(TOOLS.map(t => t.category)))];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 flex overflow-hidden font-sans transition-colors duration-200">
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar Navigation */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ease-in-out flex flex-col
-        lg:static lg:z-auto
-        ${sidebarOpen ? 'translate-x-0 shadow-2xl lg:shadow-none' : '-translate-x-full lg:translate-x-0'}
-        ${sidebarCollapsed ? 'lg:w-0 lg:border-none lg:overflow-hidden' : 'lg:w-64'}
-        w-64
-      `}>
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center h-16 whitespace-nowrap overflow-hidden">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={handleGoHome}>
-             <div className="w-8 h-8 flex-shrink-0 bg-gradient-to-br from-primary-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-primary-500/20">
-               DT
-             </div>
-             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-900 dark:from-slate-100 dark:to-slate-400">
-               DevTool
-             </h1>
-          </div>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-primary-500">
-            <IconX className="w-6 h-6" />
-          </button>
-        </div>
-
-        <nav className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
-          {/* Categories */}
-          <div>
-            <div className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
-              {t.nav}
-            </div>
-            <button
-               onClick={handleGoHome}
-               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium whitespace-nowrap ${!currentToolId ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-100 dark:border-primary-500/10' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'}`}
-            >
-              <IconHome className="w-5 h-5 flex-shrink-0" />
-              {t.allTools}
-            </button>
-          </div>
-
-          <div>
-             <div className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
-              {t.tool}
-            </div>
-            <div className="space-y-1">
-              {TOOLS.map(tool => (
-                <button
-                  key={tool.id}
-                  onClick={() => handleToolSelect(tool.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium whitespace-nowrap ${currentToolId === tool.id ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-100 dark:border-primary-500/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'}`}
-                >
-                  <span className="opacity-70 flex-shrink-0">{tool.icon}</span>
-                  {lang === 'zh' ? tool.nameZh : tool.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </nav>
-
-        {/* Sidebar Footer / Collapse Button */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-          <button 
-             onClick={() => setSidebarCollapsed(true)}
-             className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors overflow-hidden whitespace-nowrap"
-             title="Collapse Sidebar"
-          >
-             <IconPanelLeft className="w-5 h-5 flex-shrink-0 rotate-180" />
-             <span className="lg:inline hidden">Hide Sidebar</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative min-w-0">
-        {/* Header */}
-        <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/50 backdrop-blur-md flex items-center justify-between px-4 lg:px-8 z-30 sticky top-0 shrink-0 transition-colors">
-          <div className="flex items-center gap-4">
-             {/* Mobile Menu Toggle */}
-             <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
-               <IconMenu className="w-6 h-6" />
-             </button>
-             
-             {/* Desktop Expand Button */}
-             {sidebarCollapsed && (
-                <button onClick={() => setSidebarCollapsed(false)} className="hidden lg:block text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                    <IconPanelLeft className="w-6 h-6" />
-                </button>
-             )}
-
-             {/* Breadcrumb / Title */}
-             <div className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
-               <span className="cursor-pointer hover:text-slate-900 dark:hover:text-slate-200" onClick={handleGoHome}>{t.home}</span>
-               {currentTool && (
-                 <>
-                   <span>/</span>
-                   <span className="text-primary-600 dark:text-primary-400 font-medium">
-                     {lang === 'zh' ? currentTool.nameZh : currentTool.name}
-                   </span>
-                 </>
-               )}
-             </div>
-          </div>
-
-          {/* Right Actions */}
-          <div className="flex items-center gap-3">
-             {/* Search Bar (Desktop) */}
-             <div className="relative w-full max-w-xs hidden md:block">
-                <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input 
-                  type="text"
-                  placeholder={t.search}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 text-sm rounded-full py-1.5 pl-10 pr-4 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-slate-500"
-                />
-             </div>
-
-             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
-
-             {/* Language Switch */}
-             <button 
-                onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
-                className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1 font-medium text-sm"
-                title="Switch Language"
-             >
-                <IconLanguage className="w-5 h-5" />
-                <span className="hidden sm:inline">{lang === 'zh' ? 'EN' : '中'}</span>
-             </button>
-
-             {/* Theme Switch */}
-             <button 
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                title="Toggle Theme"
-             >
-                {theme === 'dark' ? <IconSun className="w-5 h-5" /> : <IconMoon className="w-5 h-5" />}
-             </button>
-          </div>
-        </header>
-
-        {/* Quick Menu (Shortcut Bar) */}
-        <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shrink-0 z-20 shadow-sm transition-colors">
-            {/* Top Row: Categories */}
-            <div className="flex overflow-x-auto scrollbar-hide border-b border-slate-100 dark:border-slate-800/50 px-2">
-                {QUICK_MENU_CATEGORIES.map(cat => {
-                    const catLabel = cat === 'Common' ? t.common : (t[cat as keyof typeof t] || cat);
-                    return (
-                        <button
-                            key={cat}
-                            onClick={() => setQuickMenuCategory(cat)}
-                            className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                                quickMenuCategory === cat 
-                                ? 'border-primary-500 text-primary-600 dark:text-primary-400' 
-                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
-                            }`}
-                        >
-                            {catLabel}
-                        </button>
-                    )
-                })}
-            </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 flex flex-col font-sans transition-colors duration-200">
+      
+      {/* --- TOP HEADER (Row 1) --- */}
+      <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="max-w-[1600px] mx-auto px-4 h-16 flex items-center justify-between gap-4">
             
-            {/* Bottom Row: Tools Chips */}
-            <div className="flex overflow-x-auto p-3 gap-3 items-center scrollbar-hide bg-slate-50/50 dark:bg-transparent">
-                {getToolsForQuickMenu(quickMenuCategory).map(tool => {
-                    const isActive = currentToolId === tool.id;
+            {/* Left: Logo & Home */}
+            <div className="flex items-center gap-6 shrink-0">
+                <div 
+                    className="flex items-center gap-2 cursor-pointer group" 
+                    onClick={handleGoHome}
+                >
+                    <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg group-hover:scale-105 transition-transform">
+                        NB
+                    </div>
+                    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-700 to-slate-900 dark:from-slate-100 dark:to-slate-300 hidden md:block">
+                        NewBeTools
+                    </span>
+                </div>
+            </div>
+
+            {/* Middle: Category Tabs (Scrollable) */}
+            <div className="flex-1 flex justify-center overflow-hidden">
+                <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide mask-fade px-2">
+                    {QUICK_MENU_CATEGORIES.map(cat => {
+                        const label = cat === 'Common' ? t.common : (t[cat as keyof typeof t] || cat);
+                        const isActive = activeCategory === cat;
+                        return (
+                            <button
+                                key={cat}
+                                onClick={() => { setActiveCategory(cat); setSearchTerm(''); if(!currentToolId) setCurrentToolId(null); }}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                                    isActive 
+                                    ? 'bg-primary-50 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400' 
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                                }`}
+                            >
+                                {label}
+                            </button>
+                        );
+                    })}
+                </nav>
+            </div>
+
+            {/* Right: Actions (Search, Lang, Theme) */}
+            <div className="flex items-center gap-2 shrink-0">
+                {/* Search Input (Desktop) */}
+                <div className="relative hidden md:block w-48 lg:w-64">
+                    <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input 
+                        type="text"
+                        placeholder={t.search}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-full py-1.5 pl-9 pr-4 text-sm text-slate-900 dark:text-slate-200 focus:ring-2 focus:ring-primary-500 placeholder:text-slate-500 transition-all"
+                    />
+                </div>
+                {/* Search Icon (Mobile) */}
+                <button className="md:hidden p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                     <IconSearch className="w-5 h-5" />
+                </button>
+
+                <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
+
+                <button 
+                    onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
+                    className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1 text-sm font-medium"
+                >
+                    <IconLanguage className="w-5 h-5" />
+                    <span className="hidden lg:inline">{lang === 'zh' ? 'EN' : '中'}</span>
+                </button>
+
+                <button 
+                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                    className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                >
+                    {theme === 'dark' ? <IconSun className="w-5 h-5" /> : <IconMoon className="w-5 h-5" />}
+                </button>
+            </div>
+        </div>
+      </header>
+
+      {/* --- SUB HEADER (Row 2): Tool Chips --- */}
+      {/* Only show if not searching and not inside a specific tool (optional, but requested layout implies these are navigation) */}
+      {!currentToolId && (
+        <div className="bg-white/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 backdrop-blur-sm sticky top-16 z-40">
+            <div className="max-w-[1600px] mx-auto px-4 py-2 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                {getToolsForChipRow().map(tool => {
                     const toolName = lang === 'zh' ? tool.nameZh : tool.name;
                     return (
                         <button 
                             key={tool.id}
                             onClick={() => handleToolSelect(tool.id)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs sm:text-sm font-medium whitespace-nowrap transition-all ${
-                                isActive 
-                                ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500 text-primary-600 dark:text-primary-400' 
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-750 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-900 dark:hover:text-slate-200 shadow-sm'
-                            }`}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-full text-xs font-medium text-slate-600 dark:text-slate-300 transition-colors shadow-sm whitespace-nowrap"
                         >
-                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                            <span className="opacity-70">{tool.icon}</span>
                             {toolName}
                         </button>
-                    );
+                    )
                 })}
+                 {getToolsForChipRow().length === 0 && searchTerm && (
+                     <div className="text-xs text-slate-500 px-2 italic">Searching...</div>
+                 )}
             </div>
         </div>
+      )}
 
-        {/* Content Scrollable Area */}
-        <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-4 lg:p-8 transition-colors">
-           <div className="max-w-6xl mx-auto h-full">
-             
-             {currentTool ? (
-                // Tool View
-               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 lg:p-8 shadow-2xl min-h-[500px] flex flex-col animate-in fade-in duration-300 text-slate-200">
-                  {/* Note: Tools are currently optimized for dark mode internal display. Forcing dark container for tool content. */}
-                  {currentTool.component}
-               </div>
-             ) : (
-                // Dashboard View
-                <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-10">
-                  <div className="text-center space-y-4 py-8">
-                     <h2 className="text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+      {/* --- MAIN CONTENT --- */}
+      <main className="flex-1 w-full max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 animate-in fade-in duration-300">
+         {currentTool ? (
+             // Specific Tool View
+             <div className="flex flex-col gap-4 h-full">
+                 <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-2">
+                    <button onClick={handleGoHome} className="hover:text-primary-500 flex items-center gap-1">
+                        <IconHome className="w-4 h-4" /> {t.home}
+                    </button>
+                    <span>/</span>
+                    <span className="text-slate-900 dark:text-slate-200 font-medium">
+                        {lang === 'zh' ? currentTool.nameZh : currentTool.name}
+                    </span>
+                 </div>
+
+                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm min-h-[600px] flex flex-col">
+                     {currentTool.component}
+                 </div>
+             </div>
+         ) : (
+             // Dashboard Grid View
+             <div className="space-y-8">
+                 <div className="text-center py-10 space-y-4">
+                     <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                         {t.welcome}
-                     </h2>
+                     </h1>
                      <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl mx-auto">
                         {t.desc}
                      </p>
-                     
-                     {/* Mobile Search */}
-                     <div className="relative max-w-sm mx-auto md:hidden">
-                        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input 
-                          type="text"
-                          placeholder={t.search}
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 text-sm rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary-500 shadow-sm"
-                        />
-                     </div>
-                  </div>
+                 </div>
 
-                  {/* Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-                    {filteredTools.length > 0 ? (
-                       filteredTools.map(tool => (
-                         <ToolCard key={tool.id} tool={tool} onClick={handleToolSelect} lang={lang} />
-                       ))
-                    ) : (
-                      <div className="col-span-full text-center py-20 text-slate-500 dark:text-slate-400">
-                        <p>{t.noResults}</p>
-                        <button onClick={() => { setSearchTerm(''); setActiveCategory('All'); }} className="text-primary-600 dark:text-primary-500 hover:underline mt-2">{t.clear}</button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-             )}
-           </div>
-        </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                     {filteredTools.length > 0 ? (
+                         filteredTools.map(tool => (
+                             <ToolCard key={tool.id} tool={tool} onClick={handleToolSelect} lang={lang} />
+                         ))
+                     ) : (
+                         <div className="col-span-full text-center py-20 text-slate-500 dark:text-slate-400">
+                             <p>{t.noResults}</p>
+                             <button onClick={() => { setSearchTerm(''); setActiveCategory('Common'); }} className="text-primary-500 hover:underline mt-2">
+                                 {t.clear}
+                             </button>
+                         </div>
+                     )}
+                 </div>
+             </div>
+         )}
       </main>
     </div>
   );
