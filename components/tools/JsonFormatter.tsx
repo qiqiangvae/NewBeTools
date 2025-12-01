@@ -45,7 +45,7 @@ const JsonFormatter: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col md:flex-row gap-4 h-[600px] md:h-auto">
+      <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-[700px]">
         <div className="flex-1 flex flex-col">
            <label className="text-sm text-slate-400 mb-2">Input JSON</label>
            <textarea
