@@ -434,15 +434,6 @@ const App: React.FC = () => {
                 {currentTool ? (
                     // Tool View
                     <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-                         {/* Desktop Breadcrumb / Header */}
-                         <div className="hidden md:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2 shrink-0">
-                            <span className="hover:text-primary-500 cursor-pointer transition-colors" onClick={handleGoHome}>{t.home}</span>
-                            <span>/</span>
-                            <span className="text-slate-900 dark:text-slate-200 font-bold bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
-                                {lang === 'zh' ? currentTool.nameZh : currentTool.name}
-                            </span>
-                         </div>
-                         
                          {/* Tool Container - Flex 1 to allow tool to stretch */}
                          <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm overflow-hidden flex flex-col">
                              {React.isValidElement(currentTool.component) 
