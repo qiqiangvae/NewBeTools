@@ -1,12 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { IconCopy, IconCheck } from '../Icons';
+import { ToolComponentProps } from '../../types';
 
-const UrlConverter: React.FC = () => {
+const UrlConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [activeTab, setActiveTab] = useState<'convert' | 'parse'>('convert');
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
   const [parsedUrl, setParsedUrl] = useState<any>(null);
   const [copied, setCopied] = useState(false);
+
+  const t = {
+    title: lang === 'zh' ? 'URL 工具' : 'URL Tools',
+    modeConvert: lang === 'zh' ? '编/解码' : 'Encoder/Decoder',
+    modeParse: lang === 'zh' ? '解析器' : 'Parser',
+    input: lang === 'zh' ? '输入' : 'Input',
+    encode: lang === 'zh' ? '编码' : 'Encode',
+    decode: lang === 'zh' ? '解码' : 'Decode',
+    result: lang === 'zh' ? '结果' : 'Result',
+    copy: lang === 'zh' ? '复制' : 'Copy',
+    copied: lang === 'zh' ? '已复制' : 'Copied',
+    phText: lang === 'zh' ? '输入 URL 或文本...' : 'Enter URL or text...',
+    phUrl: lang === 'zh' ? 'https://example.com/path?query=123' : 'https://example.com/path?query=123',
+    queryParams: lang === 'zh' ? '查询参数' : 'Query Params',
+    resPlace: lang === 'zh' ? '结果将显示在这里...' : 'Result will appear here...',
+    invalidUrl: lang === 'zh' ? '请输入有效的 URL 以解析。' : 'Enter a valid URL to parse its components.',
+  };
 
   // Convert Logic
   const handleProcess = (action: 'encode' | 'decode') => {
@@ -59,19 +77,19 @@ const UrlConverter: React.FC = () => {
   return (
     <div className="flex flex-col gap-6 h-full">
       <div className="flex justify-between items-center">
-         <h2 className="text-xl font-bold text-slate-100">URL Tools</h2>
+         <h2 className="text-xl font-bold text-slate-100">{t.title}</h2>
          <div className="bg-slate-800 p-1 rounded-lg flex border border-slate-700">
             <button 
                 onClick={() => setActiveTab('convert')}
                 className={`px-4 py-1.5 text-sm rounded-md transition-all ${activeTab === 'convert' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
             >
-                Encoder/Decoder
+                {t.modeConvert}
             </button>
             <button 
                 onClick={() => setActiveTab('parse')}
                 className={`px-4 py-1.5 text-sm rounded-md transition-all ${activeTab === 'parse' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
             >
-                Parser
+                {t.modeParse}
             </button>
          </div>
       </div>
@@ -79,11 +97,11 @@ const UrlConverter: React.FC = () => {
       {activeTab === 'convert' ? (
         <>
             <div className="flex flex-col gap-2">
-                <label className="text-slate-400 text-sm">Input</label>
+                <label className="text-slate-400 text-sm">{t.input}</label>
                 <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Enter URL or text..."
+                placeholder={t.phText}
                 className="h-32 bg-slate-800 text-slate-200 p-4 rounded-lg border border-slate-700 focus:ring-2 focus:ring-primary-500 outline-none resize-none font-mono text-sm"
                 />
             </div>
@@ -93,30 +111,30 @@ const UrlConverter: React.FC = () => {
                 onClick={() => handleProcess('encode')}
                 className="flex-1 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors"
                 >
-                Encode
+                {t.encode}
                 </button>
                 <button
                 onClick={() => handleProcess('decode')}
                 className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
                 >
-                Decode
+                {t.decode}
                 </button>
             </div>
 
             <div className="flex flex-col gap-2 flex-1">
                 <div className="flex justify-between items-center">
-                    <label className="text-slate-400 text-sm">Result</label>
+                    <label className="text-slate-400 text-sm">{t.result}</label>
                     {output && (
                         <button onClick={() => handleCopy(output)} className="flex items-center gap-1 text-xs text-primary-500 hover:text-primary-400">
                             {copied ? <IconCheck className="w-3 h-3" /> : <IconCopy className="w-3 h-3" />}
-                            {copied ? 'Copied' : 'Copy'}
+                            {copied ? t.copied : t.copy}
                         </button>
                     )}
                 </div>
                 <textarea
                 readOnly
                 value={output}
-                placeholder="Result will appear here..."
+                placeholder={t.resPlace}
                 className="flex-1 h-32 bg-slate-900 text-slate-200 p-4 rounded-lg border border-slate-700 outline-none resize-none font-mono text-sm"
                 />
             </div>
@@ -127,7 +145,7 @@ const UrlConverter: React.FC = () => {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="https://example.com/path?query=123"
+                placeholder={t.phUrl}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 focus:ring-2 focus:ring-primary-500 outline-none font-mono"
              />
              
@@ -139,7 +157,7 @@ const UrlConverter: React.FC = () => {
                             if (key === 'Query' && typeof val === 'object') {
                                 return (
                                     <div key={key}>
-                                        <div className="text-xs text-slate-500 uppercase font-bold mb-1">Query Params</div>
+                                        <div className="text-xs text-slate-500 uppercase font-bold mb-1">{t.queryParams}</div>
                                         <div className="bg-slate-800 rounded border border-slate-700 p-3 space-y-2">
                                             {Object.entries(val as object).map(([k, v]) => (
                                                 <div key={k} className="flex gap-2">
@@ -161,7 +179,7 @@ const UrlConverter: React.FC = () => {
                      </div>
                  ) : (
                      <div className="text-slate-600 text-center mt-10 italic">
-                         Enter a valid URL to parse its components.
+                         {t.invalidUrl}
                      </div>
                  )}
              </div>

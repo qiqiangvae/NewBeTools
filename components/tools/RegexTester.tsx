@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { generateRegex } from '../../services/geminiService';
 import { IconSparkles } from '../Icons';
+import { ToolComponentProps } from '../../types';
 
 const COMMON_REGEXES = [
     { name: 'Email', regex: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}', flags: 'gm' },
@@ -14,13 +15,25 @@ const COMMON_REGEXES = [
     { name: 'ID Card (CN)', regex: '\\d{17}[\\dXx]', flags: 'gm' },
 ];
 
-const RegexTester: React.FC = () => {
+const RegexTester: React.FC<ToolComponentProps> = ({ lang }) => {
   const [regexStr, setRegexStr] = useState('');
   const [flags, setFlags] = useState('gm');
   const [testString, setTestString] = useState('');
   const [matches, setMatches] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const t = {
+    title: lang === 'zh' ? '正则测试' : 'Regex Tester',
+    aiGen: lang === 'zh' ? 'AI 生成' : 'AI Generate',
+    thinking: lang === 'zh' ? '思考中...' : 'Thinking...',
+    testStr: lang === 'zh' ? '测试字符串' : 'Test String',
+    matches: lang === 'zh' ? '匹配结果' : 'Matches',
+    phExpr: lang === 'zh' ? '表达式...' : 'Expression...',
+    phTest: lang === 'zh' ? '输入要匹配的文本...' : 'Insert text to match against...',
+    noMatch: lang === 'zh' ? '无匹配结果' : 'No matches found.',
+    prompt: lang === 'zh' ? '描述你想要匹配的内容:' : 'Describe what you want to match:',
+  };
 
   useEffect(() => {
     if (!regexStr) {
@@ -55,7 +68,7 @@ const RegexTester: React.FC = () => {
   }, [regexStr, flags, testString]);
 
   const handleAiGenerate = async () => {
-      const userPrompt = window.prompt("Describe what you want to match:");
+      const userPrompt = window.prompt(t.prompt);
       if (!userPrompt) return;
       setIsGenerating(true);
       const res = await generateRegex(userPrompt);
@@ -73,10 +86,10 @@ const RegexTester: React.FC = () => {
   return (
     <div className="flex flex-col gap-6 h-full">
       <div className="flex justify-between items-center flex-wrap gap-4">
-         <h2 className="text-xl font-bold text-slate-100">Regex Tester</h2>
+         <h2 className="text-xl font-bold text-slate-100">{t.title}</h2>
          <button onClick={handleAiGenerate} className="flex items-center gap-2 text-xs sm:text-sm bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg transition-colors shadow">
             <IconSparkles className="w-4 h-4" />
-            {isGenerating ? 'Thinking...' : 'AI Generate'}
+            {isGenerating ? t.thinking : t.aiGen}
          </button>
       </div>
 
@@ -100,7 +113,7 @@ const RegexTester: React.FC = () => {
                 type="text"
                 value={regexStr}
                 onChange={(e) => setRegexStr(e.target.value)}
-                placeholder="Expression..."
+                placeholder={t.phExpr}
                 className={`flex-1 bg-slate-800 text-slate-200 p-3 rounded border ${error ? 'border-red-500' : 'border-slate-700'} font-mono outline-none focus:ring-2 focus:ring-primary-500 transition-all`}
              />
              <span className="text-slate-400 font-mono text-lg">/</span>
@@ -116,18 +129,18 @@ const RegexTester: React.FC = () => {
 
         <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
             <div className="flex-1 flex flex-col gap-2 min-h-[300px]">
-                <label className="text-sm text-slate-400 uppercase font-bold tracking-wider">Test String</label>
+                <label className="text-sm text-slate-400 uppercase font-bold tracking-wider">{t.testStr}</label>
                 <textarea
                     value={testString}
                     onChange={(e) => setTestString(e.target.value)}
                     className="flex-1 w-full bg-slate-800 text-slate-200 p-4 rounded-lg border border-slate-700 focus:ring-2 focus:ring-primary-500 outline-none resize-none font-mono text-sm leading-relaxed"
-                    placeholder="Insert text to match against..."
+                    placeholder={t.phTest}
                 />
             </div>
 
             <div className="flex-1 flex flex-col gap-2 min-h-[300px]">
                 <div className="flex justify-between items-center">
-                     <label className="text-sm text-slate-400 uppercase font-bold tracking-wider">Matches ({matches.length})</label>
+                     <label className="text-sm text-slate-400 uppercase font-bold tracking-wider">{t.matches} ({matches.length})</label>
                 </div>
                 <div className="flex-1 bg-slate-900 border border-slate-800 rounded-lg overflow-auto font-mono text-sm p-2">
                     {matches.length > 0 ? (
@@ -162,7 +175,7 @@ const RegexTester: React.FC = () => {
                         </div>
                     ) : (
                         <div className="flex items-center justify-center h-full text-slate-600 italic">
-                            No matches found.
+                            {t.noMatch}
                         </div>
                     )}
                 </div>

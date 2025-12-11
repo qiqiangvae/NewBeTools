@@ -16,7 +16,7 @@ import {
   IconClock, 
   IconBinary,
   IconType,
-  IconPalette,
+  IconPalette, 
   IconRuler,
   IconQrCode,
   IconDiff,
@@ -60,7 +60,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: '格式化、校验和压缩 JSON 数据。',
     category: ToolCategory.DEVELOPER,
     icon: <IconJson className="w-4 h-4" />,
-    component: <JsonFormatter />,
+    component: <JsonFormatter lang="en" />,
     keywords: ['json', 'parse', 'prettify']
   },
   {
@@ -71,7 +71,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: '利用 AI 测试和生成正则表达式。',
     category: ToolCategory.DEVELOPER,
     icon: <IconRegex className="w-4 h-4" />,
-    component: <RegexTester />,
+    component: <RegexTester lang="en" />,
     keywords: ['regex', 'match', 'pattern']
   },
   {
@@ -93,7 +93,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: '在线比对两段文本的差异并高亮显示。',
     category: ToolCategory.DEVELOPER,
     icon: <IconDiff className="w-4 h-4" />,
-    component: <TextDiff />,
+    component: <TextDiff lang="en" />,
     keywords: ['diff', 'compare', 'difference']
   },
   {
@@ -104,7 +104,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: '查询本机 IP 或任意 IP 地址的详细信息。',
     category: ToolCategory.UTILITY,
     icon: <IconGlobe className="w-4 h-4" />,
-    component: <IpLookup />,
+    component: <IpLookup lang="en" />,
     keywords: ['ip', 'geo', 'location']
   },
   {
@@ -115,7 +115,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: '将文本或 URL 转换为二维码图片。',
     category: ToolCategory.UTILITY,
     icon: <IconQrCode className="w-4 h-4" />,
-    component: <QrCodeGenerator />,
+    component: <QrCodeGenerator lang="en" />,
     keywords: ['qr', 'barcode', '2d']
   },
   {
@@ -126,7 +126,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: 'URL 编码、解码以及参数解析工具。',
     category: ToolCategory.CONVERTER,
     icon: <IconUrl className="w-4 h-4" />,
-    component: <UrlConverter />,
+    component: <UrlConverter lang="en" />,
     keywords: ['url', 'uri', 'percent']
   },
   {
@@ -148,7 +148,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: 'Unix 时间戳与日期时间的相互转换。',
     category: ToolCategory.UTILITY,
     icon: <IconClock className="w-4 h-4" />,
-    component: <TimestampConverter />,
+    component: <TimestampConverter lang="en" />,
     keywords: ['time', 'date', 'unix']
   },
   {
@@ -159,7 +159,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: '将中文字符转换为拼音 (带声调)。',
     category: ToolCategory.CONVERTER,
     icon: <IconPinyin className="w-4 h-4" />,
-    component: <PinyinConverter />,
+    component: <PinyinConverter lang="en" />,
     keywords: ['chinese', 'pinyin', 'convert']
   },
   {
@@ -170,7 +170,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: '利用 AI 智能格式化各种语言的代码。',
     category: ToolCategory.DEVELOPER,
     icon: <IconFormat className="w-4 h-4" />,
-    component: <CodeFormatter />,
+    component: <CodeFormatter lang="en" />,
     keywords: ['format', 'prettier', 'beautify']
   },
   {
@@ -225,7 +225,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: '通用 AI 编程助手，解释代码、生成代码。',
     category: ToolCategory.AI,
     icon: <IconBrain className="w-4 h-4" />,
-    component: <AiAssistant />,
+    component: <AiAssistant lang="en" />,
     keywords: ['ai', 'gemini']
   },
 ];

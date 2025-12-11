@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft } from '../Icons';
+import { ToolComponentProps } from '../../types';
 
 // Access global jsonpath object from CDN
 declare const jsonpath: any;
@@ -87,7 +88,7 @@ const JsonNode = ({ name, value, isLast }: { name?: string, value: any, isLast: 
   );
 };
 
-const JsonFormatter: React.FC = () => {
+const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -98,6 +99,30 @@ const JsonFormatter: React.FC = () => {
   const [pathQuery, setPathQuery] = useState('$.');
   const [pathResult, setPathResult] = useState('');
   const [pathError, setPathError] = useState<string | null>(null);
+
+  const t = {
+    title: lang === 'zh' ? 'JSON 编辑器' : 'JSON Editor',
+    textMode: lang === 'zh' ? '文本' : 'Text',
+    treeMode: lang === 'zh' ? '树形' : 'Tree',
+    path: lang === 'zh' ? '路径' : 'Path',
+    esc: lang === 'zh' ? '转义' : 'Esc',
+    unesc: lang === 'zh' ? '去转义' : 'UnEsc',
+    format: lang === 'zh' ? '格式化' : 'Format',
+    minify: lang === 'zh' ? '压缩' : 'Minify',
+    clear: lang === 'zh' ? '清空' : 'Clear',
+    sample: lang === 'zh' ? '示例' : 'Sample',
+    copy: lang === 'zh' ? '复制' : 'Copy',
+    copied: lang === 'zh' ? '已复制' : 'Copied',
+    inputTitle: lang === 'zh' ? '输入 JSON' : 'Input JSON',
+    treeTitle: lang === 'zh' ? '树形视图' : 'Tree Viewer',
+    pathTitle: lang === 'zh' ? 'JSONPath 表达式' : 'JSONPath Expression',
+    resultTitle: lang === 'zh' ? '提取结果' : 'Extraction Result',
+    readonly: lang === 'zh' ? '只读' : 'ReadOnly',
+    invalid: lang === 'zh' ? '无效的 JSON: ' : 'Invalid JSON: ',
+    placeholder: lang === 'zh' ? '在此粘贴或输入 JSON...' : 'Paste or type JSON here...',
+    empty: lang === 'zh' ? '无效的 JSON - 请切换到文本模式修复错误。' : 'Invalid JSON - switch to Text mode to fix errors.',
+    noMatch: lang === 'zh' ? '无匹配' : 'No match',
+  };
 
   // Auto-validate syntax
   useEffect(() => {
@@ -125,7 +150,7 @@ const JsonFormatter: React.FC = () => {
         const result = jsonpath.query(jsonData, pathQuery);
         
         if (result === undefined || result.length === 0) {
-            setPathResult('No match');
+            setPathResult(t.noMatch);
             setPathError(null);
         } else {
             setPathResult(JSON.stringify(result, null, 2));
@@ -134,7 +159,7 @@ const JsonFormatter: React.FC = () => {
     } catch (e: any) {
         setPathResult('');
     }
-  }, [input, pathQuery, error]);
+  }, [input, pathQuery, error, t.noMatch]);
 
   const formatJson = () => {
     try {
@@ -143,7 +168,7 @@ const JsonFormatter: React.FC = () => {
       setError(null);
       setViewMode('text'); // Formatting usually implies checking the source
     } catch (e: any) {
-      setError("Invalid JSON: " + e.message);
+      setError(t.invalid + e.message);
     }
   };
 
@@ -154,7 +179,7 @@ const JsonFormatter: React.FC = () => {
       setError(null);
       setViewMode('text');
     } catch (e: any) {
-      setError("Invalid JSON: " + e.message);
+      setError(t.invalid + e.message);
     }
   };
 
@@ -162,8 +187,6 @@ const JsonFormatter: React.FC = () => {
     try {
         // Escape the string content
         const escaped = JSON.stringify(input);
-        // JSON.stringify adds surrounding quotes, e.g. "foo" -> "\"foo\""
-        // Most users want the content with surrounding quotes for pasting into code
         setInput(escaped);
         setViewMode('text');
     } catch(e) {
@@ -179,13 +202,12 @@ const JsonFormatter: React.FC = () => {
               setInput(unescaped);
           } else {
               // Manual unescape if not wrapped in quotes or parse fails
-              // Replaces \" with " and \\ with \
               const unescaped = input.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
               setInput(unescaped);
           }
           setViewMode('text');
       } catch(e: any) {
-          setError("Could not unescape: " + e.message);
+          setError(e.message);
       }
   };
 
@@ -227,7 +249,7 @@ const JsonFormatter: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-3 p-1">
         <div className="flex items-center gap-2">
             <IconJson className="w-5 h-5 text-primary-400" />
-            <h2 className="text-lg font-bold text-slate-100">JSON Editor</h2>
+            <h2 className="text-lg font-bold text-slate-100">{t.title}</h2>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
             {/* View Mode Toggles */}
@@ -235,18 +257,18 @@ const JsonFormatter: React.FC = () => {
                 <button
                     onClick={() => setViewMode('text')}
                     className={`px-3 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${viewMode === 'text' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
-                    title="Text Editor"
+                    title={t.textMode}
                 >
                     <IconType className="w-3.5 h-3.5" />
-                    Text
+                    {t.textMode}
                 </button>
                 <button
                     onClick={() => setViewMode('tree')}
                     className={`px-3 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${viewMode === 'tree' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
-                    title="Tree Viewer"
+                    title={t.treeMode}
                 >
                     <IconPanelLeft className="w-3.5 h-3.5" />
-                    Tree
+                    {t.treeMode}
                 </button>
             </div>
 
@@ -255,23 +277,23 @@ const JsonFormatter: React.FC = () => {
                 className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors flex items-center gap-2 ${showJsonPath ? 'bg-primary-900/30 border-primary-500/50 text-primary-300' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'}`}
             >
                 <IconSearch className="w-3 h-3" />
-                Path
+                {t.path}
             </button>
             
             <div className="w-px h-6 bg-slate-700 mx-1 hidden lg:block"></div>
             
             <div className="flex gap-1">
-                 <button onClick={escapeJson} className="px-2 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors" title="Escape JSON string">Esc</button>
-                 <button onClick={unescapeJson} className="px-2 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors" title="Unescape JSON string">UnEsc</button>
+                 <button onClick={escapeJson} className="px-2 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors" title="Escape JSON string">{t.esc}</button>
+                 <button onClick={unescapeJson} className="px-2 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors" title="Unescape JSON string">{t.unesc}</button>
             </div>
 
             <div className="flex gap-1">
-                <button onClick={formatJson} className="px-3 py-1.5 text-xs font-medium bg-primary-600 hover:bg-primary-500 rounded text-white transition-colors">Format</button>
-                <button onClick={minifyJson} className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors">Minify</button>
+                <button onClick={formatJson} className="px-3 py-1.5 text-xs font-medium bg-primary-600 hover:bg-primary-500 rounded text-white transition-colors">{t.format}</button>
+                <button onClick={minifyJson} className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors">{t.minify}</button>
             </div>
             
-            <button onClick={() => setInput('')} className="px-3 py-1.5 text-xs font-medium bg-red-900/30 hover:bg-red-900/50 text-red-300 rounded border border-red-900/50 transition-colors">Clear</button>
-            <button onClick={loadSample} className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors">Sample</button>
+            <button onClick={() => setInput('')} className="px-3 py-1.5 text-xs font-medium bg-red-900/30 hover:bg-red-900/50 text-red-300 rounded border border-red-900/50 transition-colors">{t.clear}</button>
+            <button onClick={loadSample} className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors">{t.sample}</button>
         </div>
       </div>
 
@@ -282,10 +304,10 @@ const JsonFormatter: React.FC = () => {
         <div className="flex-1 flex flex-col gap-2 min-w-0 transition-all duration-300 ease-in-out h-full min-h-[400px]">
             <div className="flex justify-between items-center px-1">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    {viewMode === 'text' ? 'Input JSON' : 'Tree Viewer'}
+                    {viewMode === 'text' ? t.inputTitle : t.treeTitle}
                 </span>
                 <button onClick={() => handleCopy(input)} className="text-xs flex items-center gap-1 text-slate-500 hover:text-primary-400 transition-colors">
-                    {copied ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>} Copy
+                    {copied ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>} {t.copy}
                 </button>
             </div>
             
@@ -293,7 +315,7 @@ const JsonFormatter: React.FC = () => {
                 {viewMode === 'text' ? (
                     <textarea
                         className={`w-full h-full bg-slate-800 text-slate-200 font-mono text-xs sm:text-sm p-4 outline-none resize-none transition-all ${error ? 'focus:ring-2 focus:ring-red-500/50' : 'focus:ring-2 focus:ring-primary-500'}`}
-                        placeholder="Paste or type JSON here..."
+                        placeholder={t.placeholder}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         spellCheck="false"
@@ -304,7 +326,7 @@ const JsonFormatter: React.FC = () => {
                             <JsonNode value={parsedJson} isLast={true} />
                         ) : (
                             <div className="text-slate-500 italic text-sm">
-                                {input.trim() ? "Invalid JSON - switch to Text mode to fix errors." : "Empty JSON"}
+                                {input.trim() ? t.empty : (lang === 'zh' ? '空 JSON' : 'Empty JSON')}
                             </div>
                         )}
                     </div>
@@ -325,7 +347,7 @@ const JsonFormatter: React.FC = () => {
                 <div className="flex flex-col gap-2 shrink-0">
                     <div className="flex items-center gap-2 px-1">
                         <IconSearch className="w-3 h-3 text-slate-400" />
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">JSONPath Expression</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.pathTitle}</span>
                     </div>
                     <input 
                         type="text" 
@@ -339,15 +361,15 @@ const JsonFormatter: React.FC = () => {
                 {/* Result Section */}
                 <div className="flex-1 flex flex-col gap-2 min-h-0">
                     <div className="flex justify-between items-center px-1">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Extraction Result</span>
-                        <span className="text-xs text-slate-600">ReadOnly</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.resultTitle}</span>
+                        <span className="text-xs text-slate-600">{t.readonly}</span>
                     </div>
                     <div className="flex-1 relative bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
                         <textarea 
                             readOnly
                             value={pathResult}
-                            className={`absolute inset-0 w-full h-full bg-transparent p-4 font-mono text-xs sm:text-sm resize-none outline-none ${pathResult === 'No match' ? 'text-slate-500 italic' : 'text-green-400'}`}
-                            placeholder="Results will appear here..."
+                            className={`absolute inset-0 w-full h-full bg-transparent p-4 font-mono text-xs sm:text-sm resize-none outline-none ${pathResult === t.noMatch ? 'text-slate-500 italic' : 'text-green-400'}`}
+                            placeholder={lang === 'zh' ? '结果将显示在这里...' : "Results will appear here..."}
                         />
                     </div>
                 </div>

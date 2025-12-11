@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { IconClock, IconCopy, IconCheck } from '../Icons';
+import { ToolComponentProps } from '../../types';
 
-const TimestampConverter: React.FC = () => {
+const TimestampConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [now, setNow] = useState(Date.now());
   const [tsInput, setTsInput] = useState('');
   const [dateInput, setDateInput] = useState('');
   const [resultDate, setResultDate] = useState('');
   const [resultTs, setResultTs] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
+
+  const t = {
+    current: lang === 'zh' ? '当前时间' : 'Current Time',
+    tsToDate: lang === 'zh' ? '时间戳 → 日期' : 'Timestamp → Date',
+    dateToTs: lang === 'zh' ? '日期 → 时间戳' : 'Date → Timestamp',
+    convert: lang === 'zh' ? '转换' : 'Convert',
+    result: lang === 'zh' ? '结果...' : 'Result...',
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -59,7 +68,7 @@ const TimestampConverter: React.FC = () => {
         <div className="flex items-center gap-3">
           <IconClock className="w-8 h-8 text-primary-500" />
           <div>
-            <div className="text-xs text-slate-400 uppercase tracking-wide font-bold">Current Time</div>
+            <div className="text-xs text-slate-400 uppercase tracking-wide font-bold">{t.current}</div>
             <div className="text-xl md:text-2xl font-mono text-white font-bold tracking-tight">
               {Math.floor(now / 1000)}
             </div>
@@ -74,7 +83,7 @@ const TimestampConverter: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Timestamp to Date */}
         <div className="flex flex-col gap-4">
-          <h3 className="text-lg font-semibold text-slate-200 border-b border-slate-700 pb-2">Timestamp → Date</h3>
+          <h3 className="text-lg font-semibold text-slate-200 border-b border-slate-700 pb-2">{t.tsToDate}</h3>
           <div className="flex gap-2">
              <input
                type="number"
@@ -84,7 +93,7 @@ const TimestampConverter: React.FC = () => {
                className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:ring-2 focus:ring-primary-500 outline-none font-mono"
              />
              <button onClick={handleTsConvert} className="bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-               Convert
+               {t.convert}
              </button>
           </div>
           <div className="bg-slate-900 rounded-lg p-4 border border-slate-800 relative min-h-[80px]">
@@ -96,13 +105,13 @@ const TimestampConverter: React.FC = () => {
                    {copied === 'ts-res' ? <IconCheck className="w-4 h-4" /> : <IconCopy className="w-4 h-4" />}
                  </button>
              )}
-             <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap">{resultDate || 'Result...'}</pre>
+             <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap">{resultDate || t.result}</pre>
           </div>
         </div>
 
         {/* Date to Timestamp */}
         <div className="flex flex-col gap-4">
-          <h3 className="text-lg font-semibold text-slate-200 border-b border-slate-700 pb-2">Date → Timestamp</h3>
+          <h3 className="text-lg font-semibold text-slate-200 border-b border-slate-700 pb-2">{t.dateToTs}</h3>
            <div className="flex gap-2">
              <input
                type="text"
@@ -112,7 +121,7 @@ const TimestampConverter: React.FC = () => {
                className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:ring-2 focus:ring-primary-500 outline-none font-mono"
              />
              <button onClick={handleDateConvert} className="bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-               Convert
+               {t.convert}
              </button>
           </div>
           <div className="bg-slate-900 rounded-lg p-4 border border-slate-800 relative min-h-[80px]">
@@ -124,7 +133,7 @@ const TimestampConverter: React.FC = () => {
                    {copied === 'date-res' ? <IconCheck className="w-4 h-4" /> : <IconCopy className="w-4 h-4" />}
                  </button>
              )}
-             <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap">{resultTs || 'Result...'}</pre>
+             <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap">{resultTs || t.result}</pre>
           </div>
         </div>
       </div>
