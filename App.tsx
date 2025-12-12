@@ -15,8 +15,8 @@ import {
   IconHome, 
   IconClock, 
   IconBinary,
-  IconType,
-  IconPalette, 
+  IconType, 
+  IconPalette,
   IconRuler,
   IconQrCode,
   IconDiff,
@@ -430,7 +430,7 @@ const App: React.FC = () => {
 
          {/* Content Scrollable Area */}
          <main className="flex-1 overflow-auto p-2 md:p-4 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
-            <div className="max-w-7xl mx-auto h-full flex flex-col">
+            <div className={`h-full flex flex-col ${currentTool ? 'w-full' : 'max-w-7xl mx-auto'}`}>
                 {currentTool ? (
                     // Tool View
                     <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-300">
