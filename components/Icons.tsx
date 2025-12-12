@@ -241,3 +241,26 @@ export const IconLanguage = ({ className }: { className?: string }) => (
     <path d="M14 18h6" />
   </svg>
 );
+
+export const IconZap = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  </svg>
+);
+
+export const IconKey = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="7.5" cy="15.5" r="5.5" />
+    <path d="m21 2-9.6 9.6" />
+    <path d="m15.5 7.5 3 3L22 7l-3-3" />
+  </svg>
+);
+
+export const IconRefresh = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+    <path d="M21 3v5h-5" />
+    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+    <path d="M8 16H3v5" />
+  </svg>
+);

@@ -29,7 +29,9 @@ import {
   IconLanguage,
   IconMenu,
   IconX,
-  IconPanelLeft 
+  IconPanelLeft,
+  IconZap,
+  IconKey
 } from './components/Icons';
 
 import JsonFormatter from './components/tools/JsonFormatter';
@@ -48,6 +50,8 @@ import RegexTester from './components/tools/RegexTester';
 import IpLookup from './components/tools/IpLookup';
 import PinyinConverter from './components/tools/PinyinConverter';
 import CodeFormatter from './components/tools/CodeFormatter';
+import UuidGenerator from './components/tools/UuidGenerator';
+import JwtDecoder from './components/tools/JwtDecoder';
 import ToolCard from './components/ToolCard';
 
 // --- Tool Registry ---
@@ -62,6 +66,28 @@ const TOOLS: ToolDef[] = [
     icon: <IconJson className="w-4 h-4" />,
     component: <JsonFormatter lang="en" />,
     keywords: ['json', 'parse', 'prettify']
+  },
+  {
+    id: 'uuid-gen',
+    name: 'UUID Generator',
+    nameZh: 'UUID 生成器',
+    description: 'Generate random UUIDs (v4).',
+    descriptionZh: '批量生成随机 UUID (v4)。',
+    category: ToolCategory.DEVELOPER,
+    icon: <IconZap className="w-4 h-4" />,
+    component: <UuidGenerator lang="en" />,
+    keywords: ['uuid', 'guid', 'id']
+  },
+  {
+    id: 'jwt-decode',
+    name: 'JWT Decoder',
+    nameZh: 'JWT 解码',
+    description: 'Decode JSON Web Tokens.',
+    descriptionZh: '解析 JWT 头部和载荷信息。',
+    category: ToolCategory.DEVELOPER,
+    icon: <IconKey className="w-4 h-4" />,
+    component: <JwtDecoder lang="en" />,
+    keywords: ['jwt', 'token', 'auth']
   },
   {
     id: 'regex-test',
