@@ -1,9 +1,79 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft } from '../Icons';
 import { ToolComponentProps } from '../../types';
 
 // Access global jsonpath object from CDN
 declare const jsonpath: any;
+
+// --- Helper Components ---
+
+interface JsonEditorProps {
+  value: string;
+  onChange: (value: string) => void;
+  error: boolean;
+  placeholder?: string;
+}
+
+const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeholder }) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const preRef = useRef<HTMLPreElement>(null);
+
+  const handleScroll = () => {
+    if (textareaRef.current && preRef.current) {
+      preRef.current.scrollTop = textareaRef.current.scrollTop;
+      preRef.current.scrollLeft = textareaRef.current.scrollLeft;
+    }
+  };
+
+  const highlighted = useMemo(() => {
+    if (!value) return '';
+    // Escape HTML characters
+    const safeHtml = value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    
+    // Highlight JSON syntax
+    return safeHtml.replace(
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+      (match) => {
+        let cls = 'text-amber-400'; // Number
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+            cls = 'text-sky-400 font-semibold'; // Key
+          } else {
+            cls = 'text-emerald-400'; // String
+          }
+        } else if (/true|false/.test(match)) {
+          cls = 'text-violet-400 font-semibold'; // Boolean
+        } else if (/null/.test(match)) {
+          cls = 'text-slate-500 italic'; // Null
+        }
+        return `<span class="${cls}">${match}</span>`;
+      }
+    );
+  }, [value]);
+
+  return (
+    <div className="relative w-full h-full bg-slate-800 rounded-xl border border-slate-700 overflow-hidden group">
+      {/* Highlight Layer */}
+      <pre 
+        ref={preRef}
+        className="absolute inset-0 p-4 font-mono text-xs sm:text-sm leading-6 m-0 overflow-hidden whitespace-pre-wrap break-words text-slate-200 pointer-events-none"
+        aria-hidden="true"
+        dangerouslySetInnerHTML={{ __html: highlighted + '<br/>' }} 
+      />
+      
+      {/* Input Layer */}
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onScroll={handleScroll}
+        spellCheck="false"
+        placeholder={placeholder}
+        className={`absolute inset-0 w-full h-full p-4 font-mono text-xs sm:text-sm leading-6 bg-transparent caret-white outline-none resize-none whitespace-pre-wrap break-words ${value ? 'text-transparent' : 'text-slate-400'} ${error ? 'focus:ring-2 focus:ring-red-500/50' : 'focus:ring-2 focus:ring-primary-500'}`}
+      />
+    </div>
+  );
+};
 
 // --- Tree View Components ---
 
@@ -343,16 +413,15 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
                 </div>
             )}
 
-            <div className="relative flex-1 group h-full overflow-hidden bg-slate-800 rounded-xl border border-slate-700">
-                {viewMode === 'text' ? (
-                    <textarea
-                        className={`w-full h-full bg-slate-800 text-slate-200 font-mono text-xs sm:text-sm p-4 outline-none resize-none transition-all ${error ? 'focus:ring-2 focus:ring-red-500/50' : 'focus:ring-2 focus:ring-primary-500'}`}
-                        placeholder={t.placeholder}
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        spellCheck="false"
-                    />
-                ) : (
+            {viewMode === 'text' ? (
+                <JsonEditor 
+                  value={input} 
+                  onChange={setInput} 
+                  error={!!error} 
+                  placeholder={t.placeholder} 
+                />
+            ) : (
+                <div className="relative flex-1 group h-full overflow-hidden bg-slate-800 rounded-xl border border-slate-700">
                     <div className="w-full h-full overflow-auto p-4 scrollbar-thin scrollbar-thumb-slate-600">
                         {parsedJson ? (
                             <JsonNode value={parsedJson} isLast={true} />
@@ -362,8 +431,8 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
                             </div>
                         )}
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
 
         {/* Right Column: JSONPath & Result (Conditional) */}
