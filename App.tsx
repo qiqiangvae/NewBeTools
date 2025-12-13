@@ -49,7 +49,6 @@ import QrCodeGenerator from './components/tools/QrCodeGenerator';
 import RegexTester from './components/tools/RegexTester';
 import IpLookup from './components/tools/IpLookup';
 import PinyinConverter from './components/tools/PinyinConverter';
-import CodeFormatter from './components/tools/CodeFormatter';
 import UuidGenerator from './components/tools/UuidGenerator';
 import JwtDecoder from './components/tools/JwtDecoder';
 import ToolCard from './components/ToolCard';
@@ -187,17 +186,6 @@ const TOOLS: ToolDef[] = [
     icon: <IconPinyin className="w-4 h-4" />,
     component: <PinyinConverter lang="en" />,
     keywords: ['chinese', 'pinyin', 'convert']
-  },
-  {
-    id: 'code-fmt',
-    name: 'Code Format',
-    nameZh: '代码格式化',
-    description: 'Format code in various languages using AI.',
-    descriptionZh: '利用 AI 智能格式化各种语言的代码。',
-    category: ToolCategory.DEVELOPER,
-    icon: <IconFormat className="w-4 h-4" />,
-    component: <CodeFormatter lang="en" />,
-    keywords: ['format', 'prettier', 'beautify']
   },
   {
     id: 'base-conv',

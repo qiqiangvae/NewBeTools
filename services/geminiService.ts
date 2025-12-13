@@ -70,22 +70,40 @@ export const convertToPinyin = async (text: string): Promise<string> => {
     }
 };
 
-export const formatCode = async (code: string, language?: string): Promise<string> => {
-    if (!apiKey) return code; // Fallback
+export const formatCode = async (code: string): Promise<string> => {
+    if (!apiKey) {
+        console.error("API Key missing");
+        return code;
+    }
     const ai = getAI();
     try {
-        const prompt = `Format the following ${language || 'code'} nicely.
-        Return ONLY the formatted code. No markdown fences.
+        const prompt = `Format the following code to be clean and readable. Detect the language automatically.
+        Return ONLY the formatted code. Do not include markdown code blocks (like \`\`\`). Do not include any explanation or extra text.
         
         Code:
         ${code}`;
-
+        
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt
         });
-        return response.text?.trim() || code;
+        
+        let text = response.text?.trim() || "";
+        // Basic cleanup if model includes markdown code fences despite instructions
+        if (text.startsWith('```')) {
+            const lines = text.split('\n');
+            if (lines.length >= 2) {
+                lines.shift(); // remove first line (```language)
+                if (lines[lines.length-1].trim().startsWith('```')) {
+                    lines.pop(); // remove last line
+                }
+                text = lines.join('\n');
+            }
+        }
+        
+        return text || code;
     } catch (e) {
+        console.error("Error formatting code:", e);
         return code;
     }
 };
