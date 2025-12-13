@@ -7,7 +7,13 @@ declare const jsonpath: any;
 
 // --- Tree View Components ---
 
-const JsonNode = ({ name, value, isLast }: { name?: string, value: any, isLast: boolean }) => {
+interface JsonNodeProps {
+  name?: string;
+  value: any;
+  isLast: boolean;
+}
+
+const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast }) => {
   const [collapsed, setCollapsed] = useState(false);
   
   const isObject = value !== null && typeof value === 'object';
@@ -91,6 +97,7 @@ const JsonNode = ({ name, value, isLast }: { name?: string, value: any, isLast: 
 const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [errorVisible, setErrorVisible] = useState(false);
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'text' | 'tree'>('text');
   
@@ -128,15 +135,28 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
   useEffect(() => {
     if (!input.trim()) {
       setError(null);
+      setErrorVisible(false);
       return;
     }
     try {
       JSON.parse(input);
       setError(null);
+      setErrorVisible(false);
     } catch (e: any) {
       setError(e.message);
+      setErrorVisible(true);
     }
   }, [input]);
+
+  // Auto-hide error after 2 seconds
+  useEffect(() => {
+    if (errorVisible) {
+        const timer = setTimeout(() => {
+            setErrorVisible(false);
+        }, 2000);
+        return () => clearTimeout(timer);
+    }
+  }, [errorVisible, error]);
 
   // Execute JSONPath when input or query changes
   useEffect(() => {
@@ -166,9 +186,11 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
       const parsed = JSON.parse(input);
       setInput(JSON.stringify(parsed, null, 2));
       setError(null);
+      setErrorVisible(false);
       setViewMode('text'); // Formatting usually implies checking the source
     } catch (e: any) {
       setError(t.invalid + e.message);
+      setErrorVisible(true);
     }
   };
 
@@ -177,9 +199,11 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
       const parsed = JSON.parse(input);
       setInput(JSON.stringify(parsed));
       setError(null);
+      setErrorVisible(false);
       setViewMode('text');
     } catch (e: any) {
       setError(t.invalid + e.message);
+      setErrorVisible(true);
     }
   };
 
@@ -208,6 +232,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
           setViewMode('text');
       } catch(e: any) {
           setError(e.message);
+          setErrorVisible(true);
       }
   };
 
@@ -311,6 +336,13 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
                 </button>
             </div>
             
+            {/* Error Notification (Moved outside of editing area) */}
+            {error && errorVisible && viewMode === 'text' && (
+                <div className="bg-red-900/20 border border-red-900/50 text-red-200 px-3 py-2 rounded-lg text-xs flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <IconX className="w-3 h-3 shrink-0" /> <span className="truncate">{error}</span>
+                </div>
+            )}
+
             <div className="relative flex-1 group h-full overflow-hidden bg-slate-800 rounded-xl border border-slate-700">
                 {viewMode === 'text' ? (
                     <textarea
@@ -329,12 +361,6 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
                                 {input.trim() ? t.empty : (lang === 'zh' ? '空 JSON' : 'Empty JSON')}
                             </div>
                         )}
-                    </div>
-                )}
-
-                {error && viewMode === 'text' && (
-                    <div className="absolute bottom-4 left-4 right-4 bg-red-900/90 text-red-100 px-3 py-2 rounded-lg shadow-lg text-xs flex items-center gap-2 backdrop-blur-sm z-10 animate-in fade-in slide-in-from-bottom-2">
-                        <IconX className="w-3 h-3 shrink-0" /> <span className="truncate">{error}</span>
                     </div>
                 )}
             </div>
