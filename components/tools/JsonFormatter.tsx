@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft } from '../Icons';
+import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconEraser, IconSparkles } from '../Icons';
 import { ToolComponentProps } from '../../types';
 
 // Access global jsonpath object from CDN
@@ -184,6 +184,8 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
     path: lang === 'zh' ? '路径' : 'Path',
     esc: lang === 'zh' ? '转义' : 'Esc',
     unesc: lang === 'zh' ? '去转义' : 'UnEsc',
+    rmNewline: lang === 'zh' ? '去除 \\n' : 'Del \\n',
+    fix: lang === 'zh' ? '自动修复' : 'Auto Fix',
     format: lang === 'zh' ? '格式化' : 'Format',
     minify: lang === 'zh' ? '压缩' : 'Minify',
     clear: lang === 'zh' ? '清空' : 'Clear',
@@ -305,6 +307,37 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
           setErrorVisible(true);
       }
   };
+  
+  const removeNewlines = () => {
+    // Replace literal "\n" sequence with nothing
+    const cleaned = input.replace(/\\n/g, '');
+    setInput(cleaned);
+    setViewMode('text');
+  };
+
+  const fixJson = () => {
+    let fixed = input;
+    // Replace invalid escaped single quotes \' -> '
+    fixed = fixed.replace(/\\'/g, "'");
+    // Replace Python/loose JSON constants
+    fixed = fixed.replace(/\bNone\b/g, 'null')
+                 .replace(/\bTrue\b/g, 'true')
+                 .replace(/\bFalse\b/g, 'false');
+    // Remove trailing commas (simple heuristic for common cases like `},]` or `},}`)
+    fixed = fixed.replace(/,\s*([\]}])/g, '$1');
+    
+    // Attempt parse to pretty print if successful
+    try {
+        const parsed = JSON.parse(fixed);
+        setInput(JSON.stringify(parsed, null, 2));
+        setError(null);
+        setErrorVisible(false);
+        setViewMode('text');
+    } catch (e) {
+        // Just update text if full parse fails, allowing user to see partial fixes
+        setInput(fixed);
+    }
+  };
 
   const handleCopy = (text: string) => {
     if (!text) return;
@@ -380,6 +413,11 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
             <div className="flex gap-1">
                  <button onClick={escapeJson} className="px-2 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors" title="Escape JSON string">{t.esc}</button>
                  <button onClick={unescapeJson} className="px-2 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors" title="Unescape JSON string">{t.unesc}</button>
+                 <button onClick={removeNewlines} className="px-2 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors" title="Remove literal \n characters">{t.rmNewline}</button>
+                 <button onClick={fixJson} className="px-2 py-1.5 text-xs font-medium bg-indigo-900/30 hover:bg-indigo-900/50 text-indigo-300 rounded border border-indigo-900/50 transition-colors flex items-center gap-1" title="Fix common JSON errors (quotes, trailing commas)">
+                    <IconSparkles className="w-3 h-3" />
+                    {t.fix}
+                 </button>
             </div>
 
             <div className="flex gap-1">
