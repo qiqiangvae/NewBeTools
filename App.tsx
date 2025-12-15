@@ -31,7 +31,8 @@ import {
   IconX,
   IconPanelLeft,
   IconZap,
-  IconKey
+  IconKey,
+  IconCode
 } from './components/Icons';
 
 import JsonFormatter from './components/tools/JsonFormatter';
@@ -51,6 +52,8 @@ import IpLookup from './components/tools/IpLookup';
 import PinyinConverter from './components/tools/PinyinConverter';
 import UuidGenerator from './components/tools/UuidGenerator';
 import JwtDecoder from './components/tools/JwtDecoder';
+import UnicodeConverter from './components/tools/UnicodeConverter';
+import CodeFormatter from './components/tools/CodeFormatter';
 import ToolCard from './components/ToolCard';
 
 // --- Tool Registry ---
@@ -65,6 +68,17 @@ const TOOLS: ToolDef[] = [
     icon: <IconJson className="w-4 h-4" />,
     component: <JsonFormatter lang="en" />,
     keywords: ['json', 'parse', 'prettify']
+  },
+  {
+    id: 'code-fmt',
+    name: 'Code Formatter',
+    nameZh: '代码格式化',
+    description: 'Format code with AI (JS, Py, HTML, etc).',
+    descriptionZh: 'AI 智能代码格式化 (支持多种语言)。',
+    category: ToolCategory.DEVELOPER,
+    icon: <IconFormat className="w-4 h-4" />,
+    component: <CodeFormatter lang="en" />,
+    keywords: ['format', 'prettier', 'beautify']
   },
   {
     id: 'uuid-gen',
@@ -156,14 +170,25 @@ const TOOLS: ToolDef[] = [
   },
   {
     id: 'base64',
-    name: 'Encoding Converter',
-    nameZh: '编码转换',
+    name: 'Base64 / Base62',
+    nameZh: 'Base64 / Base62',
     description: 'Convert between Text, Base64, and Base62.',
     descriptionZh: '文本、Base64、Base62 等格式的相互转换。',
     category: ToolCategory.CONVERTER,
     icon: <IconBase64 className="w-4 h-4" />,
     component: <Base64Converter lang="en" />,
     keywords: ['base64', 'base62', 'encode', 'decode']
+  },
+  {
+    id: 'unicode',
+    name: 'Unicode Converter',
+    nameZh: 'Unicode 转码',
+    description: 'Convert text to/from Unicode escapes (\\uXXXX) and UTF-8 Hex.',
+    descriptionZh: '文本与 Unicode (\\uXXXX) 或 UTF-8 Hex 编码互转。',
+    category: ToolCategory.CONVERTER,
+    icon: <IconCode className="w-4 h-4" />,
+    component: <UnicodeConverter lang="en" />,
+    keywords: ['unicode', 'escape', 'utf8', 'hex']
   },
   {
     id: 'timestamp',

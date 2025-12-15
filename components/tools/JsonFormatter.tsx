@@ -181,6 +181,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
     title: lang === 'zh' ? 'JSON 编辑器' : 'JSON Editor',
     textMode: lang === 'zh' ? '文本' : 'Text',
     treeMode: lang === 'zh' ? '树形' : 'Tree',
+    view: lang === 'zh' ? '视图' : 'View',
     path: lang === 'zh' ? '路径' : 'Path',
     esc: lang === 'zh' ? '转义' : 'Esc',
     unesc: lang === 'zh' ? '去转义' : 'UnEsc',
@@ -188,8 +189,6 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
     fix: lang === 'zh' ? '自动修复' : 'Auto Fix',
     format: lang === 'zh' ? '格式化' : 'Format',
     minify: lang === 'zh' ? '压缩' : 'Minify',
-    clear: lang === 'zh' ? '清空' : 'Clear',
-    sample: lang === 'zh' ? '示例' : 'Sample',
     copy: lang === 'zh' ? '复制' : 'Copy',
     copied: lang === 'zh' ? '已复制' : 'Copied',
     inputTitle: lang === 'zh' ? '输入 JSON' : 'Input JSON',
@@ -346,21 +345,6 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const loadSample = () => {
-    const sample = {
-        "store": {
-            "book": [
-                { "category": "reference", "author": "Nigel Rees", "title": "Sayings of the Century", "price": 8.95 },
-                { "category": "fiction", "author": "Evelyn Waugh", "title": "Sword of Honour", "price": 12.99 }
-            ],
-            "bicycle": { "color": "red", "price": 19.95 }
-        },
-        "expensive": 10
-    };
-    setInput(JSON.stringify(sample, null, 2));
-    setViewMode('tree');
-  };
-
   // Memoize parsed JSON for tree view to avoid re-parsing on every render if input didn't change (though input changes often)
   const parsedJson = useMemo(() => {
       if (!input.trim()) return null;
@@ -371,6 +355,8 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
       }
   }, [input]);
 
+  const toggleView = () => setViewMode(v => v === 'text' ? 'tree' : 'text');
+
   return (
     <div className="flex flex-col gap-4 h-full min-h-[500px]">
       {/* Toolbar */}
@@ -380,26 +366,18 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
             <h2 className="text-lg font-bold text-slate-100">{t.title}</h2>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-            {/* View Mode Toggles */}
-            <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700 mr-2">
-                <button
-                    onClick={() => setViewMode('text')}
-                    className={`px-3 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${viewMode === 'text' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
-                    title={t.textMode}
-                >
-                    <IconType className="w-3.5 h-3.5" />
-                    {t.textMode}
-                </button>
-                <button
-                    onClick={() => setViewMode('tree')}
-                    className={`px-3 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${viewMode === 'tree' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
-                    title={t.treeMode}
-                >
-                    <IconPanelLeft className="w-3.5 h-3.5" />
-                    {t.treeMode}
-                </button>
-            </div>
+            
+            {/* View Mode Toggle */}
+            <button 
+                onClick={toggleView}
+                className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors flex items-center gap-2 mr-2"
+                title={viewMode === 'text' ? t.treeMode : t.textMode}
+            >
+                {viewMode === 'text' ? <IconPanelLeft className="w-3.5 h-3.5" /> : <IconType className="w-3.5 h-3.5" />}
+                {viewMode === 'text' ? t.treeMode : t.textMode}
+            </button>
 
+            {/* JSON Path */}
             <button 
                 onClick={() => setShowJsonPath(!showJsonPath)} 
                 className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors flex items-center gap-2 ${showJsonPath ? 'bg-primary-900/30 border-primary-500/50 text-primary-300' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'}`}
@@ -410,6 +388,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
             
             <div className="w-px h-6 bg-slate-700 mx-1 hidden lg:block"></div>
             
+            {/* Utilities */}
             <div className="flex gap-1">
                  <button onClick={escapeJson} className="px-2 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors" title="Escape JSON string">{t.esc}</button>
                  <button onClick={unescapeJson} className="px-2 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors" title="Unescape JSON string">{t.unesc}</button>
@@ -420,13 +399,12 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
                  </button>
             </div>
 
+            {/* Main Actions */}
             <div className="flex gap-1">
                 <button onClick={formatJson} className="px-3 py-1.5 text-xs font-medium bg-primary-600 hover:bg-primary-500 rounded text-white transition-colors">{t.format}</button>
                 <button onClick={minifyJson} className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors">{t.minify}</button>
             </div>
             
-            <button onClick={() => setInput('')} className="px-3 py-1.5 text-xs font-medium bg-red-900/30 hover:bg-red-900/50 text-red-300 rounded border border-red-900/50 transition-colors">{t.clear}</button>
-            <button onClick={loadSample} className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors">{t.sample}</button>
         </div>
       </div>
 
