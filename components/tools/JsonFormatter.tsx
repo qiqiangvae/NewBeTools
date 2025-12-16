@@ -412,7 +412,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
       <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-0">
         
         {/* Left Column: Input / Tree */}
-        <div className="flex-1 flex flex-col gap-2 min-w-0 transition-all duration-300 ease-in-out h-full min-h-[400px]">
+        <div className="flex-1 flex flex-col gap-2 min-w-0 transition-all duration-300 ease-in-out h-full min-h-[400px] relative">
             <div className="flex justify-between items-center px-1">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                     {viewMode === 'text' ? t.inputTitle : t.treeTitle}
@@ -422,10 +422,16 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
                 </button>
             </div>
             
-            {/* Error Notification (Moved outside of editing area) */}
+            {/* Error Notification (Floating) */}
             {error && errorVisible && viewMode === 'text' && (
-                <div className="bg-red-900/20 border border-red-900/50 text-red-200 px-3 py-2 rounded-lg text-xs flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                    <IconX className="w-3 h-3 shrink-0" /> <span className="truncate">{error}</span>
+                <div className="absolute bottom-4 left-4 right-4 z-10 mx-auto max-w-lg">
+                    <div className="bg-red-900/90 backdrop-blur border border-red-500/50 text-red-100 px-4 py-3 rounded-lg text-xs shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
+                        <IconX className="w-4 h-4 shrink-0 text-red-400" />
+                        <span className="flex-1 truncate font-mono">{error}</span>
+                        <button onClick={() => setErrorVisible(false)} className="text-red-400 hover:text-white">
+                            <IconX className="w-3 h-3" />
+                        </button>
+                    </div>
                 </div>
             )}
 
