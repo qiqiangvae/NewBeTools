@@ -390,14 +390,31 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
             <h2 className="text-lg font-bold text-slate-100">{t.title}</h2>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-            <button onClick={() => setViewMode(v => v === 'text' ? 'tree' : 'text')} className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors flex items-center gap-2 mr-2">
+            {/* 格式化按钮移到最前 */}
+            <button 
+              onClick={formatJson} 
+              className="px-4 py-1.5 text-xs font-bold bg-primary-600 hover:bg-primary-500 rounded text-white transition-colors shadow-md mr-1"
+            >
+              {t.format}
+            </button>
+
+            <button 
+                onClick={() => setViewMode(v => v === 'text' ? 'tree' : 'text')} 
+                className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors flex items-center gap-2 mr-1"
+            >
                 {viewMode === 'text' ? <IconPanelLeft className="w-3.5 h-3.5" /> : <IconType className="w-3.5 h-3.5" />}
                 {viewMode === 'text' ? t.treeMode : t.textMode}
             </button>
-            <button onClick={() => setShowJsonPath(!showJsonPath)} className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors flex items-center gap-2 ${showJsonPath ? 'bg-primary-900/30 border-primary-500/50 text-primary-300' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'}`}>
+            
+            <button 
+                onClick={() => setShowJsonPath(!showJsonPath)} 
+                className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors flex items-center gap-2 ${showJsonPath ? 'bg-primary-900/30 border-primary-500/50 text-primary-300' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'}`}
+            >
                 <IconSearch className="w-3 h-3" /> {t.path}
             </button>
+            
             <div className="w-px h-6 bg-slate-700 mx-1 hidden lg:block"></div>
+            
             <div className="flex gap-1">
                  <button onClick={escapeJson} className="px-2 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300">{t.esc}</button>
                  <button onClick={unescapeJson} className="px-2 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300">{t.unesc}</button>
@@ -406,9 +423,9 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
                     <IconSparkles className="w-3 h-3" /> {t.fix}
                  </button>
             </div>
+
             <div className="flex gap-1">
-                <button onClick={formatJson} className="px-3 py-1.5 text-xs font-medium bg-primary-600 hover:bg-primary-500 rounded text-white">{t.format}</button>
-                <button onClick={minifyJson} className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300">{t.minify}</button>
+                <button onClick={minifyJson} className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors">{t.minify}</button>
             </div>
         </div>
       </div>
