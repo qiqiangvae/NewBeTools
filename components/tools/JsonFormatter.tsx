@@ -57,7 +57,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeho
     fontFamily: 'Menlo, Monaco, "Courier New", monospace',
     fontSize: '13px',
     lineHeight: '20px',
-    padding: '16px',
+    padding: '16px', // 对应 p-4
     margin: 0,
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-all',
@@ -165,7 +165,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast }) => {
                 : 'text-slate-400';
     
     return (
-      <div className="hover:bg-slate-800/50 px-1 rounded font-mono text-sm leading-6">
+      <div className="hover:bg-slate-800/50 px-1 rounded font-mono text-sm leading-6 ml-4">
         {name && <span className="text-primary-300">"{name}"<span className="text-slate-500">: </span></span>}
         <span className={color}>{JSON.stringify(value)}</span>
         {!isLast && <span className="text-slate-500">,</span>}
@@ -179,7 +179,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast }) => {
 
   if (isEmpty) {
      return (
-       <div className="hover:bg-slate-800/50 px-1 rounded font-mono text-sm leading-6">
+       <div className="hover:bg-slate-800/50 px-1 rounded font-mono text-sm leading-6 ml-4">
          {name && <span className="text-primary-300">"{name}"<span className="text-slate-500">: </span></span>}
          <span className="text-slate-500">{openBracket}{closeBracket}</span>
          {!isLast && <span className="text-slate-500">,</span>}
@@ -192,9 +192,9 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast }) => {
        <div className="hover:bg-slate-800/50 px-1 rounded flex items-start">
          <button 
             onClick={(e) => { e.stopPropagation(); setCollapsed(!collapsed); }} 
-            className="w-4 h-6 flex items-center justify-center text-slate-500 hover:text-slate-300 mr-1 select-none shrink-0"
+            className="w-4 h-6 flex items-center justify-center text-slate-500 hover:text-slate-300 mr-0.5 select-none shrink-0"
          >
-            <span className="text-[10px] transform transition-transform duration-200" style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>▼</span>
+            <span className="text-[9px] transform transition-transform duration-200" style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>▼</span>
          </button>
          
          <div className="flex-1 min-w-0">
@@ -203,14 +203,14 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast }) => {
             
             {collapsed ? (
                 <>
-                  <button onClick={() => setCollapsed(false)} className="text-slate-600 text-xs px-2 hover:text-slate-400 select-none bg-slate-800/50 rounded mx-1">...</button>
+                  <button onClick={() => setCollapsed(false)} className="text-slate-600 text-[10px] px-1.5 hover:text-slate-400 select-none bg-slate-700/50 rounded mx-1">...</button>
                   <span className="text-slate-500">{closeBracket}</span>
                   {!isLast && <span className="text-slate-500">,</span>}
                   <span className="text-slate-600 ml-2 text-xs italic">// {isArray ? `${keys.length} items` : `${keys.length} keys`}</span>
                 </>
             ) : (
                 <>
-                   <div className="pl-4 border-l-2 border-slate-800 ml-1.5 my-0.5">
+                   <div className="pl-3 border-l border-slate-700/50 ml-1.5 my-0.5">
                         {keys.map((key, idx) => (
                             <JsonNode 
                                 key={key} 
@@ -220,8 +220,10 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast }) => {
                             />
                         ))}
                     </div>
-                    <span className="text-slate-500">{closeBracket}</span>
-                    {!isLast && <span className="text-slate-500">,</span>}
+                    <div className="ml-4">
+                      <span className="text-slate-500">{closeBracket}</span>
+                      {!isLast && <span className="text-slate-500">,</span>}
+                    </div>
                 </>
             )}
          </div>
@@ -235,7 +237,9 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [error, setError] = useState<string | null>(null);
   const [errorVisible, setErrorVisible] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [viewMode, setViewMode] = useState<'text' | 'tree' | 'split'>('text');
+  
+  // Default to 'split' view mode as requested
+  const [viewMode, setViewMode] = useState<'text' | 'tree' | 'split'>('split');
   
   const [showJsonPath, setShowJsonPath] = useState(false);
   const [pathQuery, setPathQuery] = useState('$.');
@@ -442,14 +446,14 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
 
       <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-0">
         {/* 主要显示区域 */}
-        <div className={`flex-1 flex flex-col gap-4 min-w-0 h-full ${viewMode === 'split' ? 'lg:flex-row' : ''}`}>
+        <div className={`flex-1 flex flex-col gap-3 min-w-0 h-full ${viewMode === 'split' ? 'lg:flex-row' : ''}`}>
             
             {/* 文本编辑器 */}
             {showText && (
-                <div className="flex-1 flex flex-col gap-2 min-w-0 h-full relative group">
-                    <div className="flex justify-between items-center px-1">
+                <div className="flex-1 flex flex-col gap-1.5 min-w-0 h-full relative group">
+                    <div className="flex justify-between items-center px-1 h-6 shrink-0">
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.inputTitle}</span>
-                        <button onClick={() => handleCopy(input)} className="text-xs flex items-center gap-1 text-slate-500 hover:text-primary-400 transition-colors">
+                        <button onClick={() => handleCopy(input)} className="text-xs flex items-center gap-1 text-slate-500 hover:text-primary-400 transition-colors h-full">
                             {copied ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>} {t.copy}
                         </button>
                     </div>
@@ -471,12 +475,12 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
 
             {/* 树形视图 */}
             {showTree && (
-                <div className="flex-1 flex flex-col gap-2 min-w-0 h-full">
-                    <div className="flex justify-between items-center px-1">
+                <div className="flex-1 flex flex-col gap-1.5 min-w-0 h-full">
+                    <div className="flex justify-between items-center px-1 h-6 shrink-0">
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.treeTitle}</span>
-                        <span className="text-[10px] text-slate-600 uppercase">Interactive</span>
+                        <span className="text-[10px] text-slate-600 uppercase tracking-tight">Interactive</span>
                     </div>
-                    <div className="flex-1 h-full overflow-hidden bg-slate-900/50 rounded-xl border border-slate-700 shadow-inner">
+                    <div className="flex-1 h-full overflow-hidden bg-slate-800 rounded-xl border border-slate-700">
                         <div className="w-full h-full overflow-auto p-4 scrollbar-thin scrollbar-thumb-slate-700">
                             {parsedJson ? <JsonNode value={parsedJson} isLast={true} /> : <div className="text-slate-500 italic text-sm">{input.trim() ? t.empty : (lang === 'zh' ? '空数据' : 'Empty Data')}</div>}
                         </div>
@@ -487,18 +491,18 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
 
         {/* JSONPath 面板 */}
         {showJsonPath && (
-            <div className="flex-1 md:flex-[0.8] lg:flex-[0.6] xl:flex-[0.5] flex flex-col gap-4 min-w-0 animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="flex flex-col gap-2 shrink-0">
-                    <div className="flex items-center gap-2 px-1">
+            <div className="flex-1 md:flex-[0.8] lg:flex-[0.6] xl:flex-[0.5] flex flex-col gap-3 min-w-0 animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="flex flex-col gap-1.5 shrink-0">
+                    <div className="flex items-center gap-2 px-1 h-6">
                         <IconSearch className="w-3 h-3 text-slate-400" />
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.pathTitle}</span>
                     </div>
-                    <input type="text" value={pathQuery} onChange={(e) => setPathQuery(e.target.value)} placeholder="$.store.book[*]" className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2.5 px-3 text-slate-200 font-mono text-sm focus:ring-2 focus:ring-primary-500 outline-none" />
+                    <input type="text" value={pathQuery} onChange={(e) => setPathQuery(e.target.value)} placeholder="$.store.book[*]" className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-slate-200 font-mono text-sm focus:ring-2 focus:ring-primary-500 outline-none" />
                 </div>
-                <div className="flex-1 flex flex-col gap-2 min-h-0">
-                    <div className="flex justify-between items-center px-1">
+                <div className="flex-1 flex flex-col gap-1.5 min-h-0">
+                    <div className="flex justify-between items-center px-1 h-6">
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.resultTitle}</span>
-                        <span className="text-xs text-slate-600">{t.readonly}</span>
+                        <span className="text-xs text-slate-600 uppercase tracking-tighter">{t.readonly}</span>
                     </div>
                     <div className="flex-1 relative bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
                         <textarea readOnly value={pathResult} className={`absolute inset-0 w-full h-full bg-transparent p-4 font-mono text-xs sm:text-sm resize-none outline-none ${pathResult === t.noMatch ? 'text-slate-500 italic' : 'text-green-400'}`} placeholder={lang === 'zh' ? '结果将显示在这里...' : "Results will appear here..."} />
