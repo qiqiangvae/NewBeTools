@@ -26,20 +26,21 @@ const PALETTES = [
 
 const ColorConverter: React.FC = () => {
   const [hex, setHex] = useState('#3b82f6');
-  const [rgb, setRgb] = useState('59, 130, 246');
-  // const [hsl, setHsl] = useState('217, 91%, 60%'); // Simplification for now
+  const [rgb, setRgb] = useState('rgb(59, 130, 246)');
 
-  // Convert HEX to others
   const handleHexChange = (val: string) => {
-    setHex(val);
-    if (/^#?([a-f\d]{3}|[a-f\d]{6})$/i.test(val)) {
-        let h = val.replace('#', '');
+    // Ensure starts with #
+    let cleanHex = val.startsWith('#') ? val : '#' + val;
+    setHex(cleanHex);
+    
+    if (/^#?([a-f\d]{3}|[a-f\d]{6})$/i.test(cleanHex)) {
+        let h = cleanHex.replace('#', '');
         if (h.length === 3) h = h.split('').map(c => c + c).join('');
         const r = parseInt(h.substring(0, 2), 16);
         const g = parseInt(h.substring(2, 4), 16);
         const b = parseInt(h.substring(4, 6), 16);
         
-        setRgb(`${r}, ${g}, ${b}`);
+        setRgb(`rgb(${r}, ${g}, ${b})`);
     } else {
         setRgb('Invalid HEX');
     }
@@ -50,13 +51,14 @@ const ColorConverter: React.FC = () => {
     return (
         <button 
             onClick={() => {
+                if (!text || text.includes('Invalid')) return;
                 navigator.clipboard.writeText(text);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
             }} 
-            className="p-2 text-slate-400 hover:text-white"
+            className="p-2 text-slate-500 hover:text-primary-400 transition-colors shrink-0"
         >
-            {copied ? <IconCheck className="w-4 h-4" /> : <IconCopy className="w-4 h-4" />}
+            {copied ? <IconCheck className="w-4 h-4 text-green-500" /> : <IconCopy className="w-4 h-4" />}
         </button>
     );
   };
@@ -72,29 +74,29 @@ const ColorConverter: React.FC = () => {
            <div className="flex flex-col md:flex-row gap-6">
                {/* Color Selector */}
                <div 
-                className="w-full md:w-1/3 min-h-[180px] rounded-xl shadow-md border border-slate-700 transition-colors relative group overflow-hidden"
-                style={{ backgroundColor: hex.startsWith('#') ? hex : '#000' }}
+                className="w-full md:w-1/3 min-h-[160px] rounded-xl shadow-inner border border-slate-700 transition-all relative group overflow-hidden"
+                style={{ backgroundColor: hex.startsWith('#') && (hex.length === 4 || hex.length === 7) ? hex : '#000' }}
                >
                   <input 
                     type="color" 
-                    value={hex.startsWith('#') && hex.length === 7 ? hex : '#000000'} 
+                    value={hex.startsWith('#') && hex.length === 7 ? hex : '#3b82f6'} 
                     onChange={(e) => handleHexChange(e.target.value)}
                     className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                   />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 pointer-events-none text-white font-medium text-sm">
-                      Click to Pick
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 pointer-events-none text-white font-bold text-sm">
+                      Click to Pick Color
                   </div>
                </div>
               
                {/* Popular Palettes */}
                <div className="flex-1 bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-center">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase mb-4">Popular Colors</h3>
-                  <div className="flex flex-wrap gap-3">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">Presets</h3>
+                  <div className="flex flex-wrap gap-2.5">
                       {PALETTES.map((p) => (
                           <button
                             key={p.name}
                             onClick={() => handleHexChange(p.hex)}
-                            className="w-8 h-8 rounded-full border border-slate-600/50 hover:scale-110 transition-transform focus:ring-2 focus:ring-primary-500 focus:outline-none shadow-sm"
+                            className="w-7 h-7 rounded-lg border border-white/10 hover:scale-110 transition-transform focus:ring-2 focus:ring-primary-500 outline-none shadow-sm"
                             style={{ backgroundColor: p.hex }}
                             title={`${p.name} (${p.hex})`}
                           />
@@ -103,46 +105,49 @@ const ColorConverter: React.FC = () => {
                </div>
            </div>
 
-           {/* Controls */}
-           <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-6">
-                <div className="grid gap-2">
-                    <label className="text-sm font-medium text-slate-400">HEX Value</label>
-                    <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg focus-within:ring-2 focus-within:ring-primary-500 transition-all">
-                        <span className="pl-4 text-slate-500 font-mono">#</span>
+           {/* Results Section */}
+           <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-5">
+                {/* HEX Input */}
+                <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">HEX Value</label>
+                    <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg group focus-within:ring-2 focus-within:ring-primary-500/50 transition-all">
                         <input 
                             type="text" 
-                            value={hex.replace('#', '')} 
-                            onChange={(e) => handleHexChange('#' + e.target.value)}
-                            className="flex-1 bg-transparent px-1 py-3 text-slate-200 outline-none font-mono uppercase tracking-wider"
-                            placeholder="000000"
+                            value={hex} 
+                            onChange={(e) => handleHexChange(e.target.value)}
+                            className="flex-1 bg-transparent px-4 py-3 text-slate-100 outline-none font-mono text-sm uppercase"
+                            placeholder="#000000"
+                            spellCheck="false"
                         />
                         <CopyButton text={hex} />
                     </div>
                 </div>
 
-                <div className="grid gap-2">
-                    <label className="text-sm font-medium text-slate-400">RGB Value</label>
-                     <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg">
-                        <span className="pl-4 text-slate-500 font-mono">rgb(</span>
+                {/* RGB Display */}
+                <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">RGB Value</label>
+                     <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg group">
                         <input 
                             type="text" 
                             value={rgb} 
                             readOnly
-                            className="flex-1 bg-transparent px-1 py-3 text-slate-200 outline-none font-mono"
+                            className="flex-1 bg-transparent px-4 py-3 text-slate-100 outline-none font-mono text-sm"
+                            spellCheck="false"
                         />
-                        <span className="text-slate-500 font-mono pr-1">)</span>
-                        <CopyButton text={`rgb(${rgb})`} />
+                        <CopyButton text={rgb} />
                     </div>
                 </div>
                 
-                <div className="grid gap-2">
-                    <label className="text-sm font-medium text-slate-400">CSS Variable</label>
-                     <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg">
+                {/* CSS Variable Display */}
+                <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">CSS Variable</label>
+                     <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg group">
                         <input 
                             type="text" 
                             value={`--color: ${hex};`} 
                             readOnly
-                            className="flex-1 bg-transparent px-4 py-3 text-slate-500 outline-none font-mono italic"
+                            className="flex-1 bg-transparent px-4 py-3 text-slate-400 outline-none font-mono text-sm italic"
+                            spellCheck="false"
                         />
                         <CopyButton text={`--color: ${hex};`} />
                     </div>

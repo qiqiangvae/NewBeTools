@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconEraser, IconSparkles } from '../Icons';
+import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconEraser, IconSparkles, IconDiff } from '../Icons';
 import { ToolComponentProps } from '../../types';
 
 // Access global jsonpath object from CDN
@@ -54,17 +54,17 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeho
 
   // 极致精确的共享样式
   const sharedStyles: React.CSSProperties = {
-    fontFamily: 'Menlo, Monaco, "Courier New", monospace', // 使用标准等宽字体
-    fontSize: '14px',
-    lineHeight: '22px',       // 固定的行高
-    padding: '20px',          // 固定的内边距
+    fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+    fontSize: '13px',
+    lineHeight: '20px',
+    padding: '16px',
     margin: 0,
     whiteSpace: 'pre-wrap',
-    wordBreak: 'break-all',   // 强制在任何字符间断行，确保两层对齐
+    wordBreak: 'break-all',
     boxSizing: 'border-box',
     tabSize: 2,
-    letterSpacing: '0px',     // 禁用字间距调整
-    fontVariantLigatures: 'none', // 禁用连字
+    letterSpacing: '0px',
+    fontVariantLigatures: 'none',
     border: 'none',
     outline: 'none',
   };
@@ -72,7 +72,6 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeho
   return (
     <div className="relative w-full h-full bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
       <style>{`
-        /* 自定义编辑器容器布局 */
         .editor-stack {
           display: grid;
           grid-template-columns: 1fr;
@@ -81,21 +80,20 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeho
           height: 100%;
         }
         
-        /* 两个层重叠在一起 */
         .editor-stack textarea, 
         .editor-stack pre {
           grid-area: 1 / 1 / 2 / 2;
           width: 100% !important;
           height: 100% !important;
-          overflow-y: scroll !important; /* 强制显示滚动条占位 */
-          scrollbar-gutter: stable;      /* 确保滚动条不会导致宽度变化 */
+          overflow-y: scroll !important;
+          scrollbar-gutter: stable;
         }
 
         .editor-stack textarea {
           background: transparent !important;
           color: transparent !important;
           -webkit-text-fill-color: transparent !important;
-          caret-color: white !important; /* 只保留光标可见 */
+          caret-color: white !important;
           z-index: 2;
         }
 
@@ -111,20 +109,18 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeho
           user-select: none;
         }
 
-        /* 统一滚动条样式，防止宽度差异 */
         .editor-stack textarea::-webkit-scrollbar,
         .editor-stack pre::-webkit-scrollbar {
-          width: 10px;
+          width: 8px;
         }
         .editor-stack textarea::-webkit-scrollbar-thumb,
         .editor-stack pre::-webkit-scrollbar-thumb {
           background: rgba(255, 255, 255, 0.1);
-          border-radius: 5px;
+          border-radius: 4px;
         }
       `}</style>
 
       <div className="editor-stack">
-        {/* 背景高亮层 */}
         <pre 
           ref={preRef}
           style={sharedStyles}
@@ -132,8 +128,6 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeho
           aria-hidden="true"
           dangerouslySetInnerHTML={{ __html: highlighted + (value.endsWith('\n') ? ' ' : '') }} 
         />
-        
-        {/* 前端输入/选中层 */}
         <textarea
           ref={textareaRef}
           value={value}
@@ -241,7 +235,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [error, setError] = useState<string | null>(null);
   const [errorVisible, setErrorVisible] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [viewMode, setViewMode] = useState<'text' | 'tree'>('text');
+  const [viewMode, setViewMode] = useState<'text' | 'tree' | 'split'>('text');
   
   const [showJsonPath, setShowJsonPath] = useState(false);
   const [pathQuery, setPathQuery] = useState('$.');
@@ -251,6 +245,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
     title: lang === 'zh' ? 'JSON 编辑器' : 'JSON Editor',
     textMode: lang === 'zh' ? '文本' : 'Text',
     treeMode: lang === 'zh' ? '树形' : 'Tree',
+    splitMode: lang === 'zh' ? '对照' : 'Split',
     path: lang === 'zh' ? '路径' : 'Path',
     esc: lang === 'zh' ? '转义' : 'Esc',
     unesc: lang === 'zh' ? '去转义' : 'UnEsc',
@@ -266,7 +261,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
     resultTitle: lang === 'zh' ? '提取结果' : 'Extraction Result',
     readonly: lang === 'zh' ? '只读' : 'ReadOnly',
     placeholder: lang === 'zh' ? '在此粘贴或输入 JSON...' : 'Paste or type JSON here...',
-    empty: lang === 'zh' ? '无效的 JSON - 请切换到文本模式修复错误。' : 'Invalid JSON - switch to Text mode to fix errors.',
+    empty: lang === 'zh' ? '无效的 JSON - 请在文本模式修复错误。' : 'Invalid JSON - switch to Text mode to fix errors.',
     noMatch: lang === 'zh' ? '无匹配' : 'No match',
   };
 
@@ -313,7 +308,6 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
       setInput(JSON.stringify(parsed, null, 2));
       setError(null);
       setErrorVisible(false);
-      setViewMode('text');
     } catch (e: any) {
       setError(e.message);
       setErrorVisible(true);
@@ -326,7 +320,6 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
       setInput(JSON.stringify(parsed));
       setError(null);
       setErrorVisible(false);
-      setViewMode('text');
     } catch (e: any) {
       setError(e.message);
       setErrorVisible(true);
@@ -335,7 +328,6 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
 
   const escapeJson = () => {
     setInput(JSON.stringify(input));
-    setViewMode('text');
   };
 
   const unescapeJson = () => {
@@ -345,7 +337,6 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
           } else {
               setInput(input.replace(/\\"/g, '"').replace(/\\\\/g, '\\'));
           }
-          setViewMode('text');
       } catch(e: any) {
           setError(e.message);
           setErrorVisible(true);
@@ -354,7 +345,6 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
   
   const removeNewlines = () => {
     setInput(input.replace(/\\n/g, ''));
-    setViewMode('text');
   };
 
   const fixJson = () => {
@@ -367,7 +357,6 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
     } catch {
         setInput(fixed);
     }
-    setViewMode('text');
   };
 
   const handleCopy = (text: string) => {
@@ -382,6 +371,9 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
       try { return JSON.parse(input); } catch { return null; }
   }, [input]);
 
+  const showText = viewMode === 'text' || viewMode === 'split';
+  const showTree = viewMode === 'tree' || viewMode === 'split';
+
   return (
     <div className="flex flex-col gap-4 h-full min-h-[500px]">
       <div className="flex flex-wrap items-center justify-between gap-3 p-1">
@@ -390,7 +382,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
             <h2 className="text-lg font-bold text-slate-100">{t.title}</h2>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-            {/* 格式化按钮移到最前 */}
+            {/* 格式化按钮 */}
             <button 
               onClick={formatJson} 
               className="px-4 py-1.5 text-xs font-bold bg-primary-600 hover:bg-primary-500 rounded text-white transition-colors shadow-md mr-1"
@@ -398,13 +390,33 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
               {t.format}
             </button>
 
-            <button 
-                onClick={() => setViewMode(v => v === 'text' ? 'tree' : 'text')} 
-                className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors flex items-center gap-2 mr-1"
-            >
-                {viewMode === 'text' ? <IconPanelLeft className="w-3.5 h-3.5" /> : <IconType className="w-3.5 h-3.5" />}
-                {viewMode === 'text' ? t.treeMode : t.textMode}
-            </button>
+            {/* 视图模式组 */}
+            <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700 mr-1">
+                <button 
+                    onClick={() => setViewMode('text')} 
+                    className={`px-3 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${viewMode === 'text' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                    title={t.textMode}
+                >
+                    <IconType className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{t.textMode}</span>
+                </button>
+                <button 
+                    onClick={() => setViewMode('tree')} 
+                    className={`px-3 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${viewMode === 'tree' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                    title={t.treeMode}
+                >
+                    <IconPanelLeft className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{t.treeMode}</span>
+                </button>
+                <button 
+                    onClick={() => setViewMode('split')} 
+                    className={`px-3 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${viewMode === 'split' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                    title={t.splitMode}
+                >
+                    <IconDiff className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{t.splitMode}</span>
+                </button>
+            </div>
             
             <button 
                 onClick={() => setShowJsonPath(!showJsonPath)} 
@@ -424,43 +436,58 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
                  </button>
             </div>
 
-            <div className="flex gap-1">
-                <button onClick={minifyJson} className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors">{t.minify}</button>
-            </div>
+            <button onClick={minifyJson} className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 transition-colors ml-1">{t.minify}</button>
         </div>
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-0">
-        <div className="flex-1 flex flex-col gap-2 min-w-0 h-full relative">
-            <div className="flex justify-between items-center px-1">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{viewMode === 'text' ? t.inputTitle : t.treeTitle}</span>
-                <button onClick={() => handleCopy(input)} className="text-xs flex items-center gap-1 text-slate-500 hover:text-primary-400 transition-colors">
-                    {copied ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>} {t.copy}
-                </button>
-            </div>
+        {/* 主要显示区域 */}
+        <div className={`flex-1 flex flex-col gap-4 min-w-0 h-full ${viewMode === 'split' ? 'lg:flex-row' : ''}`}>
             
-            {error && errorVisible && viewMode === 'text' && (
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-md">
-                    <div className="bg-red-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
-                        <IconX className="w-5 h-5 shrink-0" />
-                        <span className="flex-1 truncate font-mono text-xs">{error}</span>
+            {/* 文本编辑器 */}
+            {showText && (
+                <div className="flex-1 flex flex-col gap-2 min-w-0 h-full relative group">
+                    <div className="flex justify-between items-center px-1">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.inputTitle}</span>
+                        <button onClick={() => handleCopy(input)} className="text-xs flex items-center gap-1 text-slate-500 hover:text-primary-400 transition-colors">
+                            {copied ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>} {t.copy}
+                        </button>
                     </div>
+                    
+                    <div className="flex-1 min-h-0">
+                        <JsonEditor value={input} onChange={setInput} error={!!error} placeholder={t.placeholder} />
+                    </div>
+
+                    {error && errorVisible && (
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-md">
+                            <div className="bg-red-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
+                                <IconX className="w-5 h-5 shrink-0" />
+                                <span className="flex-1 truncate font-mono text-xs">{error}</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
-            {viewMode === 'text' ? (
-                <JsonEditor value={input} onChange={setInput} error={!!error} placeholder={t.placeholder} />
-            ) : (
-                <div className="flex-1 h-full overflow-hidden bg-slate-800 rounded-xl border border-slate-700">
-                    <div className="w-full h-full overflow-auto p-4 scrollbar-thin scrollbar-thumb-slate-600">
-                        {parsedJson ? <JsonNode value={parsedJson} isLast={true} /> : <div className="text-slate-500 italic text-sm">{input.trim() ? t.empty : (lang === 'zh' ? '空 JSON' : 'Empty JSON')}</div>}
+            {/* 树形视图 */}
+            {showTree && (
+                <div className="flex-1 flex flex-col gap-2 min-w-0 h-full">
+                    <div className="flex justify-between items-center px-1">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.treeTitle}</span>
+                        <span className="text-[10px] text-slate-600 uppercase">Interactive</span>
+                    </div>
+                    <div className="flex-1 h-full overflow-hidden bg-slate-900/50 rounded-xl border border-slate-700 shadow-inner">
+                        <div className="w-full h-full overflow-auto p-4 scrollbar-thin scrollbar-thumb-slate-700">
+                            {parsedJson ? <JsonNode value={parsedJson} isLast={true} /> : <div className="text-slate-500 italic text-sm">{input.trim() ? t.empty : (lang === 'zh' ? '空数据' : 'Empty Data')}</div>}
+                        </div>
                     </div>
                 </div>
             )}
         </div>
 
+        {/* JSONPath 面板 */}
         {showJsonPath && (
-            <div className="flex-1 md:flex-[0.8] lg:flex-1 flex flex-col gap-4 min-w-0 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="flex-1 md:flex-[0.8] lg:flex-[0.6] xl:flex-[0.5] flex flex-col gap-4 min-w-0 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex flex-col gap-2 shrink-0">
                     <div className="flex items-center gap-2 px-1">
                         <IconSearch className="w-3 h-3 text-slate-400" />
