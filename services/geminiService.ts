@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 
 const apiKey = process.env.API_KEY || '';
@@ -6,6 +7,7 @@ const apiKey = process.env.API_KEY || '';
 // though lightweight enough to instantiate on demand.
 const getAI = () => new GoogleGenAI({ apiKey });
 
+// Selection: 'gemini-3-pro-preview' for complex reasoning (Regex).
 export const generateRegex = async (description: string): Promise<string> => {
   if (!apiKey) return "Error: API Key is missing.";
 
@@ -19,7 +21,7 @@ export const generateRegex = async (description: string): Promise<string> => {
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
     });
 
@@ -30,6 +32,7 @@ export const generateRegex = async (description: string): Promise<string> => {
   }
 };
 
+// Selection: 'gemini-3-pro-preview' for coding reasoning tasks.
 export const explainCode = async (code: string): Promise<string> => {
   if (!apiKey) return "Error: API Key is missing.";
   const ai = getAI();
@@ -42,7 +45,7 @@ export const explainCode = async (code: string): Promise<string> => {
      \`\`\`
      `;
      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-pro-preview',
         contents: prompt,
      });
      return response.text?.trim() || "No explanation available.";
@@ -52,6 +55,7 @@ export const explainCode = async (code: string): Promise<string> => {
   }
 };
 
+// Selection: 'gemini-3-flash-preview' for basic text tasks.
 export const convertToPinyin = async (text: string): Promise<string> => {
     if (!apiKey) return "API Key missing";
     const ai = getAI();
@@ -61,7 +65,7 @@ export const convertToPinyin = async (text: string): Promise<string> => {
         Text: ${text}`;
         
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-flash-preview',
             contents: prompt
         });
         return response.text?.trim() || "Failed to convert";
@@ -70,6 +74,7 @@ export const convertToPinyin = async (text: string): Promise<string> => {
     }
 };
 
+// Selection: 'gemini-3-flash-preview' for formatting tasks.
 export const formatCode = async (code: string): Promise<string> => {
     if (!apiKey) {
         console.error("API Key missing");
@@ -84,7 +89,7 @@ export const formatCode = async (code: string): Promise<string> => {
         ${code}`;
         
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-flash-preview',
             contents: prompt
         });
         

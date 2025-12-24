@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconEraser, IconSparkles, IconDiff } from '../Icons';
 import { ToolComponentProps } from '../../types';
@@ -228,18 +229,22 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast }) => {
   );
 };
 
-const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
-  const [input, setInput] = useState('');
+const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChange }) => {
+  // Use persistent state if available
+  const [input, setInput] = useState(state?.input || '');
+  const [viewMode, setViewMode] = useState<'text' | 'tree' | 'split'>(state?.viewMode || 'split');
+  const [showJsonPath, setShowJsonPath] = useState(state?.showJsonPath || false);
+  const [pathQuery, setPathQuery] = useState(state?.pathQuery || '$.');
+  
   const [error, setError] = useState<string | null>(null);
   const [errorVisible, setErrorVisible] = useState(false);
   const [copied, setCopied] = useState(false);
-  
-  // Default to 'split' view mode as requested
-  const [viewMode, setViewMode] = useState<'text' | 'tree' | 'split'>('split');
-  
-  const [showJsonPath, setShowJsonPath] = useState(false);
-  const [pathQuery, setPathQuery] = useState('$.');
   const [pathResult, setPathResult] = useState('');
+
+  // Sync state back to parent
+  useEffect(() => {
+    onStateChange?.({ input, viewMode, showJsonPath, pathQuery });
+  }, [input, viewMode, showJsonPath, pathQuery, onStateChange]);
 
   const t = {
     title: lang === 'zh' ? 'JSON 编辑器' : 'JSON Editor',
@@ -300,7 +305,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
     } catch {
         setPathResult('');
     }
-  }, [input, pathQuery, error]);
+  }, [input, pathQuery, error, t.noMatch]);
 
   const formatJson = () => {
     try {

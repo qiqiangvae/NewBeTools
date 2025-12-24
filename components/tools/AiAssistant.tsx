@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { generateRegex, explainCode } from '../../services/geminiService';
 import { GoogleGenAI } from "@google/genai";
@@ -31,6 +32,7 @@ const AiAssistant: React.FC<ToolComponentProps> = ({ lang }) => {
      thinking: lang === 'zh' ? '思考中...' : 'Thinking...',
   };
 
+  // Selection: 'gemini-3-pro-preview' for complex code conversion tasks.
   const convertCode = async (code: string) => {
     const apiKey = process.env.API_KEY || '';
     if (!apiKey) return "API Key missing";
@@ -44,7 +46,7 @@ const AiAssistant: React.FC<ToolComponentProps> = ({ lang }) => {
         ${code}
         `;
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-pro-preview',
             contents: prompt
         });
         return response.text?.trim() || "Failed to convert";

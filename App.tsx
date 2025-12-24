@@ -17,6 +17,7 @@ import {
   IconClock, 
   IconBinary,
   IconType, 
+  IconCase,
   IconPalette,
   IconRuler,
   IconQrCode, 
@@ -243,7 +244,7 @@ const TOOLS: ToolDef[] = [
     description: 'Camel, Snake, Pascal, Kebab case converter.',
     descriptionZh: '驼峰、下划线、烤串等变量命名风格转换。',
     category: ToolCategory.DEVELOPER,
-    icon: <IconType className="w-5 h-5" />,
+    icon: <IconCase className="w-5 h-5" />,
     component: <StringCaseConverter />,
     keywords: ['case', 'camel']
   },
@@ -287,6 +288,9 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); 
   const [isCollapsed, setIsCollapsed] = useState(true); 
+  
+  // Cache for tool states
+  const [toolStates, setToolStates] = useState<Record<string, any>>({});
   
   const [lang, setLang] = useState<Lang>('zh');
   const [theme, setTheme] = useState<Theme>('dark');
@@ -351,6 +355,10 @@ const App: React.FC = () => {
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
+  };
+
+  const updateToolState = (id: string, newState: any) => {
+    setToolStates(prev => ({ ...prev, [id]: newState }));
   };
 
   const isDesktopCollapsed = !isSidebarOpen && isCollapsed;
@@ -510,7 +518,11 @@ const App: React.FC = () => {
                     <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-300">
                          <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm overflow-hidden flex flex-col">
                              {React.isValidElement(currentTool.component) 
-                                ? React.cloneElement(currentTool.component as React.ReactElement<any>, { lang }) 
+                                ? React.cloneElement(currentTool.component as React.ReactElement<any>, { 
+                                    lang,
+                                    state: toolStates[currentTool.id],
+                                    onStateChange: (s: any) => updateToolState(currentTool.id, s)
+                                  }) 
                                 : currentTool.component}
                          </div>
                     </div>

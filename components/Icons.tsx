@@ -97,19 +97,12 @@ export const IconCopy = ({ className }: { className?: string }) => (
 export const IconSparkles = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    <path d="M5 3L4 4.5L5 6L6.5 5L8 6L7 4.5L8 3L6.5 4L5 3Z" />
+    <path d="M19 18l-1 1.5l1 1.5l1.5-1l1.5 1l-1-1.5l1-1.5l-1.5 1l-1.5-1z" />
   </svg>
 );
 
-export const IconBinary = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <rect x="14" y="14" width="4" height="6" rx="2" />
-    <rect x="6" y="4" width="4" height="6" rx="2" />
-    <path d="M6 20h4" />
-    <path d="M14 10h4" />
-    <path d="M6 14h2v6" />
-    <path d="M14 4h2v6" />
-  </svg>
-);
+// --- Fix: Added missing icons ---
 
 export const IconType = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -119,90 +112,125 @@ export const IconType = ({ className }: { className?: string }) => (
   </svg>
 );
 
+export const IconPanelLeft = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+    <line x1="9" x2="9" y1="3" y2="21" />
+  </svg>
+);
+
+export const IconEraser = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
+    <path d="M22 21H7" />
+    <path d="m5 11 9 9" />
+  </svg>
+);
+
+export const IconDiff = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 3v14" />
+    <path d="M5 10h14" />
+    <rect width="18" height="18" x="3" y="3" rx="2" />
+  </svg>
+);
+
+export const IconBinary = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="14" y="14" width="4" height="6" rx="2" />
+    <rect x="6" y="4" width="4" height="6" rx="2" />
+    <path d="M6 20h4" />
+    <path d="M14 10h4" />
+    <path d="M8 20v-6" />
+    <path d="M16 10V4" />
+  </svg>
+);
+
+export const IconCase = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m3 15 4-8 4 8" />
+    <path d="M4 13h6" />
+    <circle cx="18" cy="12" r="3" />
+    <path d="M21 9v6" />
+  </svg>
+);
+
 export const IconPalette = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
     <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
     <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
     <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
-    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.6 0-.4-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.9.7-1.6 1.6-1.6H17c2.8 0 5-2.2 5-5 0-4.4-4.5-8-10-8Z" />
   </svg>
 );
 
 export const IconRuler = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z" />
-    <path d="m14.5 12.5 2-2" />
-    <path d="m11.5 9.5 2-2" />
-    <path d="m8.5 6.5 2-2" />
-    <path d="m17.5 15.5 2-2" />
-  </svg>
-);
-
-export const IconCalendar = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-    <line x1="16" y1="2" x2="16" y2="6" />
-    <line x1="8" y1="2" x2="8" y2="6" />
-    <line x1="3" y1="10" x2="21" y2="10" />
+    <path d="M21.3 15.3l-9.3-9.3c-.8-.8-2-.8-2.8 0l-4.9 4.9c-.8.8-.8 2 0 2.8l9.3 9.3c.8.8 2 .8 2.8 0l4.9-4.9c.8-.8.8-2 0-2.8z" />
+    <path d="M14.3 8.3l-1.4 1.4" />
+    <path d="M11.5 11.1l-1.4 1.4" />
+    <path d="M8.7 13.9l-1.4 1.4" />
+    <path d="M17.1 11.1l-1.4 1.4" />
   </svg>
 );
 
 export const IconQrCode = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect x="3" y="3" width="7" height="7" />
-      <rect x="14" y="3" width="7" height="7" />
-      <rect x="14" y="14" width="7" height="7" />
-      <rect x="3" y="14" width="7" height="7" />
-    </svg>
-);
-
-export const IconDiff = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M12 3v18" />
-      <path d="M8 9h8" />
-      <path d="M8 15h8" />
-    </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect width="5" height="5" x="3" y="3" rx="1" />
+    <rect width="5" height="5" x="16" y="3" rx="1" />
+    <rect width="5" height="5" x="3" y="16" rx="1" />
+    <path d="M21 16h-3a2 2 0 0 0-2 2v3" />
+    <path d="M21 21v.01" />
+    <path d="M12 7v3a2 2 0 0 1-2 2H7" />
+    <path d="M3 12h.01" />
+    <path d="M12 3h.01" />
+    <path d="M12 16v.01" />
+    <path d="M16 12h1" />
+    <path d="M21 12v.01" />
+    <path d="M12 21v-1" />
+  </svg>
 );
 
 export const IconRegex = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M4 12h16" />
-      <path d="m8 8-4 4 4 4" />
-      <path d="m16 8 4 4-4 4" />
-    </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M17 3v10" />
+    <path d="m12.67 5.5 8.66 5" />
+    <path d="m12.67 10.5 8.66-5" />
+    <path d="M9 17a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2z" />
+    <path d="M13 17a2 2 0 0 1 2 2v2" />
+    <path d="M13 21h4" />
+    <path d="M20 17a2 2 0 0 1 2 2v2" />
+  </svg>
 );
 
 export const IconGlobe = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-      <path d="M2 12h20" />
-    </svg>
-);
-
-export const IconSignature = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="m16 16-1.5-1.5" />
-      <path d="M15 12a3 3 0 1 0-3-3" />
-      <path d="M8.5 16.5a8 8 0 0 1 11-1.5" />
-      <path d="M19 19a3 3 0 1 0-3-3" />
-    </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="10" />
+    <line x1="2" x2="22" y1="12" y2="12" />
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+  </svg>
 );
 
 export const IconPinyin = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-       <text x="50%" y="50%" textAnchor="middle" dy=".3em" fontSize="14" fontWeight="bold">PY</text>
-    </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M13 10V6l-3 3" />
+    <path d="M17 10V6l3 3" />
+    <path d="M3 20h18" />
+    <path d="M5 20v-4" />
+    <path d="M19 20v-4" />
+    <path d="M12 10v10" />
+    <path d="M9 14h6" />
+  </svg>
 );
 
 export const IconFormat = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M3 6h18" />
-      <path d="M3 12h18" />
-      <path d="M3 18h18" />
-      <path d="M7 6v12" />
-    </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21 12H3" />
+    <path d="M21 6H3" />
+    <path d="M21 18H3" />
+    <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+  </svg>
 );
 
 export const IconSun = ({ className }: { className?: string }) => (
@@ -225,13 +253,6 @@ export const IconMoon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export const IconPanelLeft = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <rect width="18" height="18" x="3" y="3" rx="2" />
-    <path d="M9 3v18" />
-  </svg>
-);
-
 export const IconLanguage = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="m5 8 6 6" />
@@ -251,9 +272,19 @@ export const IconZap = ({ className }: { className?: string }) => (
 
 export const IconKey = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <circle cx="7.5" cy="15.5" r="5.5" />
-    <path d="m21 2-9.6 9.6" />
-    <path d="m15.5 7.5 3 3L22 7l-3-3" />
+    <path d="m21 2-19 19" />
+    <circle cx="7.5" cy="16.5" r="4.5" />
+    <path d="m10.5 13.5 1.5-1.5" />
+    <path d="m13.5 10.5 1.5-1.5" />
+    <path d="m16.5 7.5 1.5-1.5" />
+    <path d="m19.5 4.5 1.5-1.5" />
+  </svg>
+);
+
+export const IconCode = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polyline points="16 18 22 12 16 6" />
+    <polyline points="8 6 2 12 8 18" />
   </svg>
 );
 
@@ -262,22 +293,7 @@ export const IconRefresh = ({ className }: { className?: string }) => (
     <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
     <path d="M21 3v5h-5" />
     <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-    <path d="M8 16H3v5" />
-  </svg>
-);
-
-export const IconEraser = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
-    <path d="M22 21H7" />
-    <path d="m5 11 9 9" />
-  </svg>
-);
-
-export const IconCode = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <polyline points="16 18 22 12 16 6" />
-    <polyline points="8 6 2 12 8 18" />
+    <path d="M3 21v-5h5" />
   </svg>
 );
 

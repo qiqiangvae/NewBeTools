@@ -1,13 +1,21 @@
 
-import React, { useState } from 'react';
-import { IconCopy, IconCheck, IconRefresh, IconType, IconZap, IconUndo } from '../Icons';
+import React, { useState, useEffect } from 'react';
+import { IconCopy, IconCheck, IconType, IconZap, IconUndo } from '../Icons';
 import { ToolComponentProps } from '../../types';
 
-const TextProcessor: React.FC<ToolComponentProps> = ({ lang }) => {
-  const [input, setInput] = useState('');
-  const [suffix, setSuffix] = useState('');
+const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChange }) => {
+  // Use persistent state if available
+  const [input, setInput] = useState(state?.input || '');
+  const [extraContent, setExtraContent] = useState(state?.extraContent || '');
+  const [quoteType, setQuoteType] = useState(state?.quoteType || '"');
+  const [history, setHistory] = useState<string[]>(state?.history || []);
+  
   const [copied, setCopied] = useState(false);
-  const [history, setHistory] = useState<string[]>([]);
+
+  // Sync state back to parent
+  useEffect(() => {
+    onStateChange?.({ input, extraContent, quoteType, history });
+  }, [input, extraContent, quoteType, history, onStateChange]);
 
   const t = {
     title: lang === 'zh' ? '文本处理增强' : 'Text Processor Plus',
@@ -15,14 +23,15 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang }) => {
     copied: lang === 'zh' ? '已复制' : 'Copied',
     placeholder: lang === 'zh' ? '在此输入或粘贴需要处理的文本...' : 'Enter or paste text to process here...',
     
-    unescapeN: lang === 'zh' ? '转义 \\n → 换行' : 'Unescape \\n',
-    quoteDouble: lang === 'zh' ? '双引号包裹每一行' : 'Quote Lines (")',
-    quoteSingle: lang === 'zh' ? '单引号包裹每一行' : "Quote Lines (')",
-    appendSuffix: lang === 'zh' ? '行尾添加' : 'Append Suffix',
-    suffixPh: lang === 'zh' ? '后缀内容...' : 'Suffix text...',
+    unescapeN: lang === 'zh' ? '转义 \\n' : 'Unescape \\n',
+    appendPrefix: lang === 'zh' ? '行首添加' : 'Add Prefix',
+    appendSuffix: lang === 'zh' ? '行尾添加' : 'Add Suffix',
+    extraPh: lang === 'zh' ? '添加内容...' : 'Content to add...',
     clear: lang === 'zh' ? '清空' : 'Clear',
-    trimLines: lang === 'zh' ? '修剪首尾空格' : 'Trim Lines',
+    trimLines: lang === 'zh' ? '修剪空格' : 'Trim Lines',
     undo: lang === 'zh' ? '撤销' : 'Undo',
+    wrap: lang === 'zh' ? '包裹' : 'Wrap',
+    quoteLabel: lang === 'zh' ? '字符包裹' : 'Line Wrap',
   };
 
   const saveToHistory = () => {
@@ -34,19 +43,28 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang }) => {
     setInput(input.replace(/\\n/g, '\n'));
   };
 
-  const handleQuoteLines = (char: '"' | "'") => {
+  const handleQuoteLines = () => {
     saveToHistory();
+    let start = quoteType;
+    let end = quoteType;
+    
+    // Handle special pairs
+    if (quoteType === '[]') { start = '['; end = ']'; }
+    else if (quoteType === '{}') { start = '{'; end = '}'; }
+    else if (quoteType === '()') { start = '('; end = ')'; }
+    else if (quoteType === '<>') { start = '<'; end = '>'; }
+
     const lines = input.split('\n');
-    const quoted = lines.map(line => `${char}${line}${char}`).join('\n');
+    const quoted = lines.map(line => `${start}${line}${end}`).join('\n');
     setInput(quoted);
   };
 
-  const handleAppendSuffix = () => {
-    if (!suffix) return;
+  const handleAddAtLocation = (isPrefix: boolean) => {
+    if (!extraContent) return;
     saveToHistory();
     const lines = input.split('\n');
-    const appended = lines.map(line => line + suffix).join('\n');
-    setInput(appended);
+    const processed = lines.map(line => isPrefix ? extraContent + line : line + extraContent).join('\n');
+    setInput(processed);
   };
 
   const handleTrimLines = () => {
@@ -114,52 +132,71 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang }) => {
       </div>
 
       <div className="flex-1 flex flex-col gap-4 min-h-0">
-          {/* Action Toolbar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+          {/* Action Toolbar - Rebalanced Spans to avoid long inputs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-11 xl:grid-cols-12 gap-3 items-center">
               <button 
                 onClick={handleUnescapeNewlines}
-                className="flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all"
-                title="Convert literal '\n' characters to real newlines"
+                className="lg:col-span-2 xl:col-span-2 flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all"
               >
                 <IconZap className="w-3.5 h-3.5 text-yellow-500" />
                 {t.unescapeN}
               </button>
-              
-              <button 
-                onClick={() => handleQuoteLines('"')}
-                className="px-3 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all"
-              >
-                {t.quoteDouble}
-              </button>
-
-              <button 
-                onClick={() => handleQuoteLines("'")}
-                className="px-3 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all"
-              >
-                {t.quoteSingle}
-              </button>
 
               <button 
                 onClick={handleTrimLines}
-                className="px-3 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all"
+                className="lg:col-span-2 xl:col-span-2 px-3 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all"
               >
                 {t.trimLines}
               </button>
 
-              <div className="col-span-2 md:col-span-4 lg:col-span-1 flex gap-2">
+              {/* Quote Dropdown - Balanced width */}
+              <div className="col-span-2 md:col-span-2 lg:col-span-3 xl:col-span-4 flex gap-1.5">
+                  <select 
+                    value={quoteType}
+                    onChange={(e) => setQuoteType(e.target.value)}
+                    className="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-primary-500 appearance-none text-center font-mono cursor-pointer"
+                  >
+                      <option value='"'>" "</option>
+                      <option value="'">' '</option>
+                      <option value="`">` `</option>
+                      <option value="[]">[ ]</option>
+                      <option value="{}">{ }</option>
+                      <option value="()"> ( ) </option>
+                      <option value="<>">&lt; &gt;</option>
+                  </select>
+                  <button 
+                    onClick={handleQuoteLines}
+                    className="shrink-0 px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all"
+                  >
+                    {t.wrap}
+                  </button>
+              </div>
+
+              {/* Consolidated Prefix/Suffix Input - Significantly shortened on large screens */}
+              <div className="col-span-2 md:col-span-2 lg:col-span-4 xl:col-span-4 flex gap-1.5">
                   <input 
                     type="text"
-                    value={suffix}
-                    onChange={(e) => setSuffix(e.target.value)}
-                    placeholder={t.suffixPh}
+                    value={extraContent}
+                    onChange={(e) => setExtraContent(e.target.value)}
+                    placeholder={t.extraPh}
                     className="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-primary-500"
                   />
-                  <button 
-                    onClick={handleAppendSuffix}
-                    className="shrink-0 px-3 py-2 text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-all"
-                  >
-                    {t.appendSuffix}
-                  </button>
+                  <div className="flex gap-1.5 shrink-0">
+                    <button 
+                      onClick={() => handleAddAtLocation(true)}
+                      className="px-3 py-2 text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-all"
+                      title={t.appendPrefix}
+                    >
+                      {lang === 'zh' ? '行首' : 'Pre'}
+                    </button>
+                    <button 
+                      onClick={() => handleAddAtLocation(false)}
+                      className="px-3 py-2 text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-all"
+                      title={t.appendSuffix}
+                    >
+                      {lang === 'zh' ? '行尾' : 'Suf'}
+                    </button>
+                  </div>
               </div>
           </div>
 

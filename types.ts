@@ -1,3 +1,4 @@
+
 import { ReactNode } from 'react';
 
 export enum ToolCategory {
@@ -29,4 +30,6 @@ export type Theme = 'light' | 'dark';
 
 export interface ToolComponentProps {
   lang: Lang;
+  state?: any;
+  onStateChange?: (state: any) => void;
 }
