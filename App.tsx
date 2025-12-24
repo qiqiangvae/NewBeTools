@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   ToolCategory, 
@@ -54,6 +55,7 @@ import UuidGenerator from './components/tools/UuidGenerator';
 import JwtDecoder from './components/tools/JwtDecoder';
 import UnicodeConverter from './components/tools/UnicodeConverter';
 import CodeFormatter from './components/tools/CodeFormatter';
+import TextProcessor from './components/tools/TextProcessor';
 import ToolCard from './components/ToolCard';
 
 // --- Tool Registry ---
@@ -68,6 +70,17 @@ const TOOLS: ToolDef[] = [
     icon: <IconJson className="w-5 h-5" />,
     component: <JsonFormatter lang="en" />,
     keywords: ['json', 'parse', 'prettify']
+  },
+  {
+    id: 'text-proc',
+    name: 'Text Processor',
+    nameZh: '文本处理',
+    description: 'Unescape newlines, wrap lines with quotes, or add suffixes.',
+    descriptionZh: '一键将 \\n 替换为换行、添加行首尾字符或后缀。',
+    category: ToolCategory.DEVELOPER,
+    icon: <IconType className="w-5 h-5" />,
+    component: <TextProcessor lang="en" />,
+    keywords: ['text', 'process', 'quote', 'suffix', 'newline']
   },
   {
     id: 'code-fmt',
@@ -96,7 +109,7 @@ const TOOLS: ToolDef[] = [
     name: 'JWT Decoder',
     nameZh: 'JWT 解码',
     description: 'Decode JSON Web Tokens.',
-    descriptionZh: '解析 JWT 头部和载荷信息。',
+    descriptionZh: '解析 JWT 头部 and 载荷信息。',
     category: ToolCategory.DEVELOPER,
     icon: <IconKey className="w-5 h-5" />,
     component: <JwtDecoder lang="en" />,
