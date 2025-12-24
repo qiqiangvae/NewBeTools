@@ -102,7 +102,6 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
   const renderedMarkdown = useMemo(() => {
     if (!input || !isPreview || typeof marked === 'undefined') return '';
     try {
-        // Force breaks on every parse to ensure single newlines work
         return marked.parse(input, { 
           breaks: true,
           gfm: true 
@@ -244,17 +243,19 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
             ) : (
                 <div className="absolute inset-0 w-full h-full overflow-auto p-6 md:p-8 bg-slate-950/40">
                     <style>{`
-                        .md-preview table { border: 1px solid #475569; border-collapse: collapse; width: 100%; margin: 1.5rem 0; border-radius: 4px; overflow: hidden; }
-                        .md-preview th, .md-preview td { border: 1px solid #475569; padding: 0.6rem 1rem; }
-                        .md-preview th { background-color: #1e293b; color: #f8fafc; font-weight: 700; text-align: left; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
-                        .md-preview tr:nth-child(even) { background-color: rgba(30, 41, 59, 0.4); }
-                        .md-preview tr:hover { background-color: rgba(51, 65, 85, 0.3); }
-                        .md-preview hr { border-color: #334155; margin: 2rem 0; }
+                        .md-preview h1 { font-size: 2.25rem !important; line-height: 2.5rem !important; font-weight: 800 !important; color: white !important; margin-top: 2rem !important; margin-bottom: 1.5rem !important; border-bottom: 2px solid #334155 !important; padding-bottom: 0.75rem !important; }
+                        .md-preview h2 { font-size: 1.5rem !important; line-height: 2rem !important; font-weight: 700 !important; color: white !important; margin-top: 2rem !important; margin-bottom: 1rem !important; border-bottom: 1px solid #1e293b !important; padding-bottom: 0.5rem !important; }
+                        .md-preview h3 { font-size: 1.25rem !important; line-height: 1.75rem !important; font-weight: 700 !important; color: #f1f5f9 !important; margin-top: 1.5rem !important; margin-bottom: 0.75rem !important; }
+                        .md-preview h4 { font-size: 1.125rem !important; line-height: 1.5rem !important; font-weight: 700 !important; color: #e2e8f0 !important; margin-top: 1.25rem !important; margin-bottom: 0.5rem !important; }
+                        
+                        .md-preview table { border: 1px solid #475569 !important; border-collapse: collapse !important; width: 100% !important; margin: 1.5rem 0 !important; border-radius: 4px !important; overflow: hidden !important; }
+                        .md-preview th, .md-preview td { border: 1px solid #475569 !important; padding: 0.6rem 1rem !important; }
+                        .md-preview th { background-color: #1e293b !important; color: #f8fafc !important; font-weight: 700 !important; text-align: left !important; }
+                        .md-preview tr:nth-child(even) { background-color: rgba(30, 41, 59, 0.4) !important; }
+                        .md-preview hr { border-color: #334155 !important; margin: 2rem 0 !important; }
                     `}</style>
                     <div 
                         className="md-preview prose prose-invert max-w-none 
-                        prose-headings:text-white prose-headings:font-bold prose-headings:mb-4 prose-headings:mt-8
-                        prose-h1:text-3xl prose-h2:text-2xl prose-h2:border-b prose-h2:border-slate-800 prose-h2:pb-3
                         prose-p:text-slate-300 prose-p:leading-7 prose-p:mb-4
                         prose-a:text-primary-400 prose-a:no-underline hover:prose-a:underline
                         prose-code:bg-slate-900 prose-code:text-emerald-400 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-code:font-mono prose-code:text-[0.9em]
