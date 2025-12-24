@@ -382,9 +382,9 @@ const App: React.FC = () => {
             title={label}
             className={`flex items-center rounded-md text-xs font-medium transition-all group shrink-0 ${
                 isActive
-                ? (isDesktopCollapsed ? 'bg-primary-600 text-white' : 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400')
+                ? (isDesktopCollapsed ? 'bg-primary-600 text-white shadow-lg' : 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400')
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-            } ${isDesktopCollapsed ? 'w-12 h-10 justify-center gap-0 p-0' : 'w-full px-2 py-2 gap-3'}`}
+            } ${isDesktopCollapsed ? 'w-12 h-12 justify-center gap-0 p-0' : 'w-full px-2 py-2 gap-3'}`}
         >
             <span className={`shrink-0 flex items-center justify-center transition-transform duration-200 group-hover:scale-110 ${isActive ? (isDesktopCollapsed ? 'text-white' : 'text-primary-500') : 'text-slate-400 group-hover:text-primary-500'}`}>
                 {isHome ? <IconHome className="w-5 h-5" /> : item.icon}
@@ -411,7 +411,7 @@ const App: React.FC = () => {
           ${isSidebarOpen ? 'w-64 translate-x-0' : '-translate-x-full md:translate-x-0'}
           ${isDesktopCollapsed ? 'md:w-16' : 'md:w-64'}
       `}>
-          <div className={`flex items-center border-b border-slate-100 dark:border-slate-800 shrink-0 overflow-hidden transition-all duration-300 ${isDesktopCollapsed ? 'h-12 px-0 justify-center' : 'h-14 px-4'}`}>
+          <div className={`flex items-center border-b border-slate-100 dark:border-slate-800 shrink-0 overflow-hidden transition-all duration-300 ${isDesktopCollapsed ? 'h-14 px-0 justify-center' : 'h-14 px-4'}`}>
              <div 
                 className={`flex items-center cursor-pointer group transition-all duration-300 ${isDesktopCollapsed ? 'justify-center w-12 gap-0' : 'w-full gap-3'}`} 
                 onClick={handleGoHome}
@@ -435,6 +435,14 @@ const App: React.FC = () => {
              </button>
           </div>
 
+          {isDesktopCollapsed && (
+              <div className="flex justify-center border-b border-slate-100 dark:border-slate-800 hidden md:flex w-full py-2">
+                  <button onClick={toggleCollapse} className="w-12 h-12 flex items-center justify-center rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-primary-500 transition-colors">
+                      <IconMenu className="w-5 h-5" />
+                  </button>
+              </div>
+          )}
+
           <div className={`p-2 shrink-0 transition-all duration-300 ${isDesktopCollapsed ? 'opacity-0 h-0 p-0 overflow-hidden' : 'opacity-100 h-12'}`}>
              <div className="relative">
                 <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -448,15 +456,7 @@ const App: React.FC = () => {
              </div>
           </div>
 
-          {isDesktopCollapsed && (
-              <div className="flex justify-center border-b border-slate-100 dark:border-slate-800 hidden md:flex w-full py-0.5">
-                  <button onClick={toggleCollapse} className="w-12 h-10 flex items-center justify-center rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-primary-500 transition-colors">
-                      <IconMenu className="w-5 h-5" />
-                  </button>
-              </div>
-          )}
-
-          <div className={`flex-1 overflow-y-auto py-1 transition-all duration-300 ${isDesktopCollapsed ? 'px-0 flex flex-col items-center gap-1' : 'px-2'}`}>
+          <div className={`flex-1 overflow-y-auto py-1 transition-all duration-300 ${isDesktopCollapsed ? 'px-0 flex flex-col items-center gap-1.5' : 'px-2'}`}>
               {isDesktopCollapsed ? (
                 <>
                   {renderNavItem(null, true)}
@@ -481,11 +481,11 @@ const App: React.FC = () => {
               )}
           </div>
 
-          <div className={`p-2 border-t border-slate-100 dark:border-slate-800 shrink-0 flex transition-all duration-300 ${isDesktopCollapsed ? 'flex-col items-center gap-1 px-0 py-2' : 'gap-2'}`}>
+          <div className={`p-2 border-t border-slate-100 dark:border-slate-800 shrink-0 flex transition-all duration-300 ${isDesktopCollapsed ? 'flex-col items-center gap-2 px-0 py-3' : 'gap-2'}`}>
                <button 
                   onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
                   title={lang === 'zh' ? 'English' : '中文'}
-                  className={`flex items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-medium transition-all ${isDesktopCollapsed ? 'w-12 h-10 gap-0' : 'flex-1 py-2 gap-2'}`}
+                  className={`flex items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-medium transition-all ${isDesktopCollapsed ? 'w-12 h-12 gap-0' : 'flex-1 py-2 gap-2'}`}
                >
                   <IconLanguage className="w-4 h-4 shrink-0" />
                   <span className={`whitespace-nowrap transition-all duration-300 ${isDesktopCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>
@@ -495,7 +495,7 @@ const App: React.FC = () => {
                <button 
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                  className={`flex items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all ${isDesktopCollapsed ? 'w-12 h-10' : 'w-10 py-2'}`}
+                  className={`flex items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all ${isDesktopCollapsed ? 'w-12 h-12' : 'w-10 py-2'}`}
                >
                   {theme === 'dark' ? <IconSun className="w-4 h-4" /> : <IconMoon className="w-4 h-4" />}
                </button>
