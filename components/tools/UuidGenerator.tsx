@@ -105,7 +105,7 @@ const UuidGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
                  {copied ? t.copied : t.copy}
               </button>
           </div>
-          <div className="flex-1 overflow-auto p-2 scrollbar-thin scrollbar-thumb-slate-600">
+          <div className="flex-1 overflow-auto p-2">
               <ul className="flex flex-col gap-1">
                   {uuids.map((uuid, i) => (
                       <li key={i} className="group flex items-center justify-between p-3 rounded-lg hover:bg-slate-700/50 transition-colors border border-transparent hover:border-slate-700">

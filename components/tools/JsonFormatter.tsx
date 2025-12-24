@@ -86,7 +86,13 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeho
           width: 100% !important;
           height: 100% !important;
           overflow-y: scroll !important;
-          scrollbar-gutter: stable;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+
+        .editor-stack textarea::-webkit-scrollbar,
+        .editor-stack pre::-webkit-scrollbar {
+          display: none;
         }
 
         .editor-stack textarea {
@@ -107,16 +113,6 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeho
           background: transparent !important;
           pointer-events: none;
           user-select: none;
-        }
-
-        .editor-stack textarea::-webkit-scrollbar,
-        .editor-stack pre::-webkit-scrollbar {
-          width: 8px;
-        }
-        .editor-stack textarea::-webkit-scrollbar-thumb,
-        .editor-stack pre::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 4px;
         }
       `}</style>
 
@@ -481,7 +477,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
                         <span className="text-[10px] text-slate-600 uppercase tracking-tight">Interactive</span>
                     </div>
                     <div className="flex-1 h-full overflow-hidden bg-slate-800 rounded-xl border border-slate-700">
-                        <div className="w-full h-full overflow-auto p-4 scrollbar-thin scrollbar-thumb-slate-700">
+                        <div className="w-full h-full overflow-auto p-4">
                             {parsedJson ? <JsonNode value={parsedJson} isLast={true} /> : <div className="text-slate-500 italic text-sm">{input.trim() ? t.empty : (lang === 'zh' ? '空数据' : 'Empty Data')}</div>}
                         </div>
                     </div>
