@@ -242,27 +242,27 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
                     spellCheck="false"
                 />
             ) : (
-                <div className="absolute inset-0 w-full h-full overflow-auto p-6 md:p-14 bg-slate-950/40">
+                <div className="absolute inset-0 w-full h-full overflow-auto p-6 md:p-8 bg-slate-950/40">
                     <style>{`
-                        .md-preview table { border: 1.5px solid #475569; border-collapse: collapse; width: 100%; margin: 2rem 0; border-radius: 8px; overflow: hidden; }
-                        .md-preview th, .md-preview td { border: 1.5px solid #475569; padding: 1rem 1.25rem; }
-                        .md-preview th { background-color: #1e293b; color: #f8fafc; font-weight: 700; text-align: left; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
-                        .md-preview tr:nth-child(even) { background-color: rgba(30, 41, 59, 0.5); }
-                        .md-preview tr:hover { background-color: rgba(51, 65, 85, 0.4); }
-                        .md-preview hr { border-color: #334155; margin: 3rem 0; }
+                        .md-preview table { border: 1px solid #475569; border-collapse: collapse; width: 100%; margin: 1.5rem 0; border-radius: 4px; overflow: hidden; }
+                        .md-preview th, .md-preview td { border: 1px solid #475569; padding: 0.6rem 1rem; }
+                        .md-preview th { background-color: #1e293b; color: #f8fafc; font-weight: 700; text-align: left; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
+                        .md-preview tr:nth-child(even) { background-color: rgba(30, 41, 59, 0.4); }
+                        .md-preview tr:hover { background-color: rgba(51, 65, 85, 0.3); }
+                        .md-preview hr { border-color: #334155; margin: 2rem 0; }
                     `}</style>
                     <div 
                         className="md-preview prose prose-invert max-w-none 
-                        prose-headings:text-white prose-headings:font-bold prose-headings:mb-6 prose-headings:mt-12
-                        prose-h1:text-3xl prose-h2:text-2xl prose-h2:border-b prose-h2:border-slate-800 prose-h2:pb-4
-                        prose-p:text-slate-300 prose-p:leading-8 prose-p:mb-6
+                        prose-headings:text-white prose-headings:font-bold prose-headings:mb-4 prose-headings:mt-8
+                        prose-h1:text-3xl prose-h2:text-2xl prose-h2:border-b prose-h2:border-slate-800 prose-h2:pb-3
+                        prose-p:text-slate-300 prose-p:leading-7 prose-p:mb-4
                         prose-a:text-primary-400 prose-a:no-underline hover:prose-a:underline
-                        prose-code:bg-slate-900 prose-code:text-emerald-400 prose-code:px-2 prose-code:py-1 prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none prose-code:font-mono prose-code:text-[0.9em]
-                        prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-800 prose-pre:rounded-xl prose-pre:shadow-2xl
-                        prose-blockquote:border-l-4 prose-blockquote:border-primary-500 prose-blockquote:bg-slate-900/50 prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-xl prose-blockquote:italic prose-blockquote:text-slate-400
+                        prose-code:bg-slate-900 prose-code:text-emerald-400 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-code:font-mono prose-code:text-[0.9em]
+                        prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-800 prose-pre:rounded-lg prose-pre:shadow-xl
+                        prose-blockquote:border-l-4 prose-blockquote:border-primary-500 prose-blockquote:bg-slate-900/30 prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:rounded-r-lg prose-blockquote:italic prose-blockquote:text-slate-400
                         prose-strong:text-white prose-strong:font-bold
-                        prose-ul:list-disc prose-ol:list-decimal prose-li:text-slate-300 prose-li:mb-3 prose-li:leading-8
-                        prose-img:rounded-xl prose-img:shadow-lg"
+                        prose-ul:list-disc prose-ol:list-decimal prose-li:text-slate-300 prose-li:mb-2 prose-li:leading-7
+                        prose-img:rounded-lg prose-img:shadow-md"
                         dangerouslySetInnerHTML={{ __html: renderedMarkdown }}
                     />
                     {!input && <div className="text-slate-600 italic text-center mt-20">{lang === 'zh' ? '暂无内容可预览' : 'No content to preview'}</div>}
