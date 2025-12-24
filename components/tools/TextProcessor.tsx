@@ -14,6 +14,9 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
   const [history, setHistory] = useState<string[]>(state?.history || []);
   const [isPreview, setIsPreview] = useState(state?.isPreview || false);
   const [copied, setCopied] = useState(false);
+  
+  // Track the last state sent to parent to avoid infinite loop
+  const lastReportedState = useRef<string>('');
 
   // Debounce Markdown Input
   useEffect(() => {
@@ -23,9 +26,15 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
     return () => clearTimeout(timer);
   }, [input]);
 
-  // Sync state back to parent
+  // Sync state back to parent ONLY when it truly changes
   useEffect(() => {
-    onStateChange?.({ input, extraContent, quoteType, history, isPreview });
+    const nextState = { input, extraContent, quoteType, history, isPreview };
+    const stateStr = JSON.stringify(nextState);
+    
+    if (lastReportedState.current !== stateStr) {
+        lastReportedState.current = stateStr;
+        onStateChange?.(nextState);
+    }
   }, [input, extraContent, quoteType, history, isPreview, onStateChange]);
 
   const t = {
@@ -46,7 +55,6 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
   };
 
   const saveToHistory = () => {
-    // Limit history to 20 states to prevent memory issues
     setHistory(prev => [...prev.slice(-19), input]);
   };
 

@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
   ToolCategory, 
   ToolDef,
@@ -288,12 +288,23 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); 
   const [isCollapsed, setIsCollapsed] = useState(true); 
-  
-  // Cache for tool states
   const [toolStates, setToolStates] = useState<Record<string, any>>({});
-  
   const [lang, setLang] = useState<Lang>('zh');
   const [theme, setTheme] = useState<Theme>('dark');
+
+  const updateToolState = useCallback((id: string, newState: any) => {
+    setToolStates(prev => {
+        // Only update if reference or value changed to prevent infinite loops
+        if (prev[id] === newState) return prev;
+        return { ...prev, [id]: newState };
+    });
+  }, []);
+
+  const handleCurrentToolStateChange = useCallback((newState: any) => {
+      if (currentToolId) {
+          updateToolState(currentToolId, newState);
+      }
+  }, [currentToolId, updateToolState]);
 
   const t = {
     search: lang === 'zh' ? '搜索工具...' : 'Search tools...',
@@ -357,13 +368,8 @@ const App: React.FC = () => {
     setIsCollapsed(!isCollapsed);
   };
 
-  const updateToolState = (id: string, newState: any) => {
-    setToolStates(prev => ({ ...prev, [id]: newState }));
-  };
-
   const isDesktopCollapsed = !isSidebarOpen && isCollapsed;
 
-  // Flattened Navigation Helper
   const renderNavItem = (item: any, isHome = false) => {
     const isActive = isHome ? !currentToolId : currentToolId === item.id;
     const label = isHome ? t.home : (lang === 'zh' ? item.nameZh : item.name);
@@ -405,7 +411,6 @@ const App: React.FC = () => {
           ${isSidebarOpen ? 'w-64 translate-x-0' : '-translate-x-full md:translate-x-0'}
           ${isDesktopCollapsed ? 'md:w-16' : 'md:w-64'}
       `}>
-          {/* Sidebar Header */}
           <div className={`flex items-center border-b border-slate-100 dark:border-slate-800 shrink-0 overflow-hidden transition-all duration-300 ${isDesktopCollapsed ? 'h-12 px-0 justify-center' : 'h-14 px-4'}`}>
              <div 
                 className={`flex items-center cursor-pointer group transition-all duration-300 ${isDesktopCollapsed ? 'justify-center w-12 gap-0' : 'w-full gap-3'}`} 
@@ -443,7 +448,6 @@ const App: React.FC = () => {
              </div>
           </div>
 
-          {/* Collapsed Mode Toggler (Centered) */}
           {isDesktopCollapsed && (
               <div className="flex justify-center border-b border-slate-100 dark:border-slate-800 hidden md:flex w-full py-0.5">
                   <button onClick={toggleCollapse} className="w-12 h-10 flex items-center justify-center rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-primary-500 transition-colors">
@@ -452,10 +456,7 @@ const App: React.FC = () => {
               </div>
           )}
 
-          {/* Navigation Area */}
           <div className={`flex-1 overflow-y-auto py-1 transition-all duration-300 ${isDesktopCollapsed ? 'px-0 flex flex-col items-center gap-1' : 'px-2'}`}>
-              
-              {/* If collapsed, use a completely flat list for uniform spacing */}
               {isDesktopCollapsed ? (
                 <>
                   {renderNavItem(null, true)}
@@ -480,7 +481,6 @@ const App: React.FC = () => {
               )}
           </div>
 
-          {/* Sidebar Footer */}
           <div className={`p-2 border-t border-slate-100 dark:border-slate-800 shrink-0 flex transition-all duration-300 ${isDesktopCollapsed ? 'flex-col items-center gap-1 px-0 py-2' : 'gap-2'}`}>
                <button 
                   onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
@@ -521,7 +521,7 @@ const App: React.FC = () => {
                                 ? React.cloneElement(currentTool.component as React.ReactElement<any>, { 
                                     lang,
                                     state: toolStates[currentTool.id],
-                                    onStateChange: (s: any) => updateToolState(currentTool.id, s)
+                                    onStateChange: handleCurrentToolStateChange
                                   }) 
                                 : currentTool.component}
                          </div>
@@ -573,7 +573,6 @@ const App: React.FC = () => {
             </div>
          </main>
       </div>
-
     </div>
   );
 };
