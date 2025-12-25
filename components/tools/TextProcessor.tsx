@@ -155,7 +155,13 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
               <div className="flex-none flex items-center gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700/50">
                   <div className="w-16 relative">
                     <select value={quoteType} onChange={(e) => setQuoteType(e.target.value)} className="w-full h-7 bg-slate-800 border border-slate-700 rounded pl-2 pr-6 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-primary-500 appearance-none font-mono cursor-pointer">
-                        <option value='"'>" "</option><option value="'">' '</option><option value="`">` `</option><option value="[]">[ ]</option><option value="{}">{ }</option><option value="()"> ( ) </option><option value="<>">&lt; &gt;</option>
+                        <option value='"'>" "</option>
+                        <option value="'">' '</option>
+                        <option value="`">` `</option>
+                        <option value="[]">[ ]</option>
+                        <option value="{}">{"{ }"}</option>
+                        <option value="()">{"( )"}</option>
+                        <option value="<>">&lt; &gt;</option>
                     </select>
                     <div className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500"><IconChevronDown className="w-3 h-3" /></div>
                   </div>
