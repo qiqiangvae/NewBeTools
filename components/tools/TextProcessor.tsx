@@ -43,6 +43,7 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
     copied: lang === 'zh' ? '已复制' : 'Copied',
     placeholder: lang === 'zh' ? '在此输入或粘贴需要处理的文本...' : 'Enter or paste text to process here...',
     unescapeN: lang === 'zh' ? '转义 \\n' : 'Unescape \\n',
+    unescapeQ: lang === 'zh' ? '去除 \\"' : 'Unescape \\"',
     appendPrefix: lang === 'zh' ? '行首' : 'Pre',
     appendSuffix: lang === 'zh' ? '行尾' : 'Suf',
     extraPh: lang === 'zh' ? '添加内容...' : 'Content to add...',
@@ -61,6 +62,11 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
   const handleUnescapeNewlines = () => {
     saveToHistory();
     setInput(input.replace(/\\n/g, '\n'));
+  };
+
+  const handleUnescapeQuotes = () => {
+    saveToHistory();
+    setInput(input.replace(/\\"/g, '"'));
   };
 
   const handleQuoteLines = () => {
@@ -136,6 +142,7 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
       <div className="flex-1 flex flex-col gap-4 min-h-0">
           <div className="flex flex-wrap items-center gap-3">
               <button onClick={handleUnescapeNewlines} className="flex-none flex items-center justify-center gap-2 px-4 py-2 h-9 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all"><IconZap className="w-3.5 h-3.5 text-yellow-500" /> {t.unescapeN}</button>
+              <button onClick={handleUnescapeQuotes} className="flex-none flex items-center justify-center gap-2 px-4 py-2 h-9 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all"><IconZap className="w-3.5 h-3.5 text-blue-500" /> {t.unescapeQ}</button>
               <button onClick={handleTrimLines} className="flex-none px-4 py-2 h-9 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all">{t.trimLines}</button>
               <div className="flex-none flex items-center gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700/50">
                   <div className="w-16 relative">

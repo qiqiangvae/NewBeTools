@@ -466,7 +466,8 @@ const App: React.FC = () => {
                 <>
                   {renderNavItem(null, true)}
                   <div className="w-full space-y-4">
-                    {Object.entries(groupedTools).map(([cat, tools]) => (
+                    {/* Fix: Explicitly cast Object.entries result to fix potential 'unknown' type inference on tools variable */}
+                    {(Object.entries(groupedTools) as [string, ToolDef[]][]).map(([cat, tools]) => (
                         <div key={cat} className="flex flex-col w-full">
                             <div className="px-2 mb-1 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                                 {t[cat as ToolCategory] || cat}
