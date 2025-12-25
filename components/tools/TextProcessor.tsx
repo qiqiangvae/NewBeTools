@@ -117,16 +117,24 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
 
   return (
     <div className="flex flex-col gap-6 h-full">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-2 shrink-0">
-            <IconType className="w-5 h-5 text-primary-400" />
-            <h2 className="text-xl font-bold text-slate-100">{t.title}</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-1">
+        <div className="flex flex-wrap items-center gap-4 shrink-0">
+            <div className="flex items-center gap-2">
+                <IconType className="w-5 h-5 text-primary-400" />
+                <h2 className="text-xl font-bold text-slate-100">{t.title}</h2>
+            </div>
+            <div className="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700 shadow-sm">
+                <button onClick={() => setIsPreview(false)} title={t.editor} className={`px-2.5 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${!isPreview ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+                    <IconCode className="w-3.5 h-3.5" />
+                    <span className="hidden xs:inline">{t.editor}</span>
+                </button>
+                <button onClick={() => setIsPreview(true)} title={t.preview} className={`px-2.5 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${isPreview ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+                    <IconMarkdown className="w-3.5 h-3.5" />
+                    <span className="hidden xs:inline">{t.preview}</span>
+                </button>
+            </div>
         </div>
         <div className="flex gap-2">
-            <button onClick={() => setIsPreview(!isPreview)} className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded transition-all shadow-sm ${isPreview ? 'bg-primary-600 border-primary-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700'}`}>
-                {isPreview ? <IconCode className="w-3.5 h-3.5" /> : <IconMarkdown className="w-3.5 h-3.5" />}
-                {isPreview ? t.editor : t.preview}
-            </button>
             <button onClick={handleUndo} disabled={history.length === 0} className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded transition-all ${history.length > 0 ? 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700' : 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed'}`}>
                 <IconUndo className="w-3.5 h-3.5" /> {t.undo}
             </button>

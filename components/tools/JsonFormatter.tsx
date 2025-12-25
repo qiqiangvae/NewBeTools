@@ -179,14 +179,16 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
   return (
     <div className="flex flex-col gap-4 h-full min-h-[500px]">
       <div className="flex flex-wrap items-center justify-between gap-3 p-1">
-        <div className="flex items-center gap-2"><IconJson className="w-5 h-5 text-primary-400" /><h2 className="text-lg font-bold text-slate-100">{t.title}</h2></div>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2"><IconJson className="w-5 h-5 text-primary-400" /><h2 className="text-lg font-bold text-slate-100">{t.title}</h2></div>
+          <div className="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700 shadow-sm">
+              <button onClick={() => setViewMode('text')} title={t.textMode} className={`px-2.5 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${viewMode === 'text' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}><IconType className="w-3.5 h-3.5" /></button>
+              <button onClick={() => setViewMode('tree')} title={t.treeMode} className={`px-2.5 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${viewMode === 'tree' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}><IconPanelLeft className="w-3.5 h-3.5" /></button>
+              <button onClick={() => setViewMode('split')} title={t.splitMode} className={`px-2.5 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${viewMode === 'split' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}><IconDiff className="w-3.5 h-3.5" /></button>
+          </div>
+        </div>
         <div className="flex flex-wrap gap-2 items-center">
             <button onClick={formatJson} className="px-4 py-1.5 text-xs font-bold bg-primary-600 hover:bg-primary-500 rounded text-white transition-colors shadow-md">{t.format}</button>
-            <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
-                <button onClick={() => setViewMode('text')} className={`px-3 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${viewMode === 'text' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'}`}><IconType className="w-3.5 h-3.5" /></button>
-                <button onClick={() => setViewMode('tree')} className={`px-3 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${viewMode === 'tree' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'}`}><IconPanelLeft className="w-3.5 h-3.5" /></button>
-                <button onClick={() => setViewMode('split')} className={`px-3 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${viewMode === 'split' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'}`}><IconDiff className="w-3.5 h-3.5" /></button>
-            </div>
             <button onClick={() => setShowJsonPath(!showJsonPath)} className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors ${showJsonPath ? 'bg-primary-900/30 border-primary-500/50 text-primary-300' : 'bg-slate-800 border-slate-700 text-slate-300'}`}>{t.path}</button>
             <div className="flex gap-1">
                  <button onClick={escapeJson} className="px-2 py-1.5 text-xs font-medium bg-slate-800 rounded border border-slate-700 text-slate-300">{t.esc}</button>
