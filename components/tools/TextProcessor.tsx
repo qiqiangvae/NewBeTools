@@ -123,16 +123,18 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
                 <IconType className="w-5 h-5 text-primary-400" />
                 <h2 className="text-xl font-bold text-slate-100">{t.title}</h2>
             </div>
-            <div className="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700 shadow-sm">
-                <button onClick={() => setIsPreview(false)} title={t.editor} className={`px-2.5 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${!isPreview ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-                    <IconCode className="w-3.5 h-3.5" />
-                    <span className="hidden xs:inline">{t.editor}</span>
-                </button>
-                <button onClick={() => setIsPreview(true)} title={t.preview} className={`px-2.5 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${isPreview ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-                    <IconMarkdown className="w-3.5 h-3.5" />
-                    <span className="hidden xs:inline">{t.preview}</span>
-                </button>
-            </div>
+            
+            <button 
+                onClick={() => setIsPreview(!isPreview)}
+                className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg border transition-all duration-200 shadow-sm ${
+                    isPreview 
+                    ? 'bg-slate-800 border-slate-700 text-primary-400 hover:bg-slate-700 hover:text-primary-300' 
+                    : 'bg-primary-600 border-primary-500 text-white hover:bg-primary-500'
+                }`}
+            >
+                {isPreview ? <IconCode className="w-4 h-4" /> : <IconMarkdown className="w-4 h-4" />}
+                <span>{isPreview ? t.editor : t.preview}</span>
+            </button>
         </div>
         <div className="flex gap-2">
             <button onClick={handleUndo} disabled={history.length === 0} className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded transition-all ${history.length > 0 ? 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700' : 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed'}`}>
