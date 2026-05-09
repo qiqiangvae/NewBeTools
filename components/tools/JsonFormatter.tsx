@@ -89,7 +89,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeho
 // Tree view components... (rest of JsonNode remains same)
 interface JsonNodeProps { name?: string; value: any; isLast: boolean; }
 const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast }) => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const isObject = value !== null && typeof value === 'object';
   const isArray = Array.isArray(value);
   const isEmpty = isObject && Object.keys(value).length === 0;
@@ -115,7 +115,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast }) => {
 
 const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChange }) => {
   const [input, setInput] = useState(state?.input || '');
-  const [viewMode, setViewMode] = useState<'text' | 'tree' | 'split'>(state?.viewMode || 'split');
+  const [viewMode, setViewMode] = useState<'text' | 'tree' | 'split'>(state?.viewMode || 'text');
   const [showJsonPath, setShowJsonPath] = useState(state?.showJsonPath || false);
   const [pathQuery, setPathQuery] = useState(state?.pathQuery || '$.');
   const [error, setError] = useState<string | null>(null);
