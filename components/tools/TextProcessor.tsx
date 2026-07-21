@@ -19,6 +19,41 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
   const [copied, setCopied] = useState(false);
   
   const previewRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const scrollSource = useRef<'editor' | 'preview' | null>(null);
+
+  const handleEditorScroll = () => {
+    if (viewMode !== 'split') return;
+    if (scrollSource.current !== 'editor') return;
+    
+    const editor = editorRef.current;
+    const preview = previewRef.current;
+    if (editor && preview) {
+      const editorLimit = editor.scrollHeight - editor.clientHeight;
+      if (editorLimit > 0) {
+        const percentage = editor.scrollTop / editorLimit;
+        const previewLimit = preview.scrollHeight - preview.clientHeight;
+        preview.scrollTop = percentage * previewLimit;
+      }
+    }
+  };
+
+  const handlePreviewScroll = () => {
+    if (viewMode !== 'split') return;
+    if (scrollSource.current !== 'preview') return;
+    
+    const editor = editorRef.current;
+    const preview = previewRef.current;
+    if (editor && preview) {
+      const previewLimit = preview.scrollHeight - preview.clientHeight;
+      if (previewLimit > 0) {
+        const percentage = preview.scrollTop / previewLimit;
+        const editorLimit = editor.scrollHeight - editor.clientHeight;
+        editor.scrollTop = percentage * editorLimit;
+      }
+    }
+  };
+
   // Track the last state sent to parent to avoid infinite loop
   const lastReportedState = useRef<string>('');
 
@@ -239,10 +274,14 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
               {(viewMode === 'editor' || viewMode === 'split') && (
                 <div className="relative h-full flex flex-col bg-slate-800/10">
                   <textarea 
+                    ref={editorRef}
                     value={input} 
                     onChange={(e) => setInput(e.target.value)} 
                     placeholder={t.placeholder} 
-                    className="w-full h-full bg-transparent p-4 font-mono text-sm text-slate-200 resize-none outline-none focus:ring-2 focus:ring-primary-500/10" 
+                    onScroll={handleEditorScroll}
+                    onMouseEnter={() => { scrollSource.current = 'editor'; }}
+                    onTouchStart={() => { scrollSource.current = 'editor'; }}
+                    className="w-full h-full bg-transparent p-4 font-mono text-sm text-slate-200 resize-none outline-none focus:ring-2 focus:ring-primary-500/10 overflow-y-auto" 
                     spellCheck="false" 
                   />
                   {viewMode === 'split' && (
@@ -255,7 +294,13 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
 
               {/* PREVIEW COLUMN */}
               {(viewMode === 'preview' || viewMode === 'split') && (
-                <div className="relative h-full overflow-auto bg-[#0d1117] p-6 md:p-8 flex flex-col" ref={previewRef}>
+                <div 
+                  className="relative h-full overflow-auto bg-[#0d1117] p-6 md:p-8 flex flex-col" 
+                  ref={previewRef}
+                  onScroll={handlePreviewScroll}
+                  onMouseEnter={() => { scrollSource.current = 'preview'; }}
+                  onTouchStart={() => { scrollSource.current = 'preview'; }}
+                >
                   <div className="markdown-body max-w-none !bg-transparent flex-1" dangerouslySetInnerHTML={{ __html: renderedMarkdown }} />
                   {!input && (
                     <div className="text-slate-500 italic text-center my-auto flex flex-col items-center justify-center gap-2 py-10">
