@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { jsonrepair } from 'jsonrepair';
 import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconEraser, IconSparkles, IconDiff } from '../Icons';
 import { ToolComponentProps } from '../../types';
 
 declare const jsonpath: any;
 
-// Performance Threshold: 50KB
-const MAX_HIGHLIGHT_SIZE = 50000;
+// Performance Threshold: 500KB
+const MAX_HIGHLIGHT_SIZE = 500000;
 
 interface JsonEditorProps {
   value: string;
@@ -172,7 +173,21 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
   const minifyJson = () => { try { setInput(JSON.stringify(JSON.parse(input))); } catch (e: any) { setError(e.message); setErrorVisible(true); } };
   const escapeJson = () => { setInput(JSON.stringify(input)); };
   const unescapeJson = () => { try { setInput(input.startsWith('"') ? JSON.parse(input) : input.replace(/\\"/g, '"').replace(/\\\\/g, '\\')); } catch { } };
-  const fixJson = () => { let fixed = input.replace(/\\'/g, "'").replace(/\bNone\b/g, 'null').replace(/\bTrue\b/g, 'true').replace(/\bFalse\b/g, 'false').replace(/,\s*([\]}])/g, '$1'); try { setInput(JSON.stringify(JSON.parse(fixed), null, 2)); } catch { setInput(fixed); } };
+  const fixJson = () => {
+    if (!input.trim()) return;
+    try {
+      const repaired = jsonrepair(input);
+      try {
+        setInput(JSON.stringify(JSON.parse(repaired), null, 2));
+        setError(null);
+      } catch {
+        setInput(repaired);
+      }
+    } catch (e: any) {
+      setError(e.message || 'Failed to repair JSON');
+      setErrorVisible(true);
+    }
+  };
   const handleCopy = (text: string) => { if (!text) return; navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); };
   const parsedJson = useMemo(() => { if (!input.trim() || input.length > MAX_HIGHLIGHT_SIZE * 2) return null; try { return JSON.parse(input); } catch { return null; } }, [input]);
 
