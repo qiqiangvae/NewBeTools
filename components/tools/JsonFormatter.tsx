@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { jsonrepair } from 'jsonrepair';
-import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconEraser, IconSparkles, IconDiff } from '../Icons';
-import { ToolComponentProps } from '../../types';
+import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconEraser, IconSparkles, IconDiff, IconMenu } from '../Icons';
+import { ToolComponentProps, Lang } from '../../types';
 
 declare const jsonpath: any;
 
@@ -87,36 +87,210 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeho
   );
 };
 
-// Tree view components... (rest of JsonNode remains same)
-interface JsonNodeProps { name?: string; value: any; isLast: boolean; }
-const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast }) => {
-  const [collapsed, setCollapsed] = useState(true);
+// Tree view components with linkage integration
+interface JsonNodeProps { 
+  name?: string; 
+  value: any; 
+  isLast: boolean; 
+  onNavigateToTool?: (toolId: string, payload?: any) => void;
+  lang: Lang;
+}
+
+const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTool, lang }) => {
+  const [collapsed, setCollapsed] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [copied, setCopied] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   const isObject = value !== null && typeof value === 'object';
   const isArray = Array.isArray(value);
   const isEmpty = isObject && Object.keys(value).length === 0;
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [showMenu]);
+
   if (!isObject) {
-    const color = typeof value === 'string' ? 'text-green-400' : typeof value === 'number' ? 'text-blue-400' : typeof value === 'boolean' ? 'text-purple-400' : 'text-slate-400';
-    return (<div className="hover:bg-slate-800/50 px-1 rounded font-mono text-sm leading-6 ml-4">{name && <span className="text-primary-300">"{name}"<span className="text-slate-500">: </span></span>}<span className={color}>{JSON.stringify(value)}</span>{!isLast && <span className="text-slate-500">,</span>}</div>);
+    const isString = typeof value === 'string';
+    const color = isString 
+      ? 'text-green-400 cursor-pointer hover:text-green-300 hover:underline decoration-dashed decoration-green-500/50 underline-offset-4 transition-colors' 
+      : typeof value === 'number' 
+        ? 'text-blue-400' 
+        : typeof value === 'boolean' 
+          ? 'text-purple-400' 
+          : 'text-slate-400';
+
+    const handleNodeClick = (e: React.MouseEvent) => {
+      if (isString) {
+        e.stopPropagation();
+        // Adjust menu position if too close to screen edges
+        const x = Math.min(e.clientX + 8, window.innerWidth - 240);
+        const y = Math.min(e.clientY + 8, window.innerHeight - 150);
+        setMenuPosition({ x, y });
+        setShowMenu(prev => !prev);
+      }
+    };
+
+    const handleCopy = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+        setShowMenu(false);
+      }, 1000);
+    };
+
+    const handleSendToTextProc = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (onNavigateToTool) {
+        onNavigateToTool('text-proc', { input: value });
+      }
+      setShowMenu(false);
+    };
+
+    return (
+      <div className="relative hover:bg-slate-700/30 px-2 py-0.5 rounded font-mono text-sm leading-6 ml-4 flex items-center justify-between group/node">
+        <div className="flex-1 min-w-0" onClick={handleNodeClick}>
+          {name && <span className="text-primary-300 select-none">"{name}"<span className="text-slate-500">: </span></span>}
+          <span className={color}>{JSON.stringify(value)}</span>
+          {!isLast && <span className="text-slate-500 select-none">,</span>}
+        </div>
+
+        {isString && (
+          <div className="hidden group-hover/node:flex items-center gap-1 shrink-0 ml-2">
+            <button 
+              onClick={handleNodeClick}
+              title={lang === 'zh' ? '联动操作' : 'Linkage Actions'}
+              className="p-1 rounded bg-slate-700/80 hover:bg-primary-600 text-slate-300 hover:text-white transition-all cursor-pointer shadow-md"
+            >
+              <IconType className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {showMenu && isString && (
+          <div 
+            ref={menuRef} 
+            style={{ position: 'fixed', left: `${menuPosition.x}px`, top: `${menuPosition.y}px` }}
+            className="z-50 bg-slate-950/95 border border-slate-700 rounded-xl shadow-2xl py-1.5 px-1 min-w-[220px] animate-in fade-in slide-in-from-top-2 duration-150 text-xs backdrop-blur-md"
+          >
+            <div className="px-2.5 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-800 mb-1">
+              {lang === 'zh' ? 'JSON 属性联动' : 'JSON Property Linkage'}
+            </div>
+            <button 
+              onClick={handleSendToTextProc}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 text-left text-slate-200 hover:bg-primary-600 hover:text-white rounded-lg transition-colors group/item"
+            >
+              <IconType className="w-4 h-4 text-primary-400 group-hover/item:text-white shrink-0" />
+              <div className="flex flex-col min-w-0">
+                <span className="font-semibold">{lang === 'zh' ? '发送至文本处理' : 'Send to Text Processor'}</span>
+                <span className="text-[9px] text-slate-400 group-hover/item:text-slate-200 truncate">{lang === 'zh' ? '转换、包裹等高级处理' : 'Wrap, trim, or edit lines'}</span>
+              </div>
+            </button>
+            <button 
+              onClick={handleCopy}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 text-left text-slate-200 hover:bg-primary-600 hover:text-white rounded-lg transition-colors group/item"
+            >
+              {copied ? (
+                <>
+                  <IconCheck className="w-4 h-4 text-green-400 group-hover/item:text-white shrink-0" />
+                  <span className="font-medium text-green-400 group-hover/item:text-white">{lang === 'zh' ? '已复制！' : 'Copied!'}</span>
+                </>
+              ) : (
+                <>
+                  <IconCopy className="w-4 h-4 text-slate-400 group-hover/item:text-white shrink-0" />
+                  <span>{lang === 'zh' ? '复制字符串内容' : 'Copy string content'}</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+    );
   }
+
   const keys = Object.keys(value);
   const openBracket = isArray ? '[' : '{';
   const closeBracket = isArray ? ']' : '}';
-  if (isEmpty) return (<div className="hover:bg-slate-800/50 px-1 rounded font-mono text-sm leading-6 ml-4">{name && <span className="text-primary-300">"{name}"<span className="text-slate-500">: </span></span>}<span className="text-slate-500">{openBracket}{closeBracket}</span>{!isLast && <span className="text-slate-500">,</span>}</div>);
+
+  if (isEmpty) {
+    return (
+      <div className="hover:bg-slate-700/20 px-2 py-0.5 rounded font-mono text-sm leading-6 ml-4">
+        {name && <span className="text-primary-300">"{name}"<span className="text-slate-500">: </span></span>}
+        <span className="text-slate-500">{openBracket}{closeBracket}</span>
+        {!isLast && <span className="text-slate-500">,</span>}
+      </div>
+    );
+  }
+
   return (
-    <div className="group font-mono text-sm leading-6">
-       <div className="hover:bg-slate-800/50 px-1 rounded flex items-start">
-         <button onClick={(e) => { e.stopPropagation(); setCollapsed(!collapsed); }} className="w-4 h-6 flex items-center justify-center text-slate-500 hover:text-slate-300 mr-0.5 select-none shrink-0"><span className="text-[9px] transform transition-transform duration-200" style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>▼</span></button>
-         <div className="flex-1 min-w-0">{name && <span className="text-primary-300">"{name}"<span className="text-slate-500">: </span></span>}<span className="text-slate-500">{openBracket}</span>
-            {collapsed ? (<><button onClick={() => setCollapsed(false)} className="text-slate-600 text-[10px] px-1.5 hover:text-slate-400 bg-slate-700/50 rounded mx-1">...</button><span className="text-slate-500">{closeBracket}</span>{!isLast && <span className="text-slate-500">,</span>}</>) : (<><div className="pl-3 border-l border-slate-700/50 ml-1.5 my-0.5">{keys.map((key, idx) => (<JsonNode key={key} name={isArray ? undefined : key} value={value[key]} isLast={idx === keys.length - 1} />))}</div><div className="ml-4"><span className="text-slate-500">{closeBracket}</span>{!isLast && <span className="text-slate-500">,</span>}</div></>)}
+    <div className="group/tree font-mono text-sm leading-6">
+       <div className="hover:bg-slate-700/20 px-2 py-0.5 rounded flex items-start">
+         <button 
+           onClick={(e) => { e.stopPropagation(); setCollapsed(!collapsed); }} 
+           className="w-4 h-6 flex items-center justify-center text-slate-500 hover:text-slate-300 mr-1 select-none shrink-0"
+         >
+           <span 
+             className="text-[9px] transform transition-transform duration-200" 
+             style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+           >
+             ▼
+           </span>
+         </button>
+         <div className="flex-1 min-w-0">
+           {name && <span className="text-primary-300">"{name}"<span className="text-slate-500">: </span></span>}
+           <span className="text-slate-500">{openBracket}</span>
+           
+           {collapsed ? (
+             <>
+               <button 
+                 onClick={() => setCollapsed(false)} 
+                 className="text-slate-400 text-[10px] px-1.5 py-0.5 hover:text-white hover:bg-slate-600 bg-slate-700/60 rounded mx-1 transition-colors"
+               >
+                 ...
+               </button>
+               <span className="text-slate-500">{closeBracket}</span>
+               {!isLast && <span className="text-slate-500">,</span>}
+             </>
+           ) : (
+             <>
+               <div className="pl-3 border-l border-slate-700/60 ml-1.5 my-0.5">
+                 {keys.map((key, idx) => (
+                   <JsonNode 
+                     key={key} 
+                     name={isArray ? undefined : key} 
+                     value={value[key]} 
+                     isLast={idx === keys.length - 1} 
+                     onNavigateToTool={onNavigateToTool}
+                     lang={lang}
+                   />
+                 ))}
+               </div>
+               <div className="ml-4">
+                 <span className="text-slate-500">{closeBracket}</span>
+                 {!isLast && <span className="text-slate-500">,</span>}
+               </div>
+             </>
+           )}
          </div>
        </div>
     </div>
   );
 };
 
-const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChange }) => {
+const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChange, onNavigateToTool }) => {
   const [input, setInput] = useState(state?.input || '');
-  const [viewMode, setViewMode] = useState<'text' | 'tree' | 'split'>(state?.viewMode || 'text');
+  const [viewMode, setViewMode] = useState<'text' | 'tree' | 'split'>(state?.viewMode || 'split');
   const [showJsonPath, setShowJsonPath] = useState(state?.showJsonPath || false);
   const [pathQuery, setPathQuery] = useState(state?.pathQuery || '$.');
   const [error, setError] = useState<string | null>(null);
@@ -226,7 +400,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
                 <div className="flex-1 flex flex-col gap-1.5 min-w-0 h-full">
                     <div className="flex justify-between items-center px-1 h-6 shrink-0"><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.treeTitle}</span></div>
                     <div className="flex-1 h-full overflow-hidden bg-slate-800 rounded-xl border border-slate-700">
-                        <div className="w-full h-full overflow-auto p-4">{parsedJson ? <JsonNode value={parsedJson} isLast={true} /> : <div className="text-slate-500 italic text-sm">{input.length > MAX_HIGHLIGHT_SIZE * 2 ? 'Large JSON: Tree view disabled' : (input.trim() ? t.empty : 'No Data')}</div>}</div>
+                        <div className="w-full h-full overflow-auto p-4">{parsedJson ? <JsonNode value={parsedJson} isLast={true} onNavigateToTool={onNavigateToTool} lang={lang} /> : <div className="text-slate-500 italic text-sm">{input.length > MAX_HIGHLIGHT_SIZE * 2 ? 'Large JSON: Tree view disabled' : (input.trim() ? t.empty : 'No Data')}</div>}</div>
                     </div>
                 </div>
             )}

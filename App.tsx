@@ -306,6 +306,22 @@ const App: React.FC = () => {
       }
   }, [currentToolId, updateToolState]);
 
+  const handleNavigateToTool = useCallback((toolId: string, payload?: any) => {
+    setCurrentToolId(toolId);
+    if (payload !== undefined) {
+      setToolStates(prev => {
+        const prevTargetState = prev[toolId] || {};
+        return {
+          ...prev,
+          [toolId]: {
+            ...prevTargetState,
+            ...payload
+          }
+        };
+      });
+    }
+  }, []);
+
   const t = {
     search: lang === 'zh' ? '搜索工具...' : 'Search tools...',
     home: lang === 'zh' ? '首页' : 'Home',
@@ -522,7 +538,8 @@ const App: React.FC = () => {
                                 ? React.cloneElement(currentTool.component as React.ReactElement<any>, { 
                                     lang,
                                     state: toolStates[currentTool.id],
-                                    onStateChange: handleCurrentToolStateChange
+                                    onStateChange: handleCurrentToolStateChange,
+                                    onNavigateToTool: handleNavigateToTool
                                   }) 
                                 : currentTool.component}
                          </div>

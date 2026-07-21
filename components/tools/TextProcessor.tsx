@@ -57,6 +57,16 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
   // Track the last state sent to parent to avoid infinite loop
   const lastReportedState = useRef<string>('');
 
+  // Sync external state updates (e.g., from JSON tree linkage transfer)
+  useEffect(() => {
+    if (state?.input !== undefined && state.input !== input) {
+      if (input && (!history.length || history[history.length - 1] !== input)) {
+        setHistory(prev => [...prev.slice(-19), input]);
+      }
+      setInput(state.input);
+    }
+  }, [state?.input]);
+
   // Debounce Markdown Input
   useEffect(() => {
     const timer = setTimeout(() => {

@@ -32,4 +32,5 @@ export interface ToolComponentProps {
   lang: Lang;
   state?: any;
   onStateChange?: (state: any) => void;
+  onNavigateToTool?: (toolId: string, payload?: any) => void;
 }
