@@ -180,9 +180,10 @@ interface JsonNodeProps {
   isLast: boolean; 
   onNavigateToTool?: (toolId: string, payload?: any) => void;
   lang: Lang;
+  onSendToLeftInput?: (val: string) => void;
 }
 
-const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTool, lang }) => {
+const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTool, lang, onSendToLeftInput }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
@@ -244,6 +245,14 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
       setShowMenu(false);
     };
 
+    const handleSendToLeftInput = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (onSendToLeftInput) {
+        onSendToLeftInput(value);
+      }
+      setShowMenu(false);
+    };
+
     return (
       <div className="relative hover:bg-slate-700/30 px-2 py-0.5 rounded font-mono text-sm leading-6 ml-4 flex items-center justify-between group/node">
         <div className="flex-1 min-w-0" onClick={handleNodeClick}>
@@ -283,6 +292,18 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
                 <span className="text-[9px] text-slate-400 group-hover/item:text-slate-200 truncate">{lang === 'zh' ? '转换、包裹等高级处理' : 'Wrap, trim, or edit lines'}</span>
               </div>
             </button>
+            {onSendToLeftInput && (
+              <button 
+                onClick={handleSendToLeftInput}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 text-left text-slate-200 hover:bg-primary-600 hover:text-white rounded-lg transition-colors group/item"
+              >
+                <IconJson className="w-4 h-4 text-sky-400 group-hover/item:text-white shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="font-semibold">{lang === 'zh' ? '发送至左侧 JSON' : 'Send to Left JSON'}</span>
+                  <span className="text-[9px] text-slate-400 group-hover/item:text-slate-200 truncate">{lang === 'zh' ? '作为编辑器输入' : 'Set as editor input'}</span>
+                </div>
+              </button>
+            )}
             <button 
               onClick={handleCopy}
               className="w-full flex items-center gap-2.5 px-2.5 py-2 text-left text-slate-200 hover:bg-primary-600 hover:text-white rounded-lg transition-colors group/item"
@@ -358,7 +379,8 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
                      value={value[key]} 
                      isLast={idx === keys.length - 1} 
                      onNavigateToTool={onNavigateToTool}
-                     lang={lang}
+                      lang={lang}
+                      onSendToLeftInput={onSendToLeftInput}
                    />
                  ))}
                </div>
@@ -496,7 +518,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
                 <div className="flex-1 flex flex-col gap-1.5 min-w-0 h-full">
                     <div className="flex justify-between items-center px-1 h-6 shrink-0"><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.treeTitle}</span></div>
                     <div className="flex-1 h-full overflow-hidden bg-slate-800 rounded-xl border border-slate-700">
-                        <div className="w-full h-full overflow-auto p-4">{parsedJson ? <JsonNode value={parsedJson} isLast={true} onNavigateToTool={onNavigateToTool} lang={lang} /> : <div className="text-slate-500 italic text-sm">{input.length > MAX_HIGHLIGHT_SIZE * 2 ? 'Large JSON: Tree view disabled' : (input.trim() ? t.empty : 'No Data')}</div>}</div>
+                        <div className="w-full h-full overflow-auto p-4">{parsedJson ? <JsonNode value={parsedJson} isLast={true} onNavigateToTool={onNavigateToTool} lang={lang} onSendToLeftInput={setInput} /> : <div className="text-slate-500 italic text-sm">{input.length > MAX_HIGHLIGHT_SIZE * 2 ? 'Large JSON: Tree view disabled' : (input.trim() ? t.empty : 'No Data')}</div>}</div>
                     </div>
                 </div>
             )}
