@@ -14,7 +14,7 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
   const [quoteType, setQuoteType] = useState(state?.quoteType || '"');
   const [history, setHistory] = useState<string[]>(state?.history || []);
   const [viewMode, setViewMode] = useState<'editor' | 'split' | 'preview'>(
-    state?.viewMode || (state?.isPreview ? 'preview' : 'editor')
+    state?.viewMode || 'split'
   );
   const [copied, setCopied] = useState(false);
   
