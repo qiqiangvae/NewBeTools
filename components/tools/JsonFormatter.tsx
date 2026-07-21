@@ -13,10 +13,11 @@ interface JsonEditorProps {
   value: string;
   onChange: (value: string) => void;
   error: boolean;
+  errorMsg?: string | null;
   placeholder?: string;
 }
 
-const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeholder }) => {
+const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMsg, placeholder }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
 
@@ -27,6 +28,74 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeho
     }
   };
 
+  const errorPos = useMemo(() => {
+    if (!error || !errorMsg) return null;
+    
+    // 1. Try to match "at position (\d+)" (typically Chrome/V8 / Node)
+    const posMatch = errorMsg.match(/at position (\d+)/i);
+    if (posMatch) {
+      const pos = parseInt(posMatch[1], 10);
+      if (!isNaN(pos) && pos >= 0 && pos <= value.length) {
+        let start = pos;
+        let end = pos + 1;
+        if (start >= value.length) {
+          start = Math.max(0, value.length - 1);
+          end = value.length;
+        }
+        return { start, end };
+      }
+    }
+
+    // 2. Try to match Firefox style "line (\d+) column (\d+)"
+    const lineColMatch = errorMsg.match(/line (\d+) column (\d+)/i);
+    if (lineColMatch) {
+      const lineNum = parseInt(lineColMatch[1], 10);
+      const colNum = parseInt(lineColMatch[2], 10);
+      if (!isNaN(lineNum) && !isNaN(colNum)) {
+        const lines = value.split('\n');
+        let pos = 0;
+        for (let i = 0; i < lineNum - 1 && i < lines.length; i++) {
+          pos += lines[i].length + 1; // +1 for the newline character
+        }
+        pos += (colNum - 1);
+        if (pos >= 0 && pos <= value.length) {
+          let start = pos;
+          let end = pos + 1;
+          if (start >= value.length) {
+            start = Math.max(0, value.length - 1);
+            end = value.length;
+          }
+          return { start, end };
+        }
+      }
+    }
+
+    // 3. Try to match Safari style "character (\d+)"
+    const charMatch = errorMsg.match(/character (\d+)/i);
+    if (charMatch) {
+      const pos = parseInt(charMatch[1], 10);
+      if (!isNaN(pos) && pos >= 0 && pos <= value.length) {
+        let start = pos;
+        let end = pos + 1;
+        if (start >= value.length) {
+          start = Math.max(0, value.length - 1);
+          end = value.length;
+        }
+        return { start, end };
+      }
+    }
+
+    return null;
+  }, [error, errorMsg, value]);
+
+  // Focus and select the error text when error status changes and an error is highlighted
+  useEffect(() => {
+    if (error && errorPos && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(errorPos.start, errorPos.end);
+    }
+  }, [error, errorPos]);
+
   const highlighted = useMemo(() => {
     if (!value) return '';
     
@@ -35,22 +104,39 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, placeho
         return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    const safeHtml = value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return safeHtml.replace(
-      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-      (match) => {
-        let cls = 'text-amber-400';
-        if (/^"/.test(match)) {
-          cls = /:$/.test(match) ? 'text-sky-400 font-semibold' : 'text-emerald-400';
-        } else if (/true|false/.test(match)) {
-          cls = 'text-violet-400 font-semibold';
-        } else if (/null/.test(match)) {
-          cls = 'text-slate-500 italic';
+    const highlightText = (text: string) => {
+      const safeHtml = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return safeHtml.replace(
+        /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        (match) => {
+          let cls = 'text-amber-400';
+          if (/^"/.test(match)) {
+            cls = /:$/.test(match) ? 'text-sky-400 font-semibold' : 'text-emerald-400';
+          } else if (/true|false/.test(match)) {
+            cls = 'text-violet-400 font-semibold';
+          } else if (/null/.test(match)) {
+            cls = 'text-slate-500 italic';
+          }
+          return `<span class="${cls}">${match}</span>`;
         }
-        return `<span class="${cls}">${match}</span>`;
-      }
-    );
-  }, [value]);
+      );
+    };
+
+    if (errorPos) {
+      const { start, end } = errorPos;
+      const left = value.substring(0, start);
+      const middle = value.substring(start, end);
+      const right = value.substring(end);
+      
+      const leftHtml = highlightText(left);
+      const middleHtml = `<span class="bg-red-500/40 border-b-2 border-red-500 text-red-200 font-bold animate-pulse px-0.5 rounded-sm relative z-10">${highlightText(middle || ' ')}</span>`;
+      const rightHtml = highlightText(right);
+      
+      return leftHtml + middleHtml + rightHtml;
+    }
+
+    return highlightText(value);
+  }, [value, errorPos]);
 
   const sharedStyles: React.CSSProperties = {
     fontFamily: 'Menlo, Monaco, "Courier New", monospace',
@@ -302,6 +388,16 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
     onStateChange?.({ input, viewMode, showJsonPath, pathQuery });
   }, [input, viewMode, showJsonPath, pathQuery, onStateChange]);
 
+  // Automatically dismiss the error pop-up after 1 second
+  useEffect(() => {
+    if (errorVisible) {
+      const timer = setTimeout(() => {
+        setErrorVisible(false);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorVisible]);
+
   const t = {
     title: lang === 'zh' ? 'JSON 编辑器' : 'JSON Editor',
     textMode: lang === 'zh' ? '文本' : 'Text',
@@ -392,7 +488,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
             {(viewMode === 'text' || viewMode === 'split') && (
                 <div className="flex-1 flex flex-col gap-1.5 min-w-0 h-full relative">
                     <div className="flex justify-between items-center px-1 h-6 shrink-0"><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.inputTitle}</span><button onClick={() => handleCopy(input)} className="text-xs flex items-center gap-1 text-slate-500 hover:text-primary-400 transition-colors">{copied ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>} {t.copy}</button></div>
-                    <div className="flex-1 min-h-0"><JsonEditor value={input} onChange={setInput} error={!!error} placeholder={t.placeholder} /></div>
+                    <div className="flex-1 min-h-0"><JsonEditor value={input} onChange={setInput} error={!!error} errorMsg={error} placeholder={t.placeholder} /></div>
                     {error && errorVisible && <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-md"><div className="bg-red-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3"><IconX className="w-5 h-5 shrink-0" /><span className="flex-1 truncate font-mono text-xs">{error}</span></div></div>}
                 </div>
             )}
