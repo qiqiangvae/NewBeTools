@@ -188,6 +188,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [copied, setCopied] = useState(false);
+  const [objCopied, setObjCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isObject = value !== null && typeof value === 'object';
@@ -205,6 +206,18 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [showMenu]);
+
+  const handleCopyObject = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const jsonString = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+      navigator.clipboard.writeText(jsonString);
+      setObjCopied(true);
+      setTimeout(() => setObjCopied(false), 1500);
+    } catch (err) {
+      console.error('Failed to copy JSON object:', err);
+    }
+  };
 
   if (!isObject) {
     const isString = typeof value === 'string';
@@ -332,66 +345,107 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
 
   if (isEmpty) {
     return (
-      <div className="hover:bg-slate-700/20 px-2 py-0.5 rounded font-mono text-sm leading-6 ml-4">
-        {name && <span className="text-primary-300">"{name}"<span className="text-slate-500">: </span></span>}
-        <span className="text-slate-500">{openBracket}{closeBracket}</span>
-        {!isLast && <span className="text-slate-500">,</span>}
+      <div className="hover:bg-slate-700/20 px-2 py-0.5 rounded font-mono text-sm leading-6 ml-4 flex items-center justify-between group/obj-node">
+        <div className="flex-1 min-w-0">
+          {name && <span className="text-primary-300">"{name}"<span className="text-slate-500">: </span></span>}
+          <span className="text-slate-500">{openBracket}{closeBracket}</span>
+          {!isLast && <span className="text-slate-500">,</span>}
+        </div>
+        <button
+          onClick={handleCopyObject}
+          title={lang === 'zh' ? '复制此层 JSON' : 'Copy this JSON layer'}
+          className="opacity-0 group-hover/obj-node:opacity-100 flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-slate-700/80 hover:bg-primary-600 text-slate-300 hover:text-white transition-all cursor-pointer shadow-sm shrink-0 ml-2"
+        >
+          {objCopied ? (
+            <>
+              <IconCheck className="w-3.5 h-3.5 text-green-400" />
+              <span className="text-green-400 font-medium">{lang === 'zh' ? '已复制' : 'Copied'}</span>
+            </>
+          ) : (
+            <>
+              <IconCopy className="w-3.5 h-3.5 text-slate-300" />
+              <span>{lang === 'zh' ? '复制此层' : 'Copy layer'}</span>
+            </>
+          )}
+        </button>
       </div>
     );
   }
 
   return (
     <div className="group/tree font-mono text-sm leading-6">
-       <div className="hover:bg-slate-700/20 px-2 py-0.5 rounded flex items-start">
-         <button 
-           onClick={(e) => { e.stopPropagation(); setCollapsed(!collapsed); }} 
-           className="w-4 h-6 flex items-center justify-center text-slate-500 hover:text-slate-300 mr-1 select-none shrink-0"
-         >
-           <span 
-             className="text-[9px] transform transition-transform duration-200" 
-             style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+       <div className="hover:bg-slate-700/20 px-2 py-0.5 rounded flex items-center justify-between group/obj-header">
+         <div className="flex items-start min-w-0 flex-1">
+           <button 
+             onClick={(e) => { e.stopPropagation(); setCollapsed(!collapsed); }} 
+             className="w-4 h-6 flex items-center justify-center text-slate-500 hover:text-slate-300 mr-1 select-none shrink-0"
            >
-             ▼
-           </span>
-         </button>
-         <div className="flex-1 min-w-0">
-           {name && <span className="text-primary-300">"{name}"<span className="text-slate-500">: </span></span>}
-           <span className="text-slate-500">{openBracket}</span>
-           
-           {collapsed ? (
+             <span 
+               className="text-[9px] transform transition-transform duration-200" 
+               style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+             >
+               ▼
+             </span>
+           </button>
+           <div className="flex-1 min-w-0">
+             {name && <span className="text-primary-300">"{name}"<span className="text-slate-500">: </span></span>}
+             <span className="text-slate-500">{openBracket}</span>
+             {isArray && <span className="text-slate-500 text-xs ml-1 font-normal select-none">({keys.length})</span>}
+             {collapsed && (
+               <>
+                 <button 
+                   onClick={() => setCollapsed(false)} 
+                   className="text-slate-400 text-[10px] px-1.5 py-0.5 hover:text-white hover:bg-slate-600 bg-slate-700/60 rounded mx-1 transition-colors"
+                 >
+                   ...
+                 </button>
+                 <span className="text-slate-500">{closeBracket}</span>
+                 {!isLast && <span className="text-slate-500">,</span>}
+               </>
+             )}
+           </div>
+         </div>
+
+         <button
+           onClick={handleCopyObject}
+           title={lang === 'zh' ? '复制此层 JSON' : 'Copy this JSON layer'}
+           className="opacity-0 group-hover/obj-header:opacity-100 flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-slate-700/80 hover:bg-primary-600 text-slate-300 hover:text-white transition-all cursor-pointer shadow-sm shrink-0 ml-2"
+         >
+           {objCopied ? (
              <>
-               <button 
-                 onClick={() => setCollapsed(false)} 
-                 className="text-slate-400 text-[10px] px-1.5 py-0.5 hover:text-white hover:bg-slate-600 bg-slate-700/60 rounded mx-1 transition-colors"
-               >
-                 ...
-               </button>
-               <span className="text-slate-500">{closeBracket}</span>
-               {!isLast && <span className="text-slate-500">,</span>}
+               <IconCheck className="w-3.5 h-3.5 text-green-400" />
+               <span className="text-green-400 font-medium">{lang === 'zh' ? '已复制' : 'Copied'}</span>
              </>
            ) : (
              <>
-               <div className="pl-3 border-l border-slate-700/60 ml-1.5 my-0.5">
-                 {keys.map((key, idx) => (
-                   <JsonNode 
-                     key={key} 
-                     name={isArray ? undefined : key} 
-                     value={value[key]} 
-                     isLast={idx === keys.length - 1} 
-                     onNavigateToTool={onNavigateToTool}
-                      lang={lang}
-                      onSendToLeftInput={onSendToLeftInput}
-                   />
-                 ))}
-               </div>
-               <div className="ml-4">
-                 <span className="text-slate-500">{closeBracket}</span>
-                 {!isLast && <span className="text-slate-500">,</span>}
-               </div>
+               <IconCopy className="w-3.5 h-3.5 text-slate-300" />
+               <span>{lang === 'zh' ? '复制此层' : 'Copy layer'}</span>
              </>
            )}
-         </div>
+         </button>
        </div>
+
+       {!collapsed && (
+         <>
+           <div className="pl-3 border-l border-slate-700/60 ml-1.5 my-0.5">
+             {keys.map((key, idx) => (
+               <JsonNode 
+                 key={key} 
+                 name={isArray ? undefined : key} 
+                 value={value[key]} 
+                 isLast={idx === keys.length - 1} 
+                 onNavigateToTool={onNavigateToTool}
+                 lang={lang}
+                 onSendToLeftInput={onSendToLeftInput}
+               />
+             ))}
+           </div>
+           <div className="ml-4">
+             <span className="text-slate-500">{closeBracket}</span>
+             {!isLast && <span className="text-slate-500">,</span>}
+           </div>
+         </>
+       )}
     </div>
   );
 };
