@@ -187,7 +187,8 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
   const [collapsed, setCollapsed] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  const [copied, setCopied] = useState(false);
+  const [valueCopied, setValueCopied] = useState(false);
+  const [keyCopied, setKeyCopied] = useState(false);
   const [objCopied, setObjCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -240,12 +241,26 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
       }
     };
 
-    const handleCopy = (e: React.MouseEvent) => {
+    const handleCopyValue = (e: React.MouseEvent) => {
       e.stopPropagation();
       navigator.clipboard.writeText(value);
-      setCopied(true);
+      setValueCopied(true);
       setTimeout(() => {
-        setCopied(false);
+        setValueCopied(false);
+        setShowMenu(false);
+      }, 1000);
+    };
+
+    const handleCopyKey = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (name) {
+        navigator.clipboard.writeText(name);
+      } else {
+        navigator.clipboard.writeText('');
+      }
+      setKeyCopied(true);
+      setTimeout(() => {
+        setKeyCopied(false);
         setShowMenu(false);
       }, 1000);
     };
@@ -278,7 +293,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
           <div className="hidden group-hover/node:flex items-center gap-1 shrink-0 ml-2">
             <button 
               onClick={handleNodeClick}
-              title={lang === 'zh' ? '联动操作' : 'Linkage Actions'}
+              title={lang === 'zh' ? '便捷操作' : 'Quick Actions'}
               className="p-1 rounded bg-slate-700/80 hover:bg-primary-600 text-slate-300 hover:text-white transition-all cursor-pointer shadow-md"
             >
               <IconType className="w-3.5 h-3.5" />
@@ -292,9 +307,48 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
             style={{ position: 'fixed', left: `${menuPosition.x}px`, top: `${menuPosition.y}px` }}
             className="z-50 bg-slate-950/95 border border-slate-700 rounded-xl shadow-2xl py-1.5 px-1 min-w-[220px] animate-in fade-in slide-in-from-top-2 duration-150 text-xs backdrop-blur-md"
           >
-            <div className="px-2.5 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-800 mb-1">
-              {lang === 'zh' ? 'JSON 属性联动' : 'JSON Property Linkage'}
+            <div className="px-2.5 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-800 mb-1.5">
+              {lang === 'zh' ? '便捷操作' : 'Quick Actions'}
             </div>
+            
+            <div className="grid grid-cols-2 gap-1 mb-1 px-1">
+              <button 
+                onClick={handleCopyKey}
+                disabled={!name}
+                title={!name ? (lang === 'zh' ? '无 Key 可复制' : 'No Key') : undefined}
+                className="flex items-center justify-center gap-1.5 px-2 py-1.5 text-slate-200 hover:bg-primary-600 hover:text-white disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-200 rounded-lg transition-colors group/item cursor-pointer disabled:cursor-not-allowed bg-slate-900/60 hover:bg-primary-600"
+              >
+                {keyCopied ? (
+                  <>
+                    <IconCheck className="w-3.5 h-3.5 text-green-400 group-hover/item:text-white shrink-0" />
+                    <span className="font-medium text-green-400 group-hover/item:text-white">{lang === 'zh' ? '已复制' : 'Copied'}</span>
+                  </>
+                ) : (
+                  <>
+                    <IconCopy className="w-3.5 h-3.5 text-slate-400 group-hover/item:text-white shrink-0" />
+                    <span>{lang === 'zh' ? '复制 Key' : 'Copy Key'}</span>
+                  </>
+                )}
+              </button>
+
+              <button 
+                onClick={handleCopyValue}
+                className="flex items-center justify-center gap-1.5 px-2 py-1.5 text-slate-200 hover:bg-primary-600 hover:text-white rounded-lg transition-colors group/item cursor-pointer bg-slate-900/60 hover:bg-primary-600"
+              >
+                {valueCopied ? (
+                  <>
+                    <IconCheck className="w-3.5 h-3.5 text-green-400 group-hover/item:text-white shrink-0" />
+                    <span className="font-medium text-green-400 group-hover/item:text-white">{lang === 'zh' ? '已复制' : 'Copied'}</span>
+                  </>
+                ) : (
+                  <>
+                    <IconCopy className="w-3.5 h-3.5 text-slate-400 group-hover/item:text-white shrink-0" />
+                    <span>{lang === 'zh' ? '复制 Value' : 'Copy Value'}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
             <button 
               onClick={handleSendToTextProc}
               className="w-full flex items-center gap-2.5 px-2.5 py-2 text-left text-slate-200 hover:bg-primary-600 hover:text-white rounded-lg transition-colors group/item"
@@ -317,22 +371,6 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
                 </div>
               </button>
             )}
-            <button 
-              onClick={handleCopy}
-              className="w-full flex items-center gap-2.5 px-2.5 py-2 text-left text-slate-200 hover:bg-primary-600 hover:text-white rounded-lg transition-colors group/item"
-            >
-              {copied ? (
-                <>
-                  <IconCheck className="w-4 h-4 text-green-400 group-hover/item:text-white shrink-0" />
-                  <span className="font-medium text-green-400 group-hover/item:text-white">{lang === 'zh' ? '已复制！' : 'Copied!'}</span>
-                </>
-              ) : (
-                <>
-                  <IconCopy className="w-4 h-4 text-slate-400 group-hover/item:text-white shrink-0" />
-                  <span>{lang === 'zh' ? '复制字符串内容' : 'Copy string content'}</span>
-                </>
-              )}
-            </button>
           </div>
         )}
       </div>
