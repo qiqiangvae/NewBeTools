@@ -311,3 +311,14 @@ export const IconMarkdown = ({ className }: { className?: string }) => (
     <path d="M17 13l2 2 2-2" />
   </svg>
 );
+
+export const IconMortgage = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 21h18" />
+    <path d="M19 21v-8a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v8" />
+    <path d="M12 3L2 12h3v7h14v-7h3L12 3z" />
+    <path d="M9 14h6" />
+    <path d="M12 11v6" />
+  </svg>
+);
+

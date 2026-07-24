@@ -34,7 +34,8 @@ import {
   IconPanelLeft,
   IconZap,
   IconKey,
-  IconCode
+  IconCode,
+  IconMortgage
 } from './components/Icons';
 
 import JsonFormatter from './components/tools/JsonFormatter';
@@ -57,6 +58,7 @@ import JwtDecoder from './components/tools/JwtDecoder';
 import UnicodeConverter from './components/tools/UnicodeConverter';
 import CodeFormatter from './components/tools/CodeFormatter';
 import TextProcessor from './components/tools/TextProcessor';
+import MortgageCalculator from './components/tools/MortgageCalculator';
 import ToolCard from './components/ToolCard';
 
 // --- Tool Registry ---
@@ -269,6 +271,17 @@ const TOOLS: ToolDef[] = [
     icon: <IconRuler className="w-5 h-5" />,
     component: <UnitConverter />,
     keywords: ['measure']
+  },
+  {
+    id: 'mortgage-calc',
+    name: 'Mortgage Prepayment',
+    nameZh: '还贷/提前还款计算',
+    description: 'Calculate mortgage prepayments, shortened terms, and saved interest.',
+    descriptionZh: '房贷提前还款计算器：缩短年限/减少月供方案对比与利息节省分析。',
+    category: ToolCategory.UTILITY,
+    icon: <IconMortgage className="w-5 h-5" />,
+    component: <MortgageCalculator lang="en" />,
+    keywords: ['mortgage', 'loan', 'prepayment', 'interest', '房贷', '还贷', '提前还款', '利息']
   },
   {
     id: 'ai-assist',
