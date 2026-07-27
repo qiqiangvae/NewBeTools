@@ -15,9 +15,10 @@ interface JsonEditorProps {
   error: boolean;
   errorMsg?: string | null;
   placeholder?: string;
+  lang?: Lang;
 }
 
-const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMsg, placeholder }) => {
+const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMsg, placeholder, lang }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
 
@@ -88,13 +89,60 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMs
     return null;
   }, [error, errorMsg, value]);
 
-  // Focus and select the error text when error status changes and an error is highlighted
-  useEffect(() => {
-    if (error && errorPos && textareaRef.current) {
+  // Manual jump to error position when user explicitly clicks the jump button
+  const handleJumpToError = () => {
+    if (errorPos && textareaRef.current) {
       textareaRef.current.focus();
       textareaRef.current.setSelectionRange(errorPos.start, errorPos.end);
     }
-  }, [error, errorPos]);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+
+      if (e.shiftKey) {
+        const val = textarea.value;
+        const lineStart = val.lastIndexOf('\n', start - 1) + 1;
+        if (val.substring(lineStart, lineStart + 2) === '  ') {
+          const newValue = val.substring(0, lineStart) + val.substring(lineStart + 2);
+          onChange(newValue);
+          setTimeout(() => {
+            if (textareaRef.current) {
+              textareaRef.current.selectionStart = Math.max(lineStart, start - 2);
+              textareaRef.current.selectionEnd = Math.max(lineStart, end - 2);
+            }
+          }, 0);
+        }
+      } else {
+        if (start === end) {
+          const newValue = value.substring(0, start) + '  ' + value.substring(end);
+          onChange(newValue);
+          setTimeout(() => {
+            if (textareaRef.current) {
+              textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 2;
+            }
+          }, 0);
+        } else {
+          const lines = value.substring(start, end).split('\n');
+          const indented = lines.map(line => '  ' + line).join('\n');
+          const newValue = value.substring(0, start) + indented + value.substring(end);
+          onChange(newValue);
+          setTimeout(() => {
+            if (textareaRef.current) {
+              textareaRef.current.selectionStart = start;
+              textareaRef.current.selectionEnd = start + indented.length;
+            }
+          }, 0);
+        }
+      }
+    }
+  };
 
   const highlighted = useMemo(() => {
     if (!value) return '';
@@ -129,7 +177,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMs
       const right = value.substring(end);
       
       const leftHtml = highlightText(left);
-      const middleHtml = `<span class="bg-red-500/40 border-b-2 border-red-500 text-red-200 font-bold animate-pulse px-0.5 rounded-sm relative z-10">${highlightText(middle || ' ')}</span>`;
+      const middleHtml = `<span class="bg-red-500/50 underline decoration-red-500 decoration-wavy text-red-200 relative z-10">${highlightText(middle || ' ')}</span>`;
       const rightHtml = highlightText(right);
       
       return leftHtml + middleHtml + rightHtml;
@@ -162,8 +210,19 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMs
       `}</style>
       <div className="editor-stack">
         <pre ref={preRef} style={sharedStyles} className="m-0 text-slate-200" dangerouslySetInnerHTML={{ __html: highlighted + (value.endsWith('\n') ? ' ' : '') }} />
-        <textarea ref={textareaRef} value={value} onChange={(e) => onChange(e.target.value)} onScroll={handleScroll} spellCheck="false" placeholder={placeholder} style={sharedStyles} className={`resize-none ${error ? 'focus:ring-2 focus:ring-red-500/20' : 'focus:ring-2 focus:ring-primary-500/20'}`} />
+        <textarea ref={textareaRef} value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={handleKeyDown} onScroll={handleScroll} spellCheck="false" placeholder={placeholder} style={sharedStyles} className={`resize-none ${error ? 'focus:ring-2 focus:ring-red-500/20' : 'focus:ring-2 focus:ring-primary-500/20'}`} />
       </div>
+      {error && errorPos && (
+        <button
+          type="button"
+          onClick={handleJumpToError}
+          className="absolute bottom-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 text-xs bg-red-900/80 hover:bg-red-800 text-red-200 rounded-md border border-red-700/60 shadow-lg backdrop-blur transition-all cursor-pointer group"
+          title={lang === 'zh' ? '点击跳转到 JSON 语法错误位置' : 'Click to jump to JSON error location'}
+        >
+          <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
+          <span className="font-mono text-[11px]">{lang === 'zh' ? `定位错误 (字符 ${errorPos.start})` : `Jump to error (pos ${errorPos.start})`}</span>
+        </button>
+      )}
       {value.length > MAX_HIGHLIGHT_SIZE && (
         <div className="absolute top-2 right-10 z-30 bg-yellow-900/80 text-yellow-200 text-[10px] px-2 py-1 rounded border border-yellow-700/50">
             Performance Mode (Highlighting Disabled)
@@ -602,7 +661,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
             {(viewMode === 'text' || viewMode === 'split') && (
                 <div className="flex-1 flex flex-col gap-1.5 min-w-0 h-full relative">
                     <div className="flex justify-between items-center px-1 h-6 shrink-0"><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.inputTitle}</span><button onClick={() => handleCopy(input)} className="text-xs flex items-center gap-1 text-slate-500 hover:text-primary-400 transition-colors">{copied ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>} {t.copy}</button></div>
-                    <div className="flex-1 min-h-0"><JsonEditor value={input} onChange={setInput} error={!!error} errorMsg={error} placeholder={t.placeholder} /></div>
+                    <div className="flex-1 min-h-0"><JsonEditor value={input} onChange={setInput} error={!!error} errorMsg={error} placeholder={t.placeholder} lang={lang} /></div>
                     {error && errorVisible && <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-md"><div className="bg-red-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3"><IconX className="w-5 h-5 shrink-0" /><span className="flex-1 truncate font-mono text-xs">{error}</span></div></div>}
                 </div>
             )}
