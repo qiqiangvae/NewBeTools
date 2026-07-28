@@ -22,6 +22,175 @@ interface YamlEditorProps {
   readOnly?: boolean;
 }
 
+const MAX_HIGHLIGHT_SIZE = 500000;
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function highlightYamlValue(val: string): string {
+  if (!val) return '';
+  const match = val.match(/^(\s*)([\s\S]*)$/);
+  if (!match) return escapeHtml(val);
+  const spaces = escapeHtml(match[1]);
+  const content = match[2];
+
+  if (!content) return spaces;
+
+  const escapedContent = escapeHtml(content);
+
+  // Double quoted string
+  if (/^"([^"\\]|\\.)*"$/.test(content)) {
+    return spaces + `<span class="text-emerald-400">${escapedContent}</span>`;
+  }
+  // Single quoted string
+  if (/^'([^'\\]|\\.)*'$/.test(content)) {
+    return spaces + `<span class="text-emerald-400">${escapedContent}</span>`;
+  }
+  // Booleans
+  if (/^(true|false|yes|no|True|False|YES|NO)$/i.test(content)) {
+    return spaces + `<span class="text-violet-400 font-semibold">${escapedContent}</span>`;
+  }
+  // Nulls
+  if (/^(null|~|Null|NULL)$/.test(content)) {
+    return spaces + `<span class="text-slate-500 italic font-semibold">${escapedContent}</span>`;
+  }
+  // Numbers
+  if (/^-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?$/.test(content)) {
+    return spaces + `<span class="text-amber-300 font-mono">${escapedContent}</span>`;
+  }
+  // Block scalar indicator
+  if (/^[\|>][+\-]?$/.test(content)) {
+    return spaces + `<span class="text-amber-400 font-bold">${escapedContent}</span>`;
+  }
+
+  // Default value
+  return spaces + `<span class="text-emerald-300/90">${escapedContent}</span>`;
+}
+
+export function highlightYaml(text: string, errorLine?: number | null): string {
+  if (!text) return '';
+  if (text.length > MAX_HIGHLIGHT_SIZE) {
+    return escapeHtml(text);
+  }
+
+  const lines = text.split('\n');
+
+  const highlightedLines = lines.map((line, lineIndex) => {
+    const isErrorLine = errorLine != null && lineIndex === errorLine - 1;
+
+    if (!line && !isErrorLine) {
+      return '';
+    }
+
+    // Extract comment
+    let mainPart = line;
+    let commentPart = '';
+    let inDouble = false;
+    let inSingle = false;
+    let commentIdx = -1;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"' && !inSingle && (i === 0 || line[i - 1] !== '\\')) {
+        inDouble = !inDouble;
+      } else if (char === "'" && !inDouble) {
+        inSingle = !inSingle;
+      } else if (char === '#' && !inDouble && !inSingle) {
+        if (i === 0 || /\s/.test(line[i - 1])) {
+          commentIdx = i;
+          break;
+        }
+      }
+    }
+
+    if (commentIdx !== -1) {
+      mainPart = line.substring(0, commentIdx);
+      commentPart = line.substring(commentIdx);
+    }
+
+    let lineResult = '';
+
+    const trimmedMain = mainPart.trim();
+    if (trimmedMain === '---' || trimmedMain === '...') {
+      lineResult = escapeHtml(mainPart).replace(
+        trimmedMain,
+        `<span class="text-purple-400 font-bold">${trimmedMain}</span>`
+      );
+    } else {
+      const leadMatch = mainPart.match(/^(\s*)(-\s+|-)?([\s\S]*)$/);
+      const indent = leadMatch ? leadMatch[1] : '';
+      const dash = leadMatch ? leadMatch[2] : '';
+      const rest = leadMatch ? leadMatch[3] : mainPart;
+
+      const indentHtml = escapeHtml(indent);
+      const dashHtml = dash ? `<span class="text-amber-400 font-bold">${escapeHtml(dash)}</span>` : '';
+
+      if (!rest) {
+        lineResult = indentHtml + dashHtml;
+      } else {
+        // Find colon separating key and value outside quotes
+        let colonIdx = -1;
+        let inD = false;
+        let inS = false;
+
+        for (let i = 0; i < rest.length; i++) {
+          const c = rest[i];
+          if (c === '"' && !inS && (i === 0 || rest[i - 1] !== '\\')) {
+            inD = !inD;
+          } else if (c === "'" && !inD) {
+            inS = !inS;
+          } else if (c === ':' && !inD && !inS) {
+            const next = rest[i + 1];
+            if (!next || next === ' ' || next === '\t' || next === '\n' || next === '\r') {
+              colonIdx = i;
+              break;
+            }
+          }
+        }
+
+        if (colonIdx !== -1) {
+          const rawKey = rest.substring(0, colonIdx);
+          const rawColon = rest.substring(colonIdx, colonIdx + 1);
+          const rawVal = rest.substring(colonIdx + 1);
+
+          const keyHtml = `<span class="text-sky-400 font-semibold">${escapeHtml(rawKey)}</span>`;
+          const colonHtml = `<span class="text-slate-400">${escapeHtml(rawColon)}</span>`;
+          const valHtml = highlightYamlValue(rawVal);
+
+          lineResult = indentHtml + dashHtml + keyHtml + colonHtml + valHtml;
+        } else {
+          if (rest.startsWith('{') || rest.startsWith('[')) {
+            const flowEscaped = escapeHtml(rest);
+            const flowHighlighted = flowEscaped.replace(
+              /("([^"\\]|\\.)*"|'([^'\\]|\\.)*'|[^\s:\#,\{\}\[\]]+)(\s*:)/g,
+              '<span class="text-sky-400 font-semibold">$1</span><span class="text-slate-400">$4</span>'
+            );
+            lineResult = indentHtml + dashHtml + flowHighlighted;
+          } else {
+            lineResult = indentHtml + dashHtml + highlightYamlValue(rest);
+          }
+        }
+      }
+    }
+
+    if (commentPart) {
+      lineResult += `<span class="text-slate-500 italic">${escapeHtml(commentPart)}</span>`;
+    }
+
+    if (isErrorLine) {
+      return `<span class="bg-red-500/20 text-red-200 border-l-2 border-red-500 pl-1 -ml-1 inline-block w-full">${lineResult || '&nbsp;'}</span>`;
+    }
+
+    return lineResult;
+  });
+
+  return highlightedLines.join('\n');
+}
+
 const YamlEditor: React.FC<YamlEditorProps> = ({
   value,
   onChange,
@@ -32,6 +201,18 @@ const YamlEditor: React.FC<YamlEditorProps> = ({
   readOnly = false
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const preRef = useRef<HTMLPreElement>(null);
+
+  const handleScroll = () => {
+    if (textareaRef.current && preRef.current) {
+      preRef.current.scrollTop = textareaRef.current.scrollTop;
+      preRef.current.scrollLeft = textareaRef.current.scrollLeft;
+    }
+  };
+
+  const highlighted = useMemo(() => {
+    return highlightYaml(value, errorLine);
+  }, [value, errorLine]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (readOnly) return;
@@ -95,25 +276,56 @@ const YamlEditor: React.FC<YamlEditorProps> = ({
     textareaRef.current.setSelectionRange(pos, pos + 1);
   };
 
+  const sharedStyles: React.CSSProperties = {
+    fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+    fontSize: '13px',
+    lineHeight: '20px',
+    padding: '14px',
+    margin: 0,
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-all',
+    boxSizing: 'border-box',
+    tabSize: 2,
+    border: 'none',
+    outline: 'none',
+  };
+
   return (
     <div className="relative w-full h-full bg-slate-900 rounded-xl border border-slate-700/80 overflow-hidden flex flex-col font-mono text-xs md:text-sm">
-      <textarea
-        ref={textareaRef}
-        value={value}
-        readOnly={readOnly}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        spellCheck="false"
-        placeholder={placeholder}
-        className={`w-full h-full p-3.5 bg-transparent text-slate-200 resize-none outline-none leading-relaxed transition-all ${
-          errorLine ? 'border-red-500/50 focus:ring-1 focus:ring-red-500/40' : 'focus:ring-1 focus:ring-primary-500/40'
-        }`}
-      />
+      <style>{`
+        .yaml-editor-stack { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; width: 100%; height: 100%; }
+        .yaml-editor-stack textarea, .yaml-editor-stack pre { grid-area: 1 / 1 / 2 / 2; width: 100% !important; height: 100% !important; overflow-y: auto !important; }
+        .yaml-editor-stack textarea { background: transparent !important; color: transparent !important; -webkit-text-fill-color: transparent !important; caret-color: #38bdf8 !important; z-index: 2; }
+        .yaml-editor-stack textarea::placeholder { color: #64748b !important; -webkit-text-fill-color: #64748b !important; }
+        .yaml-editor-stack pre { z-index: 1; pointer-events: none; user-select: none; }
+      `}</style>
+      <div className="yaml-editor-stack">
+        <pre
+          ref={preRef}
+          style={sharedStyles}
+          className="m-0 text-slate-200"
+          dangerouslySetInnerHTML={{ __html: highlighted + (value.endsWith('\n') ? ' ' : '') }}
+        />
+        <textarea
+          ref={textareaRef}
+          value={value}
+          readOnly={readOnly}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onScroll={handleScroll}
+          spellCheck="false"
+          placeholder={placeholder}
+          style={sharedStyles}
+          className={`resize-none outline-none ${
+            errorLine ? 'focus:ring-1 focus:ring-red-500/40' : 'focus:ring-1 focus:ring-primary-500/40'
+          }`}
+        />
+      </div>
       {errorLine != null && (
         <button
           type="button"
           onClick={jumpToLine}
-          className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 px-2.5 py-1 text-xs bg-red-900/90 hover:bg-red-800 text-red-200 rounded-md border border-red-700/60 shadow-lg backdrop-blur transition-all cursor-pointer"
+          className="absolute bottom-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 text-xs bg-red-900/90 hover:bg-red-800 text-red-200 rounded-md border border-red-700/60 shadow-lg backdrop-blur transition-all cursor-pointer"
         >
           <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
           <span>
@@ -323,7 +535,7 @@ const YamlTool: React.FC<ToolComponentProps> = ({
 
   const t = {
     title: lang === 'zh' ? 'YAML 工具' : 'YAML Tool',
-    subtitle: lang === 'zh' ? 'YAML 格式化、语法校验与 JSON 转换' : 'Format, validate and convert YAML to JSON',
+    subtitle: lang === 'zh' ? 'YAML 格式化（含键名高亮）、语法校验与 JSON 转换' : 'Format YAML with key highlighting, validate and convert to JSON',
     format: lang === 'zh' ? '格式化 YAML' : 'Format YAML',
     minify: lang === 'zh' ? '压缩' : 'Minify',
     clear: lang === 'zh' ? '清空' : 'Clear',
