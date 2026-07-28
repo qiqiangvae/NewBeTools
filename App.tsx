@@ -8,6 +8,7 @@ import {
 } from './types';
 import { 
   IconJson, 
+  IconYaml,
   IconBase64, 
   IconHash, 
   IconUrl, 
@@ -39,7 +40,9 @@ import {
 } from './components/Icons';
 
 import JsonFormatter from './components/tools/JsonFormatter';
+import YamlTool from './components/tools/YamlTool';
 import Base64Converter from './components/tools/Base64Converter';
+
 import HashGenerator from './components/tools/HashGenerator';
 import UrlConverter from './components/tools/UrlConverter';
 import AiAssistant from './components/tools/AiAssistant';
@@ -73,6 +76,17 @@ const TOOLS: ToolDef[] = [
     icon: <IconJson className="w-5 h-5" />,
     component: <JsonFormatter lang="en" />,
     keywords: ['json', 'parse', 'prettify']
+  },
+  {
+    id: 'yaml-fmt',
+    name: 'YAML Tool',
+    nameZh: 'YAML 工具',
+    description: 'Format, validate, convert between YAML and JSON.',
+    descriptionZh: 'YAML 格式化、语法校验、与 JSON 双向转换。',
+    category: ToolCategory.DEVELOPER,
+    icon: <IconYaml className="w-5 h-5" />,
+    component: <YamlTool lang="en" />,
+    keywords: ['yaml', 'yml', 'json', 'convert', 'format', 'docker', 'k8s', 'openapi']
   },
   {
     id: 'text-proc',
