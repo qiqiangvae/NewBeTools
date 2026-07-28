@@ -164,6 +164,13 @@ const YamlTool: React.FC<ToolComponentProps> = ({
     onStateChange?.({ yamlInput, indent, sortKeys, viewMode });
   }, [yamlInput, indent, sortKeys, viewMode, onStateChange]);
 
+  // Update yamlInput when state.yamlInput changes externally (e.g. from JSON tool)
+  useEffect(() => {
+    if (state?.yamlInput !== undefined) {
+      setYamlInput(state.yamlInput);
+    }
+  }, [state?.yamlInput]);
+
   // Parse YAML to JS Object or error
   const parsedData = useMemo(() => {
     if (!yamlInput.trim()) {

@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { jsonrepair } from 'jsonrepair';
-import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconEraser, IconSparkles, IconDiff, IconMenu } from '../Icons';
+import * as yaml from 'js-yaml';
+import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconEraser, IconSparkles, IconDiff, IconMenu, IconYaml } from '../Icons';
 import { ToolComponentProps, Lang } from '../../types';
 
 declare const jsonpath: any;
@@ -593,6 +594,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
     placeholder: lang === 'zh' ? '在此粘贴或输入 JSON...' : 'Paste or type JSON here...',
     empty: lang === 'zh' ? '无效的 JSON' : 'Invalid JSON',
     noMatch: lang === 'zh' ? '无匹配' : 'No match',
+    sendToYaml: lang === 'zh' ? '发送至 YAML 工具' : 'Send to YAML Tool',
   };
 
   useEffect(() => {
@@ -631,6 +633,21 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
       setErrorVisible(true);
     }
   };
+  const handleSendToYaml = () => {
+    if (!input.trim() || !onNavigateToTool) return;
+    let yamlString = input;
+    try {
+      const parsed = JSON.parse(input);
+      yamlString = yaml.dump(parsed, {
+        indent: 2,
+        noRefs: true,
+        lineWidth: -1
+      });
+    } catch {
+      // If not standard JSON, send raw string
+    }
+    onNavigateToTool('yaml-fmt', { yamlInput: yamlString });
+  };
   const handleCopy = (text: string) => { if (!text) return; navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); };
   const parsedJson = useMemo(() => { if (!input.trim() || input.length > MAX_HIGHLIGHT_SIZE * 2) return null; try { return JSON.parse(input); } catch { return null; } }, [input]);
 
@@ -654,6 +671,12 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
                  <button onClick={fixJson} className="px-2 py-1.5 text-xs font-medium bg-indigo-900/30 text-indigo-300 rounded border border-indigo-900/50">{t.fix}</button>
             </div>
             <button onClick={minifyJson} className="px-3 py-1.5 text-xs font-medium bg-slate-800 rounded border border-slate-700 text-slate-300">{t.minify}</button>
+            {onNavigateToTool && (
+              <button onClick={handleSendToYaml} className="px-3 py-1.5 text-xs font-medium bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-300 rounded border border-emerald-700/50 transition-colors flex items-center gap-1.5" title={t.sendToYaml}>
+                <IconYaml className="w-3.5 h-3.5 shrink-0" />
+                <span>{t.sendToYaml}</span>
+              </button>
+            )}
         </div>
       </div>
       <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-0">
