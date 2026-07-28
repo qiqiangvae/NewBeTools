@@ -8,9 +8,7 @@ import {
   IconX, 
   IconEraser, 
   IconDiff, 
-  IconType,
-  IconSparkles,
-  IconCode
+  IconSparkles
 } from '../Icons';
 import { ToolComponentProps, Lang } from '../../types';
 
@@ -129,76 +127,7 @@ const YamlEditor: React.FC<YamlEditorProps> = ({
   );
 };
 
-// Preset Samples
-const SAMPLES = {
-  docker: `version: '3.8'
-services:
-  web:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    environment:
-      NODE_ENV: production
-    restart: always
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-
-volumes:
-  redis_data:`,
-
-  k8s: `apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sample-app
-  labels:
-    app: sample
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: sample
-  template:
-    metadata:
-      labels:
-        app: sample
-    spec:
-      containers:
-        - name: app
-          image: myregistry/sample:v1.0.0
-          ports:
-            - containerPort: 3000
-          resources:
-            limits:
-              cpu: "500m"
-              memory: "512Mi"`,
-
-  openapi: `openapi: 3.0.0
-info:
-  title: Sample User API
-  version: 1.0.0
-  description: Simple REST API for managing users
-paths:
-  /users:
-    get:
-      summary: List all users
-      responses:
-        '200':
-          description: A JSON array of user objects
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    name:
-                      type: string`,
-
-  simple: `server:
+const DEFAULT_YAML = `server:
   host: "0.0.0.0"
   port: 8080
   debug: true
@@ -208,13 +137,10 @@ database:
   url: "postgres://user:secret@localhost:5432/dbname"
   pool:
     max_connections: 20
-    idle_timeout: "30s"
 
 features:
   - analytics
-  - rate_limiting
-  - user_auth`
-};
+  - user_auth`;
 
 const YamlTool: React.FC<ToolComponentProps> = ({
   lang = 'zh',
@@ -222,10 +148,12 @@ const YamlTool: React.FC<ToolComponentProps> = ({
   onStateChange,
   onNavigateToTool
 }) => {
-  const [yamlInput, setYamlInput] = useState<string>(state?.yamlInput ?? SAMPLES.simple);
+  const [yamlInput, setYamlInput] = useState<string>(state?.yamlInput ?? DEFAULT_YAML);
   const [indent, setIndent] = useState<number>(state?.indent ?? 2);
   const [sortKeys, setSortKeys] = useState<boolean>(state?.sortKeys ?? false);
-  const [viewMode, setViewMode] = useState<'split' | 'yaml-only' | 'json-only'>(state?.viewMode ?? 'split');
+  const [viewMode, setViewMode] = useState<'split' | 'yaml-only'>(
+    state?.viewMode === 'yaml-only' ? 'yaml-only' : 'split'
+  );
   
   const [copied, setCopied] = useState<boolean>(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string; isError: boolean } | null>(null);
@@ -294,29 +222,6 @@ const YamlTool: React.FC<ToolComponentProps> = ({
     } catch (err: any) {
       setStatusMsg({
         text: err?.message || (lang === 'zh' ? 'YAML 格式错误' : 'Invalid YAML'),
-        isError: true
-      });
-    }
-  };
-
-  const handleJsonToYaml = () => {
-    if (!yamlInput.trim()) return;
-    try {
-      const parsedJson = JSON.parse(yamlInput);
-      const dumped = yaml.dump(parsedJson, {
-        indent,
-        sortKeys,
-        noRefs: true,
-        lineWidth: -1
-      });
-      setYamlInput(dumped);
-      setStatusMsg({
-        text: lang === 'zh' ? '已将 JSON 转换为 YAML' : 'Converted JSON to YAML',
-        isError: false
-      });
-    } catch (err: any) {
-      setStatusMsg({
-        text: lang === 'zh' ? '输入不是有效的 JSON' : 'Input is not valid JSON',
         isError: true
       });
     }
@@ -396,9 +301,8 @@ const YamlTool: React.FC<ToolComponentProps> = ({
 
   const t = {
     title: lang === 'zh' ? 'YAML 工具' : 'YAML Tool',
-    subtitle: lang === 'zh' ? '格式化、校验、JSON 互转与美化' : 'Format, validate, convert & prettify YAML',
+    subtitle: lang === 'zh' ? 'YAML 格式化、语法校验与 JSON 转换' : 'Format, validate and convert YAML to JSON',
     format: lang === 'zh' ? '格式化 YAML' : 'Format YAML',
-    jsonToYaml: lang === 'zh' ? 'JSON 转 YAML' : 'JSON to YAML',
     minify: lang === 'zh' ? '压缩' : 'Minify',
     clear: lang === 'zh' ? '清空' : 'Clear',
     copyYaml: lang === 'zh' ? '复制 YAML' : 'Copy YAML',
@@ -408,10 +312,9 @@ const YamlTool: React.FC<ToolComponentProps> = ({
     sendToJsonFmt: lang === 'zh' ? '发送至 JSON 工具' : 'Send to JSON Tool',
     indent: lang === 'zh' ? '缩进: ' : 'Indent: ',
     sortKeys: lang === 'zh' ? '键名排序' : 'Sort Keys',
-    samples: lang === 'zh' ? '预设示例:' : 'Presets:',
-    yamlInput: lang === 'zh' ? 'YAML / JSON 输入' : 'YAML / JSON Input',
+    yamlInput: lang === 'zh' ? 'YAML 输入' : 'YAML Input',
     jsonOutput: lang === 'zh' ? '转换后的 JSON' : 'Converted JSON Output',
-    placeholder: lang === 'zh' ? '在此粘贴或输入 YAML 或 JSON 内容...' : 'Paste or enter YAML or JSON content here...',
+    placeholder: lang === 'zh' ? '在此粘贴或输入 YAML 内容...' : 'Paste or enter YAML content here...',
     validYaml: lang === 'zh' ? '语法正确' : 'Valid YAML Syntax',
     invalidYaml: lang === 'zh' ? '语法错误' : 'Invalid YAML Syntax',
     lines: lang === 'zh' ? '行数' : 'Lines',
@@ -420,7 +323,6 @@ const YamlTool: React.FC<ToolComponentProps> = ({
     keys: lang === 'zh' ? '节点数' : 'Keys',
     modeSplit: lang === 'zh' ? '对照模式' : 'Split View',
     modeYaml: lang === 'zh' ? '仅 YAML' : 'YAML Only',
-    modeJson: lang === 'zh' ? '仅 JSON' : 'JSON Only',
   };
 
   return (
@@ -460,17 +362,22 @@ const YamlTool: React.FC<ToolComponentProps> = ({
               <IconYaml className="w-3.5 h-3.5" />
               <span className="hidden md:inline">{t.modeYaml}</span>
             </button>
-            <button
-              onClick={() => setViewMode('json-only')}
-              className={`px-2.5 py-1 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${
-                viewMode === 'json-only' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title={t.modeJson}
-            >
-              <IconJson className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">{t.modeJson}</span>
-            </button>
           </div>
+
+          {/* Validation Status Indicator */}
+          {yamlInput.trim() && (
+            parsedData.error ? (
+              <span className="flex items-center gap-1 text-[11px] text-red-400 bg-red-900/30 px-2 py-1 rounded border border-red-800/50">
+                <IconX className="w-3 h-3 shrink-0" />
+                <span>{t.invalidYaml}</span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-900/30 px-2 py-1 rounded border border-emerald-800/50">
+                <IconCheck className="w-3 h-3 shrink-0" />
+                <span>{t.validYaml}</span>
+              </span>
+            )
+          )}
         </div>
 
         {/* Formatting Controls & Buttons */}
@@ -510,14 +417,6 @@ const YamlTool: React.FC<ToolComponentProps> = ({
           </button>
 
           <button
-            onClick={handleJsonToYaml}
-            className="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700 transition-colors"
-            title="Convert JSON string to YAML"
-          >
-            {t.jsonToYaml}
-          </button>
-
-          <button
             onClick={handleMinifyYaml}
             className="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition-colors"
           >
@@ -534,94 +433,46 @@ const YamlTool: React.FC<ToolComponentProps> = ({
         </div>
       </div>
 
-      {/* Preset Templates Bar */}
-      <div className="flex flex-wrap items-center gap-2 px-1 text-xs">
-        <span className="text-slate-400 font-medium">{t.samples}</span>
-        <button
-          onClick={() => setYamlInput(SAMPLES.simple)}
-          className="px-2 py-0.5 rounded bg-slate-800/80 hover:bg-primary-900/40 text-slate-300 hover:text-primary-300 border border-slate-700/60 transition-all text-[11px]"
-        >
-          Config
-        </button>
-        <button
-          onClick={() => setYamlInput(SAMPLES.docker)}
-          className="px-2 py-0.5 rounded bg-slate-800/80 hover:bg-primary-900/40 text-slate-300 hover:text-primary-300 border border-slate-700/60 transition-all text-[11px]"
-        >
-          Docker Compose
-        </button>
-        <button
-          onClick={() => setYamlInput(SAMPLES.k8s)}
-          className="px-2 py-0.5 rounded bg-slate-800/80 hover:bg-primary-900/40 text-slate-300 hover:text-primary-300 border border-slate-700/60 transition-all text-[11px]"
-        >
-          Kubernetes
-        </button>
-        <button
-          onClick={() => setYamlInput(SAMPLES.openapi)}
-          className="px-2 py-0.5 rounded bg-slate-800/80 hover:bg-primary-900/40 text-slate-300 hover:text-primary-300 border border-slate-700/60 transition-all text-[11px]"
-        >
-          OpenAPI
-        </button>
-
-        {/* Validation Status Indicator */}
-        <div className="ml-auto flex items-center gap-2">
-          {yamlInput.trim() && (
-            parsedData.error ? (
-              <span className="flex items-center gap-1 text-[11px] text-red-400 bg-red-900/30 px-2 py-0.5 rounded border border-red-800/50">
-                <IconX className="w-3 h-3 shrink-0" />
-                <span>{t.invalidYaml}</span>
-              </span>
-            ) : (
-              <span className="flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-900/30 px-2 py-0.5 rounded border border-emerald-800/50">
-                <IconCheck className="w-3 h-3 shrink-0" />
-                <span>{t.validYaml}</span>
-              </span>
-            )
-          )}
-        </div>
-      </div>
-
       {/* Main Editor Panels */}
       <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-0">
         {/* Left / YAML Panel */}
-        {(viewMode === 'split' || viewMode === 'yaml-only') && (
-          <div className="flex-1 flex flex-col gap-1.5 min-w-0 h-full relative">
-            <div className="flex justify-between items-center px-1 h-6 shrink-0">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <IconYaml className="w-3.5 h-3.5 text-emerald-400" />
-                {t.yamlInput}
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleCopy(yamlInput)}
-                  className="text-xs flex items-center gap-1 text-slate-400 hover:text-primary-400 transition-colors"
-                >
-                  {copied ? <IconCheck className="w-3 h-3 text-emerald-400" /> : <IconCopy className="w-3 h-3" />}
-                  <span>{t.copyYaml}</span>
-                </button>
-                <button
-                  onClick={() => handleDownload('config.yaml', yamlInput)}
-                  className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
-                >
-                  {t.downloadYaml}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 min-h-0">
-              <YamlEditor
-                value={yamlInput}
-                onChange={setYamlInput}
-                errorLine={parsedData.line}
-                errorCol={parsedData.col}
-                placeholder={t.placeholder}
-                lang={lang}
-              />
+        <div className="flex-1 flex flex-col gap-1.5 min-w-0 h-full relative">
+          <div className="flex justify-between items-center px-1 h-6 shrink-0">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <IconYaml className="w-3.5 h-3.5 text-emerald-400" />
+              {t.yamlInput}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleCopy(yamlInput)}
+                className="text-xs flex items-center gap-1 text-slate-400 hover:text-primary-400 transition-colors"
+              >
+                {copied ? <IconCheck className="w-3 h-3 text-emerald-400" /> : <IconCopy className="w-3 h-3" />}
+                <span>{t.copyYaml}</span>
+              </button>
+              <button
+                onClick={() => handleDownload('config.yaml', yamlInput)}
+                className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                {t.downloadYaml}
+              </button>
             </div>
           </div>
-        )}
 
-        {/* Right / JSON Panel */}
-        {(viewMode === 'split' || viewMode === 'json-only') && (
+          <div className="flex-1 min-h-0">
+            <YamlEditor
+              value={yamlInput}
+              onChange={setYamlInput}
+              errorLine={parsedData.line}
+              errorCol={parsedData.col}
+              placeholder={t.placeholder}
+              lang={lang}
+            />
+          </div>
+        </div>
+
+        {/* Right / JSON Panel (Split View Only) */}
+        {viewMode === 'split' && (
           <div className="flex-1 flex flex-col gap-1.5 min-w-0 h-full">
             <div className="flex justify-between items-center px-1 h-6 shrink-0">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -703,7 +554,7 @@ const YamlTool: React.FC<ToolComponentProps> = ({
           <span>{t.keys}: <strong className="text-slate-300 font-mono">{stats.keysCount}</strong></span>
         </div>
         <div className="italic">
-          {lang === 'zh' ? '支持 YAML ↔ JSON 双向转换及格式美化' : 'Supports YAML ↔ JSON bi-directional conversion and formatting'}
+          {lang === 'zh' ? '支持 YAML 格式化、语法校验及 JSON 实时转换' : 'Supports YAML formatting, validation and real-time JSON conversion'}
         </div>
       </div>
     </div>
