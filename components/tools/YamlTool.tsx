@@ -157,6 +157,7 @@ const YamlTool: React.FC<ToolComponentProps> = ({
   
   const [copied, setCopied] = useState<boolean>(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string; isError: boolean } | null>(null);
+  const [showErrorBanner, setShowErrorBanner] = useState<boolean>(false);
 
   // Sync state upward
   useEffect(() => {
@@ -182,6 +183,19 @@ const YamlTool: React.FC<ToolComponentProps> = ({
     }
   }, [yamlInput]);
 
+  // Error banner auto-hide after 0.5s (500ms)
+  useEffect(() => {
+    if (parsedData.error) {
+      setShowErrorBanner(true);
+      const timer = setTimeout(() => {
+        setShowErrorBanner(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      setShowErrorBanner(false);
+    }
+  }, [parsedData.error]);
+
   // Convert parsed object to formatted JSON
   const jsonOutput = useMemo(() => {
     if (parsedData.error || parsedData.obj === undefined || parsedData.obj === null) {
@@ -194,10 +208,11 @@ const YamlTool: React.FC<ToolComponentProps> = ({
     }
   }, [parsedData, indent]);
 
-  // Toast auto-clear
+  // Toast auto-clear (0.5s for errors, 3s for success)
   useEffect(() => {
     if (statusMsg) {
-      const timer = setTimeout(() => setStatusMsg(null), 3000);
+      const duration = statusMsg.isError ? 500 : 3000;
+      const timer = setTimeout(() => setStatusMsg(null), duration);
       return () => clearTimeout(timer);
     }
   }, [statusMsg]);
@@ -521,7 +536,7 @@ const YamlTool: React.FC<ToolComponentProps> = ({
       </div>
 
       {/* Error Banner Notification */}
-      {parsedData.error && (
+      {parsedData.error && showErrorBanner && (
         <div className="bg-red-950/80 border border-red-800/80 rounded-xl p-3 text-red-200 text-xs flex items-start gap-2.5 animate-in fade-in duration-200 shrink-0">
           <IconX className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
           <div className="flex-1 font-mono break-all leading-relaxed">
