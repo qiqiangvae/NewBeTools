@@ -8,20 +8,11 @@ interface ToolCardProps {
 }
 
 const ToolCard: React.FC<ToolCardProps> = ({ tool, onClick, lang }) => {
-  const open = () => onClick(tool.id);
-
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={open}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          open();
-        }
-      }}
-      className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 hover:border-primary-500/50 rounded-lg p-3 cursor-pointer transition-all duration-200 group flex flex-col gap-2 h-full shadow-sm hover:shadow-md hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+    <button
+      type="button"
+      onClick={() => onClick(tool.id)}
+      className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 hover:border-primary-500/50 rounded-lg p-3 cursor-pointer transition-all duration-200 group flex flex-col gap-2 h-full text-left shadow-sm hover:shadow-md hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
     >
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-md bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 group-hover:scale-105 transition-transform duration-200 shrink-0">
@@ -47,7 +38,7 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, onClick, lang }) => {
              <span key={k} className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400">#{k}</span>
          ))}
       </div>
-    </div>
+    </button>
   );
 };
 

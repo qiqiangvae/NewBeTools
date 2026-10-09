@@ -127,7 +127,7 @@ const TOOLS: ToolDef[] = [
     name: 'JWT Decoder',
     nameZh: 'JWT 解码',
     description: 'Decode JSON Web Tokens.',
-    descriptionZh: '解析 JWT 头部 and 载荷信息。',
+    descriptionZh: '解析 JWT 头部和载荷信息。',
     category: ToolCategory.DEVELOPER,
     icon: <IconKey className="w-5 h-5" />,
     component: <JwtDecoder lang="en" />,
@@ -311,24 +311,43 @@ const TOOLS: ToolDef[] = [
   },
 ];
 
+/** UI prefs survive a reload; a storage failure (private mode) just means no memory. */
+const readPref = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const writePref = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* storage unavailable: prefs stay session-only */
+  }
+};
+
+/** The tool named by the URL fragment, so a single tool can be linked to. */
+const toolIdFromHash = (): string | null => {
+  const id = window.location.hash.replace(/^#/, '');
+  return TOOLS.some((tool) => tool.id === id) ? id : null;
+};
+
 const App: React.FC = () => {
-  const [currentToolId, setCurrentToolId] = useState<string | null>(null);
+  const [currentToolId, setCurrentToolId] = useState<string | null>(toolIdFromHash);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); 
-  const [isCollapsed, setIsCollapsed] = useState(true); 
+  const [isCollapsed, setIsCollapsed] = useState(() => readPref('nbt.collapsed') !== '0'); 
   const [toolStates, setToolStates] = useState<Record<string, any>>({});
-  const [lang, setLang] = useState<Lang>('zh');
-  const [theme, setTheme] = useState<Theme>('dark');
-
-  const updateToolState = useCallback((id: string, newState: any) => {
-    setToolStates(prev => ({ ...prev, [id]: newState }));
-  }, []);
+  const [lang, setLang] = useState<Lang>(() => (readPref('nbt.lang') === 'en' ? 'en' : 'zh'));
+  const [theme, setTheme] = useState<Theme>(() => (readPref('nbt.theme') === 'light' ? 'light' : 'dark'));
 
   const handleCurrentToolStateChange = useCallback((newState: any) => {
       if (currentToolId) {
-          updateToolState(currentToolId, newState);
+          setToolStates(prev => ({ ...prev, [currentToolId]: newState }));
       }
-  }, [currentToolId, updateToolState]);
+  }, [currentToolId]);
 
   const handleNavigateToTool = useCallback((toolId: string, payload?: any) => {
     setCurrentToolId(toolId);
@@ -359,6 +378,31 @@ const App: React.FC = () => {
     root.lang = lang === 'zh' ? 'zh-CN' : 'en';
   }, [theme, lang]);
 
+  useEffect(() => {
+    writePref('nbt.lang', lang);
+    writePref('nbt.theme', theme);
+  }, [lang, theme]);
+
+  useEffect(() => {
+    writePref('nbt.collapsed', isCollapsed ? '1' : '0');
+  }, [isCollapsed]);
+
+  // Open tool -> URL fragment (a new history entry, so Back works);
+  // home -> rewrite the fragment away in place.
+  useEffect(() => {
+    if (currentToolId) {
+      if (window.location.hash !== `#${currentToolId}`) window.location.hash = currentToolId;
+    } else if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, [currentToolId]);
+
+  useEffect(() => {
+    const onHashChange = () => setCurrentToolId(toolIdFromHash());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
   const filteredTools = useMemo(() => {
     return TOOLS.filter(tool => {
         if (!searchTerm) return true;
@@ -372,19 +416,13 @@ const App: React.FC = () => {
     });
   }, [searchTerm, lang]);
 
-  const groupedTools = useMemo<Record<string, ToolDef[]>>(() => {
+  const groupedToolEntries = useMemo(() => {
     const groups: Record<string, ToolDef[]> = {};
     filteredTools.forEach(tool => {
-        if (!groups[tool.category]) groups[tool.category] = [];
-        groups[tool.category].push(tool);
+        (groups[tool.category] ??= []).push(tool);
     });
-    return groups;
+    return Object.entries(groups) as [ToolCategory, ToolDef[]][];
   }, [filteredTools]);
-
-  const groupedToolEntries = useMemo(
-    () => Object.entries(groupedTools) as [ToolCategory, ToolDef[]][],
-    [groupedTools]
-  );
 
   const currentTool = TOOLS.find(t => t.id === currentToolId);
 
@@ -494,7 +532,7 @@ const App: React.FC = () => {
              </div>
           </div>
 
-          <div className={`flex-1 overflow-y-auto py-1 transition-all duration-300 ${isDesktopCollapsed ? 'px-0 flex flex-col items-center gap-1.5' : 'px-2'}`}>
+          <div className={`no-scrollbar flex-1 overflow-y-auto py-1 transition-all duration-300 ${isDesktopCollapsed ? 'px-0 flex flex-col items-center gap-1.5' : 'px-2'}`}>
               {isDesktopCollapsed ? (
                 <>
                   {renderNavItem(null)}
