@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { IconCopy, IconCheck } from '../Icons';
-import { Lang, ToolComponentProps } from '../../types';
+import { ToolComponentProps } from '../../types';
 import { useCopy } from './shared/useCopy';
 
 const PALETTES: { en: string; zh: string; hex: string }[] = [

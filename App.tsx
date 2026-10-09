@@ -321,11 +321,7 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<Theme>('dark');
 
   const updateToolState = useCallback((id: string, newState: any) => {
-    setToolStates(prev => {
-        // Only update if reference or value changed to prevent infinite loops
-        if (prev[id] === newState) return prev;
-        return { ...prev, [id]: newState };
-    });
+    setToolStates(prev => ({ ...prev, [id]: newState }));
   }, []);
 
   const handleCurrentToolStateChange = useCallback((newState: any) => {

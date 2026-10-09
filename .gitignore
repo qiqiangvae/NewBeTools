@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Past-session transcript archive, kept locally but out of the repo
+migrated_prompt_history/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

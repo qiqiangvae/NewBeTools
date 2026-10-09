@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { jsonrepair } from 'jsonrepair';
 import * as yaml from 'js-yaml';
-import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconEraser, IconSparkles, IconDiff, IconMenu, IconYaml } from '../Icons';
+import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconDiff, IconYaml } from '../Icons';
 import { ToolComponentProps, Lang } from '../../types';
 import { MAX_HIGHLIGHT_SIZE, escapeHtml } from './shared/highlight';
 import { useCopy } from './shared/useCopy';
@@ -133,7 +133,6 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMs
       placeholder={placeholder}
       hasError={error}
       textareaRef={textareaRef}
-      placeholderColor="#64748b"
       footer={
         <>
           {error && errorPos && (

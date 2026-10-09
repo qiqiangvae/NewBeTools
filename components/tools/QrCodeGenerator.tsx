@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
 
 declare const QRCode: any;

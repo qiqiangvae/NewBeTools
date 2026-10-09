@@ -10,17 +10,16 @@ export function useCopy(resetMs = 2000) {
   const timer = useRef<number | undefined>(undefined);
 
   const copy = useCallback(async (text?: string | null) => {
-    if (!text) return false;
+    if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
     } catch (error) {
       console.error('Clipboard write failed:', error);
-      return false;
+      return;
     }
     setCopied(true);
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => setCopied(false), resetMs);
-    return true;
   }, [resetMs]);
 
   useEffect(() => () => window.clearTimeout(timer.current), []);

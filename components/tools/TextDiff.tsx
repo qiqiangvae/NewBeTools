@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { IconCheck, IconCopy } from '../Icons';
 import { ToolComponentProps } from '../../types';
 
 // Access global Diff object from jsdiff CDN
