@@ -1,7 +1,86 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { generateRegex } from '../../services/geminiService';
 import { IconSparkles } from '../Icons';
+import { escapeHtml, MAX_HIGHLIGHT_SIZE } from './shared/highlight';
 import { ToolComponentProps } from '../../types';
+
+/** Token colours for the highlighted layer behind the pattern input. */
+const REGEX_TOKEN_CLASS = {
+    charClass: 'text-amber-300',
+    escape: 'text-rose-400',
+    group: 'text-sky-400 font-semibold',
+    quantifier: 'text-violet-400',
+    anchor: 'text-emerald-400 font-semibold',
+    alternation: 'text-amber-400 font-semibold',
+} as const;
+
+type RegexToken = keyof typeof REGEX_TOKEN_CLASS;
+
+const GROUP_PREFIX = /^\(\?(?:[:=!]|<[^>]*>)/;
+const QUANTIFIER_BRACE = /^\{\d+(?:,\d*)?\}/;
+
+/** Colour the regex source's syntactic elements (escapes, classes, groups, quantifiers, anchors, alternation). */
+const highlightPattern = (pattern: string): string => {
+    if (pattern.length > MAX_HIGHLIGHT_SIZE) return escapeHtml(pattern);
+
+    let html = '';
+    let i = 0;
+    const emit = (text: string, token?: RegexToken) => {
+        const safe = escapeHtml(text);
+        html += token ? `<span class="${REGEX_TOKEN_CLASS[token]}">${safe}</span>` : safe;
+    };
+
+    while (i < pattern.length) {
+        const ch = pattern[i];
+        if (ch === '\\') {
+            emit(pattern.slice(i, i + 2), 'escape');
+            i += 2;
+        } else if (ch === '[') {
+            let j = i + 1;
+            while (j < pattern.length && pattern[j] !== ']') j += pattern[j] === '\\' ? 2 : 1;
+            j = j < pattern.length ? j + 1 : pattern.length;
+            emit(pattern.slice(i, j), 'charClass');
+            i = j;
+        } else if (ch === '(' || ch === ')') {
+            const prefix = ch === '(' ? GROUP_PREFIX.exec(pattern.slice(i)) : null;
+            const len = prefix ? prefix[0].length : 1;
+            emit(pattern.slice(i, i + len), 'group');
+            i += len;
+        } else if (ch === '^' || ch === '$') {
+            emit(ch, 'anchor');
+            i += 1;
+        } else if (ch === '|') {
+            emit(ch, 'alternation');
+            i += 1;
+        } else if (ch === '*' || ch === '+' || ch === '?') {
+            emit(ch, 'quantifier');
+            i += 1;
+        } else {
+            const brace = ch === '{' ? QUANTIFIER_BRACE.exec(pattern.slice(i)) : null;
+            if (brace) {
+                emit(brace[0], 'quantifier');
+                i += brace[0].length;
+            } else {
+                emit(ch);
+                i += 1;
+            }
+        }
+    }
+    return html;
+};
+
+/** Identical metrics for the overlay <pre> and the real <input> so the two layers line up. */
+const EDITOR_STYLES: React.CSSProperties = {
+    fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+    fontSize: '14px',
+    lineHeight: '20px',
+    padding: '12px',
+    margin: 0,
+    width: '100%',
+    boxSizing: 'border-box',
+    border: 'none',
+    outline: 'none',
+};
 
 const COMMON_REGEXES = [
     { name: 'Email', regex: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}', flags: 'gm' },
@@ -22,6 +101,8 @@ const RegexTester: React.FC<ToolComponentProps> = ({ lang }) => {
   const [matches, setMatches] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const patternInputRef = useRef<HTMLInputElement>(null);
+  const patternPreRef = useRef<HTMLPreElement>(null);
 
   const t = {
     title: lang === 'zh' ? '正则测试' : 'Regex Tester',
@@ -33,6 +114,28 @@ const RegexTester: React.FC<ToolComponentProps> = ({ lang }) => {
     phTest: lang === 'zh' ? '输入要匹配的文本...' : 'Insert text to match against...',
     noMatch: lang === 'zh' ? '无匹配结果' : 'No matches found.',
     prompt: lang === 'zh' ? '描述你想要匹配的内容:' : 'Describe what you want to match:',
+    emptyMatch: lang === 'zh' ? '(空匹配)' : '(empty match)',
+    index: lang === 'zh' ? '位置' : 'Idx',
+    regexLabel: lang === 'zh' ? '正则表达式' : 'Regular expression',
+    flagsLabel: lang === 'zh' ? '修饰符' : 'Flags',
+    aiFailed: lang === 'zh' ? '生成失败：缺少 API Key 或请求出错，请稍后重试。' : 'Generation failed: missing API key or request error. Please try again.',
+  };
+
+  const highlightedPattern = useMemo(
+    () => (regexStr ? highlightPattern(regexStr) : `<span class="text-slate-500">${escapeHtml(t.phExpr)}</span>`),
+    [regexStr, t.phExpr]
+  );
+
+  /** Keep the highlighted layer in step with the input's horizontal scroll. */
+  const syncPatternScroll = () => {
+    if (patternInputRef.current && patternPreRef.current) {
+      patternPreRef.current.scrollLeft = patternInputRef.current.scrollLeft;
+    }
+  };
+
+  const handlePatternChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRegexStr(e.target.value);
+    requestAnimationFrame(syncPatternScroll);
   };
 
   useEffect(() => {
@@ -72,10 +175,15 @@ const RegexTester: React.FC<ToolComponentProps> = ({ lang }) => {
       if (!userPrompt) return;
       setIsGenerating(true);
       const res = await generateRegex(userPrompt);
+      setIsGenerating(false);
+      if (res === null) {
+          setError(t.aiFailed);
+          return;
+      }
       // Try to extract regex part if it returns slashes
       const clean = res.replace(/^\/|\/[a-z]*$/g, ''); 
       setRegexStr(clean);
-      setIsGenerating(false);
+      setError(null);
   };
 
   const loadPreset = (preset: typeof COMMON_REGEXES[0]) => {
@@ -108,20 +216,40 @@ const RegexTester: React.FC<ToolComponentProps> = ({ lang }) => {
 
       <div className="flex flex-col gap-4 flex-1 min-h-0">
         <div className="flex gap-2 items-center">
+             <style>{`
+               .regex-editor { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; }
+               .regex-editor > pre, .regex-editor > input { grid-area: 1 / 1 / 2 / 2; width: 100%; }
+               .regex-editor > pre { z-index: 1; pointer-events: none; user-select: none; white-space: pre; overflow: hidden; }
+               .regex-editor > input { z-index: 2; background: transparent !important; color: transparent !important; -webkit-text-fill-color: transparent !important; caret-color: #fff !important; }
+             `}</style>
              <span className="text-slate-400 font-mono text-lg">/</span>
-             <input 
-                type="text"
-                value={regexStr}
-                onChange={(e) => setRegexStr(e.target.value)}
-                placeholder={t.phExpr}
-                className={`flex-1 bg-slate-800 text-slate-200 p-3 rounded border ${error ? 'border-red-500' : 'border-slate-700'} font-mono outline-none focus:ring-2 focus:ring-primary-500 transition-all`}
-             />
+             <div className={`regex-editor flex-1 min-w-0 bg-slate-800 rounded border overflow-hidden ${error ? 'border-red-500' : 'border-slate-700'} focus-within:ring-2 focus-within:ring-primary-500 transition-all`}>
+                <pre
+                   ref={patternPreRef}
+                   aria-hidden="true"
+                   style={EDITOR_STYLES}
+                   className="text-slate-200"
+                   dangerouslySetInnerHTML={{ __html: highlightedPattern }}
+                />
+                <input
+                   ref={patternInputRef}
+                   type="text"
+                   value={regexStr}
+                   onChange={handlePatternChange}
+                   onScroll={syncPatternScroll}
+                   onSelect={syncPatternScroll}
+                   spellCheck={false}
+                   aria-label={t.regexLabel}
+                   style={EDITOR_STYLES}
+                />
+             </div>
              <span className="text-slate-400 font-mono text-lg">/</span>
              <input 
                 type="text"
                 value={flags}
                 onChange={(e) => setFlags(e.target.value)}
                 placeholder="gims"
+                aria-label={t.flagsLabel}
                 className="w-20 bg-slate-800 text-slate-200 p-3 rounded border border-slate-700 font-mono outline-none focus:ring-2 focus:ring-primary-500 transition-all text-center"
              />
         </div>
@@ -153,10 +281,10 @@ const RegexTester: React.FC<ToolComponentProps> = ({ lang }) => {
                                             {m[0] ? (
                                                 <span className="break-all">{m[0]}</span>
                                             ) : (
-                                                <span className="text-slate-500 italic text-xs py-0.5">(empty match)</span>
+                                                <span className="text-slate-500 italic text-xs py-0.5">{t.emptyMatch}</span>
                                             )}
                                         </div>
-                                        <span className="text-slate-600 text-xs whitespace-nowrap ml-2">Idx: {m.index}</span>
+                                        <span className="text-slate-600 text-xs whitespace-nowrap ml-2">{t.index}: {m.index}</span>
                                     </div>
                                     
                                     {/* Capture Groups */}
