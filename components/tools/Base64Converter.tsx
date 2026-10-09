@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
+import { useCopy } from './shared/useCopy';
 
 const CHARSET_62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
@@ -52,12 +53,40 @@ const fromBase62 = (str: string): string => {
   return hex;
 };
 
+// Parsed data URL. Returns null unless the payload is well-formed base64,
+// so a stray "data:..." string is never treated as a file.
+const parseDataUrl = (input: string) => {
+  const match = /^data:([^,]*),([\s\S]*)$/.exec(input.trim());
+  if (!match) return null;
+  const [, meta, rawPayload] = match;
+  if (!/;base64$/i.test(meta)) return null;
+  const payload = rawPayload.replace(/\s+/g, '');
+  if (!payload || payload.length % 4 === 1 || !/^[A-Za-z0-9+/]+={0,2}$/.test(payload)) return null;
+  const mime = meta.split(';')[0] || 'application/octet-stream';
+  const padding = (payload.match(/=+$/) || [''])[0].length;
+  return {
+    href: `data:${mime};base64,${payload}`,
+    mime,
+    bytes: Math.floor((payload.length * 3) / 4) - padding,
+    ext: (mime.split('/')[1] || 'bin').split('+')[0].replace(/[^a-z0-9]/gi, '') || 'bin',
+  };
+};
+
+const formatBytes = (bytes: number) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+};
+
 const Base64Converter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [text, setText] = useState('');
   const [encoded, setEncoded] = useState('');
   const [mode, setMode] = useState<'encode' | 'decode'>('encode');
   const [format, setFormat] = useState<'base64' | 'base62'>('base64');
-  const [copied, setCopied] = useState(false);
+  const { copied: copiedText, copy: copyText } = useCopy(2000);
+  const { copied: copiedEncoded, copy: copyEncoded } = useCopy(2000);
+  const [dragging, setDragging] = useState(false);
+  const [fileName, setFileName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   // Translations
@@ -71,6 +100,13 @@ const Base64Converter: React.FC<ToolComponentProps> = ({ lang }) => {
     copied: lang === 'zh' ? '已复制' : 'Copied',
     formatLabel: lang === 'zh' ? '格式' : 'Format',
     errInvalid: lang === 'zh' ? '无效的编码格式' : 'Invalid encoding format',
+    errRead: lang === 'zh' ? '文件读取失败' : 'Could not read that file',
+    errDataUrl: lang === 'zh' ? '数据 URL 无效，或载荷不是 Base64' : 'Invalid data URL, or payload is not Base64',
+    chooseFile: lang === 'zh' ? '选择文件' : 'Choose file',
+    dropHint: lang === 'zh' ? '或把图片/文件拖到输入框' : 'or drop an image/file onto an input box',
+    fileLabel: lang === 'zh' ? '文件' : 'File',
+    preview: lang === 'zh' ? '图片预览' : 'Image preview',
+    download: lang === 'zh' ? '下载文件' : 'Download file',
     placeholderPlain: lang === 'zh' ? '输入要编码的文本...' : 'Type plain text here...',
     placeholderEncoded: lang === 'zh' ? '输入要解码的字符串...' : 'Encoded string here...',
   };
@@ -92,6 +128,12 @@ const Base64Converter: React.FC<ToolComponentProps> = ({ lang }) => {
           const binaryStr = Array.from(utf8Bytes, b => String.fromCharCode(b)).join('');
           setEncoded(btoa(binaryStr));
         } else {
+          // A data URL is the encoded form of a file, not decodable text
+          if (input.trim().toLowerCase().startsWith('data:')) {
+            if (parseDataUrl(input)) setText('');
+            else setError(t.errDataUrl);
+            return;
+          }
           const binaryStr = atob(input);
           const bytes = new Uint8Array(binaryStr.length);
           for(let i=0; i<binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
@@ -139,12 +181,46 @@ const Base64Converter: React.FC<ToolComponentProps> = ({ lang }) => {
     }
   };
 
-  const copyToClipboard = (content: string) => {
-    if (!content) return;
-    navigator.clipboard.writeText(content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  // File -> data URL, kept in the encoded box so copy/download keep working
+  const loadFile = (picked?: File | null) => {
+    if (!picked) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setError(null);
+      setFileName(picked.name);
+      setText('');
+      setEncoded(String(reader.result ?? ''));
+      setMode('decode');
+    };
+    reader.onerror = () => setError(t.errRead);
+    try {
+      reader.readAsDataURL(picked);
+    } catch {
+      setError(t.errRead);
+    }
   };
+
+  const dropProps: React.DOMAttributes<HTMLTextAreaElement> =
+    format === 'base64'
+      ? {
+          onDragOver: (e) => {
+            e.preventDefault();
+            setDragging(true);
+          },
+          onDragLeave: () => setDragging(false),
+          onDrop: (e) => {
+            e.preventDefault();
+            setDragging(false);
+            loadFile(e.dataTransfer?.files?.[0]);
+          },
+        }
+      : {};
+
+  // Data URL -> file: preview for images, download anchor for anything
+  const file = useMemo(() => (format === 'base64' ? parseDataUrl(encoded) : null), [format, encoded]);
+  const downloadName = file
+    ? `${fileName ? fileName.replace(/\.[^.]+$/, '') : 'base64-file'}.${file.ext}`
+    : '';
 
   return (
     <div className="h-full flex flex-col gap-6">
@@ -192,9 +268,9 @@ const Base64Converter: React.FC<ToolComponentProps> = ({ lang }) => {
         <div className="relative group">
            <div className="flex justify-between mb-2">
              <label className="text-sm font-medium text-slate-300">{t.plain}</label>
-             <button onClick={() => copyToClipboard(text)} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-primary-500 flex items-center gap-1 text-xs">
-               {copied ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>}
-               {t.copy}
+             <button onClick={() => copyText(text)} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-primary-500 flex items-center gap-1 text-xs">
+               {copiedText ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>}
+               {copiedText ? t.copied : t.copy}
              </button>
            </div>
            <textarea
@@ -202,28 +278,66 @@ const Base64Converter: React.FC<ToolComponentProps> = ({ lang }) => {
              onChange={(e) => handleInputChange(e.target.value, 'text')}
              readOnly={mode === 'decode'}
              placeholder={t.placeholderPlain}
-             className={`w-full h-32 bg-slate-800 text-slate-200 p-4 rounded-lg border border-slate-700 focus:ring-2 focus:ring-primary-500 outline-none resize-none font-mono ${mode === 'decode' ? 'opacity-75 cursor-not-allowed' : ''}`}
+             title={t.dropHint}
+             {...dropProps}
+             className={`w-full h-32 bg-slate-800 text-slate-200 p-4 rounded-lg border border-slate-700 focus:ring-2 focus:ring-primary-500 outline-none resize-none font-mono ${mode === 'decode' ? 'opacity-75 cursor-not-allowed' : ''} ${dragging ? 'border-primary-500 ring-2 ring-primary-500' : ''}`}
            />
         </div>
 
         {/* Encoded Output Section */}
         <div className="relative group">
-           <div className="flex justify-between mb-2">
+           <div className="flex justify-between items-center mb-2">
              <label className="text-sm font-medium text-slate-300">{t.encoded}</label>
-             <button onClick={() => copyToClipboard(encoded)} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-primary-500 flex items-center gap-1 text-xs">
-               {copied ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>}
-               {t.copy}
-             </button>
+             <div className="flex items-center gap-3">
+               {format === 'base64' && (
+                 <label className="cursor-pointer text-xs text-slate-400 hover:text-primary-500">
+                   {t.chooseFile}
+                   <input
+                     type="file"
+                     className="hidden"
+                     onChange={(e) => {
+                       loadFile(e.target.files?.[0]);
+                       e.target.value = '';
+                     }}
+                   />
+                 </label>
+               )}
+               <button onClick={() => copyEncoded(encoded)} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-primary-500 flex items-center gap-1 text-xs">
+                 {copiedEncoded ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>}
+                 {copiedEncoded ? t.copied : t.copy}
+               </button>
+             </div>
            </div>
            <textarea
              value={encoded}
              onChange={(e) => handleInputChange(e.target.value, 'encoded')}
              readOnly={mode === 'encode'}
              placeholder={t.placeholderEncoded}
-             className={`w-full h-32 bg-slate-800 text-slate-200 p-4 rounded-lg border border-slate-700 focus:ring-2 focus:ring-primary-500 outline-none resize-none font-mono ${mode === 'encode' ? 'opacity-75 cursor-not-allowed' : ''} ${error ? 'border-red-500' : ''}`}
+             title={t.dropHint}
+             {...dropProps}
+             className={`w-full h-32 bg-slate-800 text-slate-200 p-4 rounded-lg border border-slate-700 focus:ring-2 focus:ring-primary-500 outline-none resize-none font-mono ${mode === 'encode' ? 'opacity-75 cursor-not-allowed' : ''} ${dragging ? 'border-primary-500 ring-2 ring-primary-500' : ''} ${error ? 'border-red-500' : ''}`}
            />
            {error && <div className="absolute bottom-4 right-4 text-xs text-red-400 bg-red-900/20 px-2 py-1 rounded">{error}</div>}
         </div>
+
+        {/* Data URL -> file */}
+        {file && (
+          <div className="flex flex-wrap items-center gap-4 p-3 rounded-lg border border-slate-700 bg-slate-800/60">
+            <div className="text-xs text-slate-400 font-mono">
+              {t.fileLabel}: {file.mime} · {formatBytes(file.bytes)}
+            </div>
+            {file.mime.startsWith('image/') && (
+              <img src={file.href} alt={t.preview} className="max-h-32 rounded border border-slate-700" />
+            )}
+            <a
+              href={file.href}
+              download={downloadName}
+              className="ml-auto px-3 py-1.5 text-xs sm:text-sm rounded-md bg-primary-600 text-white hover:bg-primary-500 transition-colors"
+            >
+              {t.download}
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
