@@ -1,6 +1,6 @@
 # Web Developer Tools Suite (开发者在线工具箱)
 
-一个现代、高效、开箱即用的在线开发者与实用工具集合，基于 React 18、TypeScript 和 Tailwind CSS 构建。
+一个现代、高效、开箱即用的在线开发者与实用工具集合，基于 React 19、TypeScript 与 Vite 构建，样式由 CDN 引入的 Tailwind CSS 提供。
 
 ---
 
@@ -26,6 +26,15 @@
 
 - **文本对比 (Text Diff)**
   - 侧边对比与逐行差异识别
+
+- **文本处理增强 (Text Processor)**
+  - 支持 `\n` 转义还原、去除 `\"`、逐行修剪空格与自定义行首/行尾附加内容
+  - 支持按行包裹引号或括号，并可通过最多 20 条历史记录逐步撤销
+  - 内置 Markdown 实时预览（仅编辑 / 分屏对照 / 仅预览），提供 9 套预览主题与代码高亮
+
+- **代码格式化 (Code Formatter)**
+  - 基于 Gemini 的 AI 代码格式化，支持 JS、Python、HTML 等多种语言
+  - 格式化失败（如缺少 API Key）时保留原代码并给出错误提示
 
 - **JWT 解码 (JWT Decoder)**
   - 实时解析 JWT Header、Payload 与 Signature
@@ -54,13 +63,30 @@
 - **AI 智能助手 (AI Assistant)**
   - 基于 Gemini API 的智能代码辅助与疑问解答
 
+- **IP 地址查询 (IP Lookup)**
+  - 查询本机 IP 或任意 IP 地址的详细信息
+
+- **二维码生成 (QR Code)**
+  - 将文本或 URL 转换为二维码图片
+
+- **颜色转换 (Color Converter)**
+  - HEX、RGB、HSL 颜色格式互转与预设色板
+
+- **单位换算 (Unit Converter)**
+  - 存储、长度、时间等常见单位实时换算
+
+- **还贷 / 提前还款计算 (Mortgage Prepayment)**
+  - 房贷提前还款计算：缩短年限与减少月供方案对比、利息节省分析
+
 ---
 
 ## 🚀 技术栈 (Tech Stack)
 
-- **前端框架**: React 18 + TypeScript + Vite
-- **样式工具**: Tailwind CSS
-- **核心解析库**: `js-yaml`, `jsonrepair`, `lucide-react`
+- **前端框架**: React 19 + TypeScript + Vite
+- **样式工具**: Tailwind CSS（由 `index.html` 中的 CDN `<script>` 引入，不是 npm 依赖；自定义主题色定义在该文件的内联 `tailwind.config` 中）
+- **图标**: 全部为 `components/Icons.tsx` 中的手写 SVG 组件
+- **核心解析库**: `js-yaml`, `jsonrepair`, `react-markdown`, `remark-gfm`
+- **包管理器**: Bun（`bun.lock`）
 - **构建部署**: Standard ESM Node.js container with Vite build pipeline
 
 ---
@@ -69,14 +95,16 @@
 
 ```bash
 # 1. 安装依赖
-npm install
+bun install
 
-# 2. 启动开发服务器
-npm run dev
+# 2. 启动开发服务器（端口 3000）
+bun run dev
 
 # 3. 构建生产包
-npm run build
+bun run build
 ```
+
+AI 助手与代码格式化需要 Gemini API Key：在项目根目录创建 `.env` 并写入 `GEMINI_API_KEY=你的密钥`。Vite 会在构建时通过 `define` 把它注入 `process.env.API_KEY`，未配置时这些功能会显示缺少密钥的提示。其余工具均在浏览器本地运行，只有 AI 功能与 IP 查询会发起网络请求。
 
 ---
 
