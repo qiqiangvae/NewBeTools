@@ -2,8 +2,8 @@
  * Headless render smoke check: `bun run smoke`.
  *
  * The repo has no test runner, and `tsc`/`vite build` cannot catch a broken tool
- * grid, so this renders App to static markup and asserts the three things that
- * would silently break it: the home grid, a deep link, and an unknown hash.
+ * grid, so this renders App to static markup and asserts the things that would
+ * silently break it: the home grid, a deep link into a tool, and an unknown hash.
  */
 import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
@@ -41,6 +41,10 @@ check(!home.includes('role="button"'), 'home grid cards are real <button> elemen
 check(/<button[^>]*class="[^"]*rounded-lg p-3/.test(home), 'tool cards keep the card styling');
 check(home.includes('JSON Formatter') && home.includes('YAML Tool'), 'tool names render');
 check(render('#json-fmt').includes('Tree Viewer'), 'deep link #json-fmt opens the JSON tool');
+check(
+  render('#fmt-conv').includes('Swap source and target'),
+  'deep link #fmt-conv opens the format converter',
+);
 check(render('#nope').includes('Developer Utilities Hub'), 'unknown hash falls back to home');
 
 process.exit(failed ? 1 : 0);

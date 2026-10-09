@@ -21,6 +21,12 @@
   - 支持 JSONPath 实时检索与过滤
   - 支持一键将 JSON 数据发送至 YAML 工具转换处理
 
+- **数据格式转换 (Format Converter)**
+  - JSON、YAML、TOML、CSV 四种格式任意两两互转，全部在浏览器本地完成，数据不出本机
+  - CSV 支持自定义分隔符（逗号 / 制表符 / 分号）、首行是否为表头、可选的类型推断，以及「Excel 兼容」输出（CRLF + UTF-8 BOM）
+  - 转换有损时逐条列出丢了什么（TOML 无法表达的 `null` 被丢弃、嵌套值被序列化成 JSON 文本、CSV 的重复列名被改名、参差行被补齐或截断），不承诺往返无损
+  - 结果可一键送往 JSON 工具或 YAML 工具继续处理；这两个工具也能一键把当前内容送过来
+
 - **正则表达式测试 (Regex Tester)**
   - 实时正则匹配测试、语法高亮与修饰符控制
 
@@ -85,7 +91,8 @@
 - **前端框架**: React 19 + TypeScript + Vite
 - **样式工具**: Tailwind CSS（由 `index.html` 中的 CDN `<script>` 引入，不是 npm 依赖；自定义主题色定义在该文件的内联 `tailwind.config` 中）
 - **图标**: 全部为 `components/Icons.tsx` 中的手写 SVG 组件
-- **核心解析库**: `js-yaml`, `jsonrepair`, `react-markdown`, `remark-gfm`
+- **核心解析库**: `js-yaml`（YAML）、`smol-toml`（TOML）、`papaparse`（CSV 分词）、`jsonrepair`（JSON 修复）、`react-markdown` / `remark-gfm`（Markdown 预览）
+- **测试**: Bun 自带的 `bun test`；单元测试与所测模块同目录（`*.test.ts`），另有 `scripts/smoke.tsx` 做渲染冒烟
 - **包管理器**: Bun（`bun.lock`）
 - **构建部署**: `bun run build` 产出纯静态资源（`dist/`），交给任意静态托管 / Node 容器托管即可
 
@@ -103,13 +110,15 @@ bun run dev
 # 3. 构建生产包（产物为静态文件，输出到 dist/）
 bun run build
 
-# 4. 检查：类型 + 冒烟渲染
-bun run typecheck && bun run smoke
+# 4. 检查：类型 + 构建 + 单元测试 + 冒烟渲染
+bun run verify
 ```
+
+`bun run verify` 依次执行 `typecheck`、`build`、`test`、`smoke`；这四个脚本也可以单独运行。
 
 AI 助手与代码格式化需要 Gemini API Key：复制 `.env.example` 为 `.env` 并填入 `GEMINI_API_KEY=你的密钥`。Vite 会在构建时通过 `define` 把它注入 `process.env.API_KEY`，未配置时这些功能会显示缺少密钥的提示。其余工具均在浏览器本地运行，只有 AI 功能与 IP 查询会发起网络请求。
 
-界面状态：语言、主题与侧栏折叠会记在 `localStorage`；当前工具会写进 URL 片段（如 `/#json-fmt`），因此刷新和分享链接都能回到同一个工具。
+界面状态：语言、主题与侧栏折叠会记在 `localStorage`；当前工具会写进 URL 片段（如 `/#json-fmt`），因此刷新和分享链接都能回到同一个工具。数据格式转换还会额外记住输入内容与源/目标格式。
 
 ---
 

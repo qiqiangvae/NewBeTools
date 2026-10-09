@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { jsonrepair } from 'jsonrepair';
 import * as yaml from 'js-yaml';
-import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconDiff, IconYaml } from '../Icons';
+import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconDiff, IconYaml, IconFormat } from '../Icons';
 import { ToolComponentProps, Lang } from '../../types';
 import { MAX_HIGHLIGHT_SIZE, escapeHtml } from './shared/highlight';
 import { useCopy } from './shared/useCopy';
@@ -480,6 +480,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
     empty: lang === 'zh' ? '无效的 JSON' : 'Invalid JSON',
     noMatch: lang === 'zh' ? '无匹配' : 'No match',
     sendToYaml: lang === 'zh' ? '发送至 YAML 工具' : 'Send to YAML Tool',
+    sendToConverter: lang === 'zh' ? '发送至格式转换' : 'Send to Converter',
   };
 
   useEffect(() => {
@@ -533,6 +534,11 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
     }
     onNavigateToTool('yaml-fmt', { yamlInput: yamlString });
   };
+  /** Hands the raw text over, valid or not: the converter reports its own parse errors. */
+  const handleSendToConverter = () => {
+    if (!input.trim() || !onNavigateToTool) return;
+    onNavigateToTool('fmt-conv', { input, sourceFormat: 'json' });
+  };
   const parsedJson = useMemo(() => { if (!input.trim() || input.length > MAX_HIGHLIGHT_SIZE * 2) return null; try { return JSON.parse(input); } catch { return null; } }, [input]);
 
   return (
@@ -559,6 +565,12 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
               <button onClick={handleSendToYaml} className="px-3 py-1.5 text-xs font-medium bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-300 rounded border border-emerald-700/50 transition-colors flex items-center gap-1.5" title={t.sendToYaml}>
                 <IconYaml className="w-3.5 h-3.5 shrink-0" />
                 <span>{t.sendToYaml}</span>
+              </button>
+            )}
+            {onNavigateToTool && (
+              <button onClick={handleSendToConverter} className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700 transition-colors flex items-center gap-1.5" title={t.sendToConverter}>
+                <IconFormat className="w-3.5 h-3.5 shrink-0" />
+                <span>{t.sendToConverter}</span>
               </button>
             )}
         </div>

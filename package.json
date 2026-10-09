@@ -8,18 +8,23 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "smoke": "bun scripts/smoke.tsx"
+    "test": "bun test",
+    "smoke": "bun scripts/smoke.tsx",
+    "verify": "bun run typecheck && bun run build && bun run test && bun run smoke"
   },
   "dependencies": {
     "@google/genai": "^1.30.0",
     "js-yaml": "^5.2.2",
     "jsonrepair": "^3.15.0",
+    "papaparse": "^5.7.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "smol-toml": "^1.9.0"
   },
   "devDependencies": {
+    "@types/bun": "^1.4.2",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",

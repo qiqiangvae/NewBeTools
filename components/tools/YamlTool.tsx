@@ -268,6 +268,13 @@ const YamlTool: React.FC<ToolComponentProps> = ({
     }
   };
 
+  /** Hands the raw YAML over, valid or not: the converter reports its own parse errors. */
+  const handleSendToConverter = () => {
+    if (yamlInput.trim() && onNavigateToTool) {
+      onNavigateToTool('fmt-conv', { input: yamlInput, sourceFormat: 'yaml' });
+    }
+  };
+
   // Stats calculation
   const stats = useMemo(() => {
     const lines = yamlInput ? yamlInput.split('\n').length : 0;
@@ -303,6 +310,7 @@ const YamlTool: React.FC<ToolComponentProps> = ({
     downloadYaml: lang === 'zh' ? '下载 YAML' : 'Download YAML',
     downloadJson: lang === 'zh' ? '下载 JSON' : 'Download JSON',
     sendToJsonFmt: lang === 'zh' ? '发送至 JSON 工具' : 'Send to JSON Tool',
+    sendToConverter: lang === 'zh' ? '发送至格式转换' : 'Send to Converter',
     indent: lang === 'zh' ? '缩进: ' : 'Indent: ',
     sortKeys: lang === 'zh' ? '键名排序' : 'Sort Keys',
     yamlInput: lang === 'zh' ? 'YAML 输入' : 'YAML Input',
@@ -449,6 +457,15 @@ const YamlTool: React.FC<ToolComponentProps> = ({
               >
                 {t.downloadYaml}
               </button>
+              {onNavigateToTool && (
+                <button
+                  onClick={handleSendToConverter}
+                  disabled={!yamlInput.trim()}
+                  className="text-[11px] text-sky-400 hover:text-sky-300 font-medium disabled:opacity-40 transition-colors"
+                >
+                  {t.sendToConverter} →
+                </button>
+              )}
             </div>
           </div>
 

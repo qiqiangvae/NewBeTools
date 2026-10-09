@@ -42,6 +42,7 @@ import {
 
 import JsonFormatter from './components/tools/JsonFormatter';
 import YamlTool from './components/tools/YamlTool';
+import FormatConverter from './components/tools/FormatConverter';
 import Base64Converter from './components/tools/Base64Converter';
 
 import HashGenerator from './components/tools/HashGenerator';
@@ -88,6 +89,17 @@ const TOOLS: ToolDef[] = [
     icon: <IconYaml className="w-5 h-5" />,
     component: <YamlTool lang="en" />,
     keywords: ['yaml', 'yml', 'json', 'convert', 'format', 'docker', 'k8s', 'openapi']
+  },
+  {
+    id: 'fmt-conv',
+    name: 'Format Converter',
+    nameZh: '数据格式转换',
+    description: 'Convert between JSON, YAML, CSV and TOML.',
+    descriptionZh: 'JSON、YAML、CSV、TOML 之间双向互转。',
+    category: ToolCategory.CONVERTER,
+    icon: <IconFormat className="w-5 h-5" />,
+    component: <FormatConverter lang="en" />,
+    keywords: ['json', 'yaml', 'toml', 'csv', 'tsv', 'convert', 'format', '转换']
   },
   {
     id: 'text-proc',
