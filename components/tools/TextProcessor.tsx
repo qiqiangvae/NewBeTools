@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { IconCopy, IconCheck, IconType, IconZap, IconUndo, IconChevronDown, IconMarkdown, IconCode } from '../Icons';
 import { ToolComponentProps } from '../../types';
+import { useCopy } from './shared/useCopy';
 
 // Access global hljs objects from CDN
 declare const hljs: any;
@@ -226,7 +227,7 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
   const [markdownThemeId, setMarkdownThemeId] = useState<string>(
     state?.markdownThemeId || 'github-dark'
   );
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy(2000);
   
   const previewRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
@@ -370,12 +371,7 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
     setInput(previous);
   };
 
-  const handleCopy = () => {
-    if (!input) return;
-    navigator.clipboard.writeText(input);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const handleCopy = () => copy(input);
 
   const currentTheme = useMemo(() => {
     return THEMES.find(t => t.id === markdownThemeId) || THEMES[0];

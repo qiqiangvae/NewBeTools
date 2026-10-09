@@ -12,6 +12,7 @@ import {
 } from '../Icons';
 import { ToolComponentProps, Lang } from '../../types';
 import { MAX_HIGHLIGHT_SIZE, escapeHtml } from './shared/highlight';
+import { useCopy } from './shared/useCopy';
 import CodeEditor from './shared/CodeEditor';
 
 interface YamlEditorProps {
@@ -282,8 +283,8 @@ const YamlTool: React.FC<ToolComponentProps> = ({
     state?.viewMode === 'yaml-only' ? 'yaml-only' : 'split'
   );
   
-  const [copied, setCopied] = useState<boolean>(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string; isError: boolean } | null>(null);
+  const { copied, copy } = useCopy(2000);
   const [showErrorBanner, setShowErrorBanner] = useState<boolean>(false);
 
   // Sync state upward
@@ -400,12 +401,7 @@ const YamlTool: React.FC<ToolComponentProps> = ({
     setYamlInput('');
   };
 
-  const handleCopy = (text: string) => {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const handleCopy = (text: string) => copy(text);
 
   const handleDownload = (filename: string, text: string) => {
     if (!text) return;

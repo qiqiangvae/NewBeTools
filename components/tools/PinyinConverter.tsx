@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { convertToPinyin } from '../../services/geminiService';
 import { IconSparkles, IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
+import { useCopy } from './shared/useCopy';
 
 const PinyinConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+  const { copied, copy } = useCopy(2000);
 
   const t = {
     title: lang === 'zh' ? '汉字转拼音' : 'Chinese to Pinyin',
@@ -38,12 +39,7 @@ const PinyinConverter: React.FC<ToolComponentProps> = ({ lang }) => {
       setLoading(false);
   };
 
-  const copyToClipboard = () => {
-      if (!output) return;
-      navigator.clipboard.writeText(output);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-  };
+  const copyToClipboard = () => copy(output);
 
   return (
     <div className="flex flex-col gap-6 h-full">

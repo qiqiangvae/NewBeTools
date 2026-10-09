@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { generateRegex, explainCode, convertCode } from '../../services/geminiService';
 import { IconSparkles, IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
+import { useCopy } from './shared/useCopy';
 
 type Mode = 'regex' | 'explain' | 'convert';
 
@@ -12,7 +13,7 @@ const AiAssistant: React.FC<ToolComponentProps> = ({ lang }) => {
   const [output, setOutput] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy(2000);
 
   const t = {
      title: lang === 'zh' ? '智能开发助手' : 'Smart Developer Assistant',
@@ -53,12 +54,7 @@ const AiAssistant: React.FC<ToolComponentProps> = ({ lang }) => {
     setLoading(false);
   };
 
-  const handleCopy = () => {
-    if (!output) return;
-    navigator.clipboard.writeText(output);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const handleCopy = () => copy(output);
 
   return (
     <div className="flex flex-col gap-6 h-full">

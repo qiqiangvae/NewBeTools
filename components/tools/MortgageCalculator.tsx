@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { IconCopy, IconCheck, IconRefresh } from '../Icons';
 import { ToolComponentProps } from '../../types';
+import { useCopy } from './shared/useCopy';
 
 export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh', state, onStateChange }) => {
   // Input States
@@ -11,8 +12,8 @@ export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh', 
   const [paymentMethod, setPaymentMethod] = useState<1 | 2>(state?.paymentMethod === 2 ? 2 : 1); // 1: 等额本息, 2: 等额本金
   const [shortenTerm, setShortenTerm] = useState<boolean>(state?.shortenTerm ?? true); // true: 缩短年限, false: 减少月供
 
-  const [copied, setCopied] = useState(false);
   const [showSchedule, setShowSchedule] = useState<boolean>(state?.showSchedule ?? false);
+  const { copied, copy } = useCopy(2000);
 
   // Persist inputs only (deps are the persisted fields, never `state`, so App writing the blob back cannot retrigger this).
   useEffect(() => {
@@ -315,9 +316,7 @@ export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh', 
 ${paymentLine}
 - ${t.copyTotalInterest}: ${calcResults.totalInterest.toFixed(2)} ${t.yuan} (${t.copyWas} ${calcResults.originalTotalInterest.toFixed(2)} ${t.yuan})`;
 
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    copy(text);
   };
 
   const resetDefaults = () => {

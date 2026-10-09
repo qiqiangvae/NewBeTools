@@ -5,6 +5,7 @@ import * as yaml from 'js-yaml';
 import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconEraser, IconSparkles, IconDiff, IconMenu, IconYaml } from '../Icons';
 import { ToolComponentProps, Lang } from '../../types';
 import { MAX_HIGHLIGHT_SIZE, escapeHtml } from './shared/highlight';
+import { useCopy } from './shared/useCopy';
 import CodeEditor from './shared/CodeEditor';
 
 declare const jsonpath: any;
@@ -171,9 +172,9 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
   const [collapsed, setCollapsed] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  const [valueCopied, setValueCopied] = useState(false);
-  const [keyCopied, setKeyCopied] = useState(false);
-  const [objCopied, setObjCopied] = useState(false);
+  const { copied: valueCopied, copy: copyValue } = useCopy(1000);
+  const { copied: keyCopied, copy: copyKey } = useCopy(1000);
+  const { copied: objCopied, copy: copyObject } = useCopy(1500);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isObject = value !== null && typeof value === 'object';
@@ -195,10 +196,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
   const handleCopyObject = (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const jsonString = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
-      navigator.clipboard.writeText(jsonString);
-      setObjCopied(true);
-      setTimeout(() => setObjCopied(false), 1500);
+      copyObject(typeof value === 'string' ? value : JSON.stringify(value, null, 2));
     } catch (err) {
       console.error('Failed to copy JSON object:', err);
     }
@@ -227,26 +225,15 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
 
     const handleCopyValue = (e: React.MouseEvent) => {
       e.stopPropagation();
-      navigator.clipboard.writeText(value);
-      setValueCopied(true);
-      setTimeout(() => {
-        setValueCopied(false);
-        setShowMenu(false);
-      }, 1000);
+      copyValue(value);
+      setTimeout(() => setShowMenu(false), 1000);
     };
 
     const handleCopyKey = (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (name) {
-        navigator.clipboard.writeText(name);
-      } else {
-        navigator.clipboard.writeText('');
-      }
-      setKeyCopied(true);
-      setTimeout(() => {
-        setKeyCopied(false);
-        setShowMenu(false);
-      }, 1000);
+      // copyKey no-ops on a missing name, so an array item no longer wipes the clipboard.
+      copyKey(name);
+      setTimeout(() => setShowMenu(false), 1000);
     };
 
     const handleSendToTextProc = (e: React.MouseEvent) => {
@@ -479,7 +466,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
   const [pathQuery, setPathQuery] = useState(state?.pathQuery || '$.');
   const [error, setError] = useState<string | null>(null);
   const [errorVisible, setErrorVisible] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy(2000);
   const [pathResult, setPathResult] = useState('');
 
   useEffect(() => {
@@ -572,7 +559,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
     }
     onNavigateToTool('yaml-fmt', { yamlInput: yamlString });
   };
-  const handleCopy = (text: string) => { if (!text) return; navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  const handleCopy = (text: string) => copy(text);
   const parsedJson = useMemo(() => { if (!input.trim() || input.length > MAX_HIGHLIGHT_SIZE * 2) return null; try { return JSON.parse(input); } catch { return null; } }, [input]);
 
   return (

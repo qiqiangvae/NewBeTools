@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
+import { useCopy } from './shared/useCopy';
 
 const UnicodeConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [mode, setMode] = useState<'unicode' | 'utf8'>('unicode');
   const [plain, setPlain] = useState('');
   const [encoded, setEncoded] = useState('');
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy(2000);
 
   const t = {
     title: lang === 'zh' ? 'Unicode 转码' : 'Unicode Converter',
@@ -71,12 +72,7 @@ const UnicodeConverter: React.FC<ToolComponentProps> = ({ lang }) => {
       }
   };
 
-  const copyToClipboard = (text: string) => {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const copyToClipboard = (text: string) => copy(text);
 
   return (
     <div className="flex flex-col gap-6 h-full">

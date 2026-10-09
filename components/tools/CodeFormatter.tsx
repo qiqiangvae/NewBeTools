@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { formatCode } from '../../services/geminiService';
 import { IconSparkles, IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
+import { useCopy } from './shared/useCopy';
 
 const CodeFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+  const { copied, copy } = useCopy(2000);
 
   const t = {
     title: lang === 'zh' ? '代码格式化 (AI)' : 'Code Formatter (AI)',
@@ -33,12 +34,7 @@ const CodeFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
       setLoading(false);
   };
 
-  const copyToClipboard = () => {
-      if (!input) return;
-      navigator.clipboard.writeText(input);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-  };
+  const copyToClipboard = () => copy(input);
 
   return (
     <div className="flex flex-col gap-6 h-full">
