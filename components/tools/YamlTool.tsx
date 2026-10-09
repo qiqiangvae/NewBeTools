@@ -13,7 +13,7 @@ import {
 import { ToolComponentProps, Lang } from '../../types';
 import { MAX_HIGHLIGHT_SIZE, escapeHtml } from './shared/highlight';
 import { useCopy } from './shared/useCopy';
-import CodeEditor from './shared/CodeEditor';
+import CodeEditor, { EditorShell } from './shared/CodeEditor';
 
 interface YamlEditorProps {
   value: string;
@@ -23,170 +23,35 @@ interface YamlEditorProps {
   placeholder?: string;
   lang?: Lang;
   readOnly?: boolean;
+  /** Which highlight.js grammar to colour the value with. */
+  language?: 'yaml' | 'json';
 }
 
-function highlightYamlValue(val: string): string {
-  if (!val) return '';
-  const match = val.match(/^(\s*)([\s\S]*)$/);
-  if (!match) return escapeHtml(val);
-  const spaces = escapeHtml(match[1]);
-  const content = match[2];
+declare const hljs: any;
 
-  if (!content) return spaces;
-
-  const escapedContent = escapeHtml(content);
-
-  // Double quoted string
-  if (/^"([^"\\]|\\.)*"$/.test(content)) {
-    return spaces + `<span class="text-emerald-400">${escapedContent}</span>`;
-  }
-  // Single quoted string
-  if (/^'([^'\\]|\\.)*'$/.test(content)) {
-    return spaces + `<span class="text-emerald-400">${escapedContent}</span>`;
-  }
-  // Booleans
-  if (/^(true|false|yes|no|True|False|YES|NO)$/i.test(content)) {
-    return spaces + `<span class="text-violet-400 font-semibold">${escapedContent}</span>`;
-  }
-  // Nulls
-  if (/^(null|~|Null|NULL)$/.test(content)) {
-    return spaces + `<span class="text-slate-500 italic font-semibold">${escapedContent}</span>`;
-  }
-  // Numbers
-  if (/^-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?$/.test(content)) {
-    return spaces + `<span class="text-amber-300 font-mono">${escapedContent}</span>`;
-  }
-  // Block scalar indicator
-  if (/^[\|>][+\-]?$/.test(content)) {
-    return spaces + `<span class="text-amber-400 font-bold">${escapedContent}</span>`;
-  }
-
-  // Default value
-  return spaces + `<span class="text-emerald-300/90">${escapedContent}</span>`;
-}
-
-function highlightYaml(text: string, errorLine?: number | null): string {
+/**
+ * Colours the text with highlight.js — a page global, whose stylesheet is
+ * linked from index.html. Highlighting runs per line so the error-line marker
+ * can wrap exactly one line without having to cut through hljs's spans.
+ */
+function highlightCode(text: string, language: 'yaml' | 'json', errorLine?: number | null): string {
   if (!text) return '';
-  if (text.length > MAX_HIGHLIGHT_SIZE) {
-    return escapeHtml(text);
-  }
+  if (text.length > MAX_HIGHLIGHT_SIZE || typeof hljs === 'undefined') return escapeHtml(text);
 
-  const lines = text.split('\n');
-
-  const highlightedLines = lines.map((line, lineIndex) => {
-    const isErrorLine = errorLine != null && lineIndex === errorLine - 1;
-
-    if (!line && !isErrorLine) {
-      return '';
-    }
-
-    // Extract comment
-    let mainPart = line;
-    let commentPart = '';
-    let inDouble = false;
-    let inSingle = false;
-    let commentIdx = -1;
-
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      if (char === '"' && !inSingle && (i === 0 || line[i - 1] !== '\\')) {
-        inDouble = !inDouble;
-      } else if (char === "'" && !inDouble) {
-        inSingle = !inSingle;
-      } else if (char === '#' && !inDouble && !inSingle) {
-        if (i === 0 || /\s/.test(line[i - 1])) {
-          commentIdx = i;
-          break;
-        }
+  return text
+    .split('\n')
+    .map((line, index) => {
+      const html = line ? hljs.highlight(line, { language, ignoreIllegals: true }).value : '';
+      if (errorLine != null && index === errorLine - 1) {
+        return `<span class="bg-red-500/20 text-red-200 border-l-2 border-red-500 pl-1 -ml-1 inline-block w-full">${html || '&nbsp;'}</span>`;
       }
-    }
-
-    if (commentIdx !== -1) {
-      mainPart = line.substring(0, commentIdx);
-      commentPart = line.substring(commentIdx);
-    }
-
-    let lineResult = '';
-
-    const trimmedMain = mainPart.trim();
-    if (trimmedMain === '---' || trimmedMain === '...') {
-      lineResult = escapeHtml(mainPart).replace(
-        trimmedMain,
-        `<span class="text-purple-400 font-bold">${trimmedMain}</span>`
-      );
-    } else {
-      const leadMatch = mainPart.match(/^(\s*)(-\s+|-)?([\s\S]*)$/);
-      const indent = leadMatch ? leadMatch[1] : '';
-      const dash = leadMatch ? leadMatch[2] : '';
-      const rest = leadMatch ? leadMatch[3] : mainPart;
-
-      const indentHtml = escapeHtml(indent);
-      const dashHtml = dash ? `<span class="text-amber-400 font-bold">${escapeHtml(dash)}</span>` : '';
-
-      if (!rest) {
-        lineResult = indentHtml + dashHtml;
-      } else {
-        // Find colon separating key and value outside quotes
-        let colonIdx = -1;
-        let inD = false;
-        let inS = false;
-
-        for (let i = 0; i < rest.length; i++) {
-          const c = rest[i];
-          if (c === '"' && !inS && (i === 0 || rest[i - 1] !== '\\')) {
-            inD = !inD;
-          } else if (c === "'" && !inD) {
-            inS = !inS;
-          } else if (c === ':' && !inD && !inS) {
-            const next = rest[i + 1];
-            if (!next || next === ' ' || next === '\t' || next === '\n' || next === '\r') {
-              colonIdx = i;
-              break;
-            }
-          }
-        }
-
-        if (colonIdx !== -1) {
-          const rawKey = rest.substring(0, colonIdx);
-          const rawColon = rest.substring(colonIdx, colonIdx + 1);
-          const rawVal = rest.substring(colonIdx + 1);
-
-          const keyHtml = `<span class="text-sky-400 font-semibold">${escapeHtml(rawKey)}</span>`;
-          const colonHtml = `<span class="text-slate-400">${escapeHtml(rawColon)}</span>`;
-          const valHtml = highlightYamlValue(rawVal);
-
-          lineResult = indentHtml + dashHtml + keyHtml + colonHtml + valHtml;
-        } else {
-          if (rest.startsWith('{') || rest.startsWith('[')) {
-            const flowEscaped = escapeHtml(rest);
-            const flowHighlighted = flowEscaped.replace(
-              /("([^"\\]|\\.)*"|'([^'\\]|\\.)*'|[^\s:\#,\{\}\[\]]+)(\s*:)/g,
-              '<span class="text-sky-400 font-semibold">$1</span><span class="text-slate-400">$4</span>'
-            );
-            lineResult = indentHtml + dashHtml + flowHighlighted;
-          } else {
-            lineResult = indentHtml + dashHtml + highlightYamlValue(rest);
-          }
-        }
-      }
-    }
-
-    if (commentPart) {
-      lineResult += `<span class="text-slate-500 italic">${escapeHtml(commentPart)}</span>`;
-    }
-
-    if (isErrorLine) {
-      return `<span class="bg-red-500/20 text-red-200 border-l-2 border-red-500 pl-1 -ml-1 inline-block w-full">${lineResult || '&nbsp;'}</span>`;
-    }
-
-    return lineResult;
-  });
-
-  return highlightedLines.join('\n');
+      return html;
+    })
+    .join('\n');
 }
 
-/** The shared CodeEditor defaults to the JSON editor's shell; this is YAML's. */
-const YAML_SHELL: Partial<React.ComponentProps<typeof CodeEditor>> = {
+/** The JSON editor's shell is the shared default; this is YAML's. */
+const YAML_SHELL: EditorShell = {
   className: 'relative w-full h-full bg-slate-900 rounded-xl border border-slate-700/80 overflow-hidden flex flex-col font-mono text-xs md:text-sm',
   padding: '14px',
   caretColor: '#38bdf8',
@@ -203,13 +68,14 @@ const YamlEditor: React.FC<YamlEditorProps> = ({
   errorCol,
   placeholder,
   lang = 'zh',
-  readOnly = false
+  readOnly = false,
+  language = 'yaml'
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const highlighted = useMemo(() => {
-    return highlightYaml(value, errorLine);
-  }, [value, errorLine]);
+    return highlightCode(value, language, errorLine);
+  }, [value, language, errorLine]);
 
   const jumpToLine = () => {
     if (errorLine == null || !textareaRef.current) return;
@@ -227,7 +93,7 @@ const YamlEditor: React.FC<YamlEditorProps> = ({
 
   return (
     <CodeEditor
-      {...YAML_SHELL}
+      shell={YAML_SHELL}
       value={value}
       onChange={onChange}
       highlighted={highlighted}
@@ -657,6 +523,7 @@ const YamlTool: React.FC<ToolComponentProps> = ({
                 value={jsonOutput}
                 onChange={() => {}}
                 readOnly={true}
+                language="json"
                 placeholder={parsedData.error ? parsedData.error : (lang === 'zh' ? '在此显示 JSON 转换结果...' : 'JSON output will appear here...')}
                 lang={lang}
               />
