@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
 import { useCopy } from './shared/useCopy';
+import { pill } from './shared/pill';
 
 const CHARSET_62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
@@ -233,13 +234,13 @@ const Base64Converter: React.FC<ToolComponentProps> = ({ lang }) => {
                 <span className="text-xs font-semibold text-slate-500 uppercase px-2 hidden sm:inline-block">{t.formatLabel}</span>
                 <button
                     onClick={() => handleFormatChange('base64')}
-                    className={`px-3 py-1 text-xs sm:text-sm rounded-md transition-all ${format === 'base64' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                    className={`px-3 py-1 text-xs sm:text-sm rounded-md transition-all ${pill(format === 'base64')}`}
                 >
                     Base64
                 </button>
                 <button
                     onClick={() => handleFormatChange('base62')}
-                    className={`px-3 py-1 text-xs sm:text-sm rounded-md transition-all ${format === 'base62' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                    className={`px-3 py-1 text-xs sm:text-sm rounded-md transition-all ${pill(format === 'base62')}`}
                 >
                     Base62
                 </button>
@@ -249,13 +250,13 @@ const Base64Converter: React.FC<ToolComponentProps> = ({ lang }) => {
             <div className="bg-slate-800 p-1 rounded-lg flex border border-slate-700">
                 <button
                     onClick={() => { setMode('encode'); if(text) handleConvert(text, 'encode', format); }}
-                    className={`px-4 py-1.5 text-sm rounded-md transition-all ${mode === 'encode' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                    className={`px-4 py-1.5 text-sm rounded-md transition-all ${pill(mode === 'encode')}`}
                 >
                     {t.encode}
                 </button>
                 <button
                     onClick={() => { setMode('decode'); if(encoded) handleConvert(encoded, 'decode', format); }}
-                    className={`px-4 py-1.5 text-sm rounded-md transition-all ${mode === 'decode' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                    className={`px-4 py-1.5 text-sm rounded-md transition-all ${pill(mode === 'decode')}`}
                 >
                     {t.decode}
                 </button>

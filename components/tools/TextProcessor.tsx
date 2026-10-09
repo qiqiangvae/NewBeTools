@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import { IconCopy, IconCheck, IconType, IconZap, IconUndo, IconChevronDown, IconMarkdown, IconCode } from '../Icons';
 import { ToolComponentProps } from '../../types';
 import { useCopy } from './shared/useCopy';
+import { pill } from './shared/pill';
 
 // Access global hljs objects from CDN
 declare const hljs: any;
@@ -458,11 +459,7 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
             <div className="bg-slate-800/80 p-0.5 rounded-lg flex border border-slate-700 shadow-inner">
                 <button
                     onClick={() => setViewMode('editor')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md transition-all duration-200 ${
-                        viewMode === 'editor' 
-                        ? 'bg-primary-600 text-white shadow' 
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md transition-all duration-200 ${pill(viewMode === 'editor')}`}
                     title={t.editor}
                 >
                     <IconCode className="w-3.5 h-3.5" />
@@ -470,11 +467,7 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
                 </button>
                 <button
                     onClick={() => setViewMode('split')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md transition-all duration-200 ${
-                        viewMode === 'split' 
-                        ? 'bg-primary-600 text-white shadow' 
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md transition-all duration-200 ${pill(viewMode === 'split')}`}
                     title={t.split}
                 >
                     <div className="flex gap-0.5 items-center">
@@ -485,11 +478,7 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
                 </button>
                 <button
                     onClick={() => setViewMode('preview')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md transition-all duration-200 ${
-                        viewMode === 'preview' 
-                        ? 'bg-primary-600 text-white shadow' 
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md transition-all duration-200 ${pill(viewMode === 'preview')}`}
                     title={t.preview}
                 >
                     <IconMarkdown className="w-3.5 h-3.5" />

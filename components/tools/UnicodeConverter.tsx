@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
 import { useCopy } from './shared/useCopy';
+import { pill } from './shared/pill';
 
 const UnicodeConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [mode, setMode] = useState<'unicode' | 'utf8'>('unicode');
@@ -81,13 +82,13 @@ const UnicodeConverter: React.FC<ToolComponentProps> = ({ lang }) => {
         <div className="bg-slate-800 p-1 rounded-lg flex border border-slate-700">
              <button
                 onClick={() => { setMode('unicode'); setEncoded(''); setPlain(''); }}
-                className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all ${mode === 'unicode' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all ${pill(mode === 'unicode')}`}
              >
                 {t.unicodeMode}
              </button>
              <button
                 onClick={() => { setMode('utf8'); setEncoded(''); setPlain(''); }}
-                className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all ${mode === 'utf8' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all ${pill(mode === 'utf8')}`}
              >
                 {t.utf8Mode}
              </button>

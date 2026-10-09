@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
 import { useCopy } from './shared/useCopy';
+import { pill } from './shared/pill';
 
 const UrlConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [activeTab, setActiveTab] = useState<'convert' | 'parse'>('convert');
@@ -92,13 +93,13 @@ const UrlConverter: React.FC<ToolComponentProps> = ({ lang }) => {
          <div className="bg-slate-800 p-1 rounded-lg flex border border-slate-700">
             <button 
                 onClick={() => setActiveTab('convert')}
-                className={`px-4 py-1.5 text-sm rounded-md transition-all ${activeTab === 'convert' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`px-4 py-1.5 text-sm rounded-md transition-all ${pill(activeTab === 'convert')}`}
             >
                 {t.modeConvert}
             </button>
             <button 
                 onClick={() => setActiveTab('parse')}
-                className={`px-4 py-1.5 text-sm rounded-md transition-all ${activeTab === 'parse' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`px-4 py-1.5 text-sm rounded-md transition-all ${pill(activeTab === 'parse')}`}
             >
                 {t.modeParse}
             </button>

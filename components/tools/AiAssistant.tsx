@@ -4,6 +4,7 @@ import { generateRegex, explainCode, convertCode } from '../../services/geminiSe
 import { IconSparkles, IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
 import { useCopy } from './shared/useCopy';
+import { pill } from './shared/pill';
 
 type Mode = 'regex' | 'explain' | 'convert';
 
@@ -67,19 +68,19 @@ const AiAssistant: React.FC<ToolComponentProps> = ({ lang }) => {
         <div className="bg-slate-800 p-1 rounded-lg flex border border-slate-700">
             <button
                 onClick={() => { setMode('regex'); setOutput(''); setInput(''); setError(''); }}
-                className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all ${mode === 'regex' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all ${pill(mode === 'regex')}`}
             >
                 {t.regex}
             </button>
             <button
                 onClick={() => { setMode('explain'); setOutput(''); setInput(''); setError(''); }}
-                className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all ${mode === 'explain' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all ${pill(mode === 'explain')}`}
             >
                 {t.explain}
             </button>
              <button
                 onClick={() => { setMode('convert'); setOutput(''); setInput(''); setError(''); }}
-                className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all ${mode === 'convert' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all ${pill(mode === 'convert')}`}
             >
                 {t.convert}
             </button>
