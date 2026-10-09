@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ToolComponentProps } from '../../types';
 
 // Access global Diff object from jsdiff CDN
@@ -7,7 +7,6 @@ declare const Diff: any;
 const TextDiff: React.FC<ToolComponentProps> = ({ lang }) => {
   const [left, setLeft] = useState('');
   const [right, setRight] = useState('');
-  const [diffResult, setDiffResult] = useState<any[]>([]);
 
   const t = {
     title: lang === 'zh' ? '文本比对' : 'Text Diff / Compare',
@@ -19,12 +18,10 @@ const TextDiff: React.FC<ToolComponentProps> = ({ lang }) => {
     empty: lang === 'zh' ? '请在两侧输入文本以进行比对。' : 'Enter text in both panels to compare.',
   };
 
-  useEffect(() => {
-    if (typeof Diff !== 'undefined') {
-        const diff = Diff.diffLines(left, right);
-        setDiffResult(diff);
-    }
-  }, [left, right]);
+  const diffResult = useMemo<any[]>(
+    () => (typeof Diff !== 'undefined' ? Diff.diffLines(left, right) : []),
+    [left, right]
+  );
 
   return (
     <div className="h-full flex flex-col gap-4">

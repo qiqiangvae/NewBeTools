@@ -1,7 +1,52 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { IconCopy, IconCheck, IconRefresh } from '../Icons';
+import { IconRefresh } from '../Icons';
 import { ToolComponentProps } from '../../types';
-import { useCopy } from './shared/useCopy';
+import CopyButton from './shared/CopyButton';
+
+interface PresetOption {
+  value: string;
+  label?: string;
+}
+
+const PRESET_TONES = {
+  primary: {
+    active: 'bg-primary-500 text-white border-primary-500',
+    hover: 'hover:border-primary-400',
+  },
+  emerald: {
+    active: 'bg-emerald-600 text-white border-emerald-600',
+    hover: 'hover:border-emerald-500',
+  },
+};
+
+/** One row of quick-pick chips; `format` labels raw values when no explicit label is given. */
+const PresetRow: React.FC<{
+  options: PresetOption[];
+  value: string;
+  onSelect: (value: string) => void;
+  format?: (value: string) => string;
+  variant?: keyof typeof PRESET_TONES;
+}> = ({ options, value, onSelect, format = (v) => v, variant = 'primary' }) => {
+  const tone = PRESET_TONES[variant];
+  return (
+    <div className="flex gap-1.5 flex-wrap pt-0.5">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onSelect(option.value)}
+          className={`px-2 py-0.5 text-[11px] rounded border transition-colors ${
+            value === option.value
+              ? tone.active
+              : `bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 ${tone.hover}`
+          }`}
+        >
+          {option.label ?? format(option.value)}
+        </button>
+      ))}
+    </div>
+  );
+};
 
 export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh', state, onStateChange }) => {
   // Input States
@@ -13,7 +58,6 @@ export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh', 
   const [shortenTerm, setShortenTerm] = useState<boolean>(state?.shortenTerm ?? true); // true: 缩短年限, false: 减少月供
 
   const [showSchedule, setShowSchedule] = useState<boolean>(state?.showSchedule ?? false);
-  const { copied, copy } = useCopy(2000);
 
   // Persist inputs only (deps are the persisted fields, never `state`, so App writing the blob back cannot retrigger this).
   useEffect(() => {
@@ -42,8 +86,6 @@ export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh', 
     annualRate: isZh ? '贷款年利率' : 'Annual Interest Rate',
     prepayment: isZh ? '提前还款金额' : 'Prepayment Amount',
     method: isZh ? '还款方式' : 'Repayment Method',
-    method1: isZh ? '等额本息 (每月还款额固定)' : 'Equal Principal & Interest (Fixed Monthly)',
-    method2: isZh ? '等额本金 (每月还款递减)' : 'Equal Principal (Decreasing Monthly)',
     method1Short: isZh ? '等额本息' : 'Equal Payment',
     method2Short: isZh ? '等额本金' : 'Equal Principal',
     firstMonth: isZh ? '首月' : 'First month',
@@ -55,7 +97,6 @@ export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh', 
     wan: isZh ? '万元' : '10k RMB',
     yuan: isZh ? '元' : 'RMB',
     errorAmount: isZh ? '错误：提前还款金额不能大于剩余本金' : 'Error: Prepayment amount cannot exceed remaining principal',
-    errorInvalid: isZh ? '请输入有效的数值' : 'Please enter valid numerical values',
     savedInterest: isZh ? '节省总利息' : 'Interest Saved',
     newPrincipal: isZh ? '还款后剩余本金' : 'Remaining Principal',
     newTerm: isZh ? '调整后还款期限' : 'Adjusted Term',
@@ -67,7 +108,6 @@ export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh', 
     comparison: isZh ? '调整前后对比' : 'Comparison Summary',
     copySummary: isZh ? '复制计算结果' : 'Copy Summary',
     scheduleTitle: isZh ? '还款明细预览' : 'Repayment Schedule Preview',
-    toggleSchedule: isZh ? '查看/隐藏还款明细表' : 'Toggle Repayment Schedule',
     monthCol: isZh ? '期数' : 'Month',
     paymentCol: isZh ? '月供(元)' : 'Payment',
     principalCol: isZh ? '本金(元)' : 'Principal',
@@ -295,8 +335,8 @@ export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh', 
     return items;
   }, [calcResults, rate, paymentMethod]);
 
-  const handleCopy = () => {
-    if (!calcResults) return;
+  const buildSummary = () => {
+    if (!calcResults) return '';
     const wan = (v: number) => (v / 10000).toFixed(2);
     const methodText = paymentMethod === 1 ? t.method1Short : t.method2Short;
     const planText = shortenTerm ? t.shortenTermTrue : t.shortenTermFalse;
@@ -305,7 +345,7 @@ export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh', 
       paymentMethod === 1
         ? `- ${t.copyNewMonthly}: ${calcResults.newMonthlyPayment.toFixed(2)} ${t.yuan}`
         : `- ${t.copyNewFirstMonthly}: ${calcResults.newFirstMonthPayment.toFixed(2)} ${t.yuan} (${t.lastMonth} ${calcResults.newLastMonthPayment.toFixed(2)} ${t.yuan})`;
-    const text = `${t.copyTitle}
+    return `${t.copyTitle}
 - ${t.copyPrincipal}: ${wan(currentPrincipal)} ${t.wan} (${currentPrincipal.toFixed(2)} ${t.yuan})
 - ${t.copyPrepayment}: ${wan(prepaymentAmount)} ${t.wan} (${prepaymentAmount.toFixed(2)} ${t.yuan})
 - ${t.copyMethod}: ${methodText}
@@ -315,8 +355,6 @@ export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh', 
 - ${t.copyNewTerm}: ${termLine}${calcResults.shortenedMonths > 0 ? ` [${t.copyShortened} ${calcResults.shortenedMonths} ${t.monthsUnit}]` : ''}
 ${paymentLine}
 - ${t.copyTotalInterest}: ${calcResults.totalInterest.toFixed(2)} ${t.yuan} (${t.copyWas} ${calcResults.originalTotalInterest.toFixed(2)} ${t.yuan})`;
-
-    copy(text);
   };
 
   const resetDefaults = () => {
@@ -454,22 +492,12 @@ ${paymentLine}
               </span>
             </div>
             {/* Quick Presets */}
-            <div className="flex gap-1.5 flex-wrap pt-0.5">
-              {['50', '80', '100', '150', '200'].map((val) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => setCurrentPrincipalWan(val)}
-                  className={`px-2 py-0.5 text-[11px] rounded border transition-colors ${
-                    currentPrincipalWan === val
-                      ? 'bg-primary-500 text-white border-primary-500'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-primary-400'
-                  }`}
-                >
-                  {isZh ? `${val}万` : `¥${(Number(val) * 10000).toLocaleString()}`}
-                </button>
-              ))}
-            </div>
+            <PresetRow
+              options={['50', '80', '100', '150', '200'].map((val) => ({ value: val }))}
+              value={currentPrincipalWan}
+              onSelect={setCurrentPrincipalWan}
+              format={(val) => (isZh ? `${val}万` : `¥${(Number(val) * 10000).toLocaleString()}`)}
+            />
           </div>
 
           {/* Row 1 - Input 2: Remaining Months */}
@@ -494,27 +522,16 @@ ${paymentLine}
               </span>
             </div>
             {/* Quick Presets */}
-            <div className="flex gap-1.5 flex-wrap pt-0.5">
-              {[
-                { label: isZh ? '10年(120期)' : '10 yrs (120 mo)', val: '120' },
-                { label: isZh ? '15年(180期)' : '15 yrs (180 mo)', val: '180' },
-                { label: isZh ? '20年(240期)' : '20 yrs (240 mo)', val: '240' },
-                { label: isZh ? '30年(360期)' : '30 yrs (360 mo)', val: '360' },
-              ].map((item) => (
-                <button
-                  key={item.val}
-                  type="button"
-                  onClick={() => setRemainingMonths(item.val)}
-                  className={`px-2 py-0.5 text-[11px] rounded border transition-colors ${
-                    remainingMonths === item.val
-                      ? 'bg-primary-500 text-white border-primary-500'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-primary-400'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
+            <PresetRow
+              options={[
+                { label: isZh ? '10年(120期)' : '10 yrs (120 mo)', value: '120' },
+                { label: isZh ? '15年(180期)' : '15 yrs (180 mo)', value: '180' },
+                { label: isZh ? '20年(240期)' : '20 yrs (240 mo)', value: '240' },
+                { label: isZh ? '30年(360期)' : '30 yrs (360 mo)', value: '360' },
+              ]}
+              value={remainingMonths}
+              onSelect={setRemainingMonths}
+            />
           </div>
 
           {/* Row 2 - Input 3: Annual Interest Rate */}
@@ -535,22 +552,12 @@ ${paymentLine}
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">%</span>
             </div>
-            <div className="flex gap-1.5 flex-wrap pt-0.5">
-              {['3.10', '3.45', '3.85', '4.20', '4.90'].map((val) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => setAnnualInterestRate(val)}
-                  className={`px-2 py-0.5 text-[11px] rounded border transition-colors ${
-                    annualInterestRate === val
-                      ? 'bg-primary-500 text-white border-primary-500'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-primary-400'
-                  }`}
-                >
-                  {val}%
-                </button>
-              ))}
-            </div>
+            <PresetRow
+              options={['3.10', '3.45', '3.85', '4.20', '4.90'].map((val) => ({ value: val }))}
+              value={annualInterestRate}
+              onSelect={setAnnualInterestRate}
+              format={(val) => `${val}%`}
+            />
           </div>
 
           {/* Row 2 - Input 4: Prepayment Amount */}
@@ -574,29 +581,19 @@ ${paymentLine}
                 {t.wan}
               </span>
             </div>
-            <div className="flex gap-1.5 flex-wrap pt-0.5">
-              {[
-                { label: isZh ? '5万' : '¥50,000', val: '5' },
-                { label: isZh ? '10万' : '¥100,000', val: '10' },
-                { label: isZh ? '20万' : '¥200,000', val: '20' },
-                { label: isZh ? '50万' : '¥500,000', val: '50' },
-                { label: '30%', val: (pWan * 0.3).toFixed(1) },
-                { label: '50%', val: (pWan * 0.5).toFixed(1) },
-              ].map((item, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setPrepaymentAmountWan(item.val)}
-                  className={`px-2 py-0.5 text-[11px] rounded border transition-colors ${
-                    prepaymentAmountWan === item.val
-                      ? 'bg-emerald-600 text-white border-emerald-600'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-emerald-500'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
+            <PresetRow
+              options={[
+                { label: isZh ? '5万' : '¥50,000', value: '5' },
+                { label: isZh ? '10万' : '¥100,000', value: '10' },
+                { label: isZh ? '20万' : '¥200,000', value: '20' },
+                { label: isZh ? '50万' : '¥500,000', value: '50' },
+                { label: '30%', value: (pWan * 0.3).toFixed(1) },
+                { label: '50%', value: (pWan * 0.5).toFixed(1) },
+              ]}
+              value={prepaymentAmountWan}
+              onSelect={setPrepaymentAmountWan}
+              variant="emerald"
+            />
           </div>
 
           {/* Row 3 - Option 1: Payment Method */}
@@ -691,85 +688,65 @@ ${paymentLine}
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <span>📊</span> {t.comparison}
               </h3>
-              <button
-                onClick={handleCopy}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors"
-              >
-                {copied ? <IconCheck className="w-3.5 h-3.5 text-emerald-500" /> : <IconCopy className="w-3.5 h-3.5" />}
-                <span>{copied ? (isZh ? '已复制结果' : 'Copied!') : t.copySummary}</span>
-              </button>
+              <CopyButton
+                text={buildSummary()}
+                title={t.copySummary}
+                label={t.copySummary}
+                copiedLabel={isZh ? '已复制结果' : 'Copied!'}
+                className="gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors"
+                iconClassName="w-3.5 h-3.5"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs">
-              {/* Original Plan Column */}
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-lg border border-slate-100 dark:border-slate-800 space-y-2.5">
-                <div className="font-bold text-slate-500 dark:text-slate-400 text-center border-b border-slate-200 dark:border-slate-700 pb-1.5">
-                  {isZh ? '提前还款前 (原计划)' : 'Before Prepayment'}
-                </div>
-                <div>
-                  <div className="text-slate-400 text-[11px]">{t.principal}</div>
-                  <div className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                    ¥ {(currentPrincipal / 10000).toFixed(2)} {t.wan}
+              {[
+                {
+                  title: isZh ? '提前还款前 (原计划)' : 'Before Prepayment',
+                  cardClass: 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800',
+                  titleClass: 'text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700',
+                  valueClass: 'text-slate-800 dark:text-slate-200',
+                  rows: [
+                    { label: t.principal, value: `¥ ${(currentPrincipal / 10000).toFixed(2)} ${t.wan}` },
+                    { label: t.remainingMonths, value: `${months} ${t.monthsUnit} (${(months / 12).toFixed(1)} ${t.yearsUnit})` },
+                    {
+                      label: isZh ? '月供情况' : 'Monthly Payment',
+                      value: paymentMethod === 1
+                        ? `¥ ${calcResults.originalMonthlyPayment.toFixed(2)}`
+                        : `${t.firstMonth} ¥ ${calcResults.originalFirstMonthPayment.toFixed(2)}`
+                    },
+                    { label: t.origTotalInterest, value: `¥ ${calcResults.originalTotalInterest.toFixed(2)} ${t.yuan}` }
+                  ]
+                },
+                {
+                  title: isZh ? '提前还款后 (新计划)' : 'After Prepayment',
+                  cardClass: 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60',
+                  titleClass: 'text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+                  valueClass: 'text-emerald-700 dark:text-emerald-300',
+                  rows: [
+                    { label: t.newPrincipal, value: `¥ ${(calcResults.newPrincipal / 10000).toFixed(2)} ${t.wan}` },
+                    { label: t.newTerm, value: `${calcResults.newRemainingMonths} ${t.monthsUnit} (${(calcResults.newRemainingMonths / 12).toFixed(1)} ${t.yearsUnit})` },
+                    {
+                      label: t.monthlyPayment,
+                      value: paymentMethod === 1
+                        ? `¥ ${calcResults.newMonthlyPayment.toFixed(2)}`
+                        : `${t.firstMonth} ¥ ${calcResults.newFirstMonthPayment.toFixed(2)}`
+                    },
+                    { label: t.totalInterest, value: `¥ ${calcResults.totalInterest.toFixed(2)} ${t.yuan}` }
+                  ]
+                }
+              ].map((column) => (
+                <div key={column.title} className={`p-3.5 rounded-lg border space-y-2.5 ${column.cardClass}`}>
+                  <div className={`font-bold text-center border-b pb-1.5 ${column.titleClass}`}>
+                    {column.title}
                   </div>
+                  {column.rows.map((row) => (
+                    <div key={row.label}>
+                      <div className="text-slate-400 text-[11px]">{row.label}</div>
+                      <div className={`font-mono font-bold ${column.valueClass}`}>{row.value}</div>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <div className="text-slate-400 text-[11px]">{t.remainingMonths}</div>
-                  <div className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                    {months} {t.monthsUnit} ({(months / 12).toFixed(1)} {t.yearsUnit})
-                  </div>
-                </div>
-                <div>
-                  <div className="text-slate-400 text-[11px]">{isZh ? '月供情况' : 'Monthly Payment'}</div>
-                  <div className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                    {paymentMethod === 1 ? (
-                      `¥ ${calcResults.originalMonthlyPayment.toFixed(2)}`
-                    ) : (
-                      `${t.firstMonth} ¥ ${calcResults.originalFirstMonthPayment.toFixed(2)}`
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-slate-400 text-[11px]">{t.origTotalInterest}</div>
-                  <div className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                    ¥ {calcResults.originalTotalInterest.toFixed(2)} {t.yuan}
-                  </div>
-                </div>
-              </div>
-
-              {/* New Plan Column */}
-              <div className="bg-emerald-50/50 dark:bg-emerald-950/20 p-3.5 rounded-lg border border-emerald-200 dark:border-emerald-800/60 space-y-2.5">
-                <div className="font-bold text-emerald-700 dark:text-emerald-400 text-center border-b border-emerald-200 dark:border-emerald-800 pb-1.5">
-                  {isZh ? '提前还款后 (新计划)' : 'After Prepayment'}
-                </div>
-                <div>
-                  <div className="text-slate-400 text-[11px]">{t.newPrincipal}</div>
-                  <div className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
-                    ¥ {(calcResults.newPrincipal / 10000).toFixed(2)} {t.wan}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-slate-400 text-[11px]">{t.newTerm}</div>
-                  <div className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
-                    {calcResults.newRemainingMonths} {t.monthsUnit} ({(calcResults.newRemainingMonths / 12).toFixed(1)} {t.yearsUnit})
-                  </div>
-                </div>
-                <div>
-                  <div className="text-slate-400 text-[11px]">{t.monthlyPayment}</div>
-                  <div className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
-                    {paymentMethod === 1 ? (
-                      `¥ ${calcResults.newMonthlyPayment.toFixed(2)}`
-                    ) : (
-                      `${t.firstMonth} ¥ ${calcResults.newFirstMonthPayment.toFixed(2)}`
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-slate-400 text-[11px]">{t.totalInterest}</div>
-                  <div className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
-                    ¥ {calcResults.totalInterest.toFixed(2)} {t.yuan}
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
 
             {/* Savings Indicator Bar */}

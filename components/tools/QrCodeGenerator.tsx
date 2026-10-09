@@ -6,7 +6,6 @@ declare const QRCode: any;
 const QrCodeGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
   const [text, setText] = useState('https://nbt.qiqiang.online');
   const qrRef = useRef<HTMLDivElement>(null);
-  const [qrCodeObj, setQrCodeObj] = useState<any>(null);
 
   const t = {
     title: lang === 'zh' ? '二维码生成' : 'QR Code Generator',
@@ -16,34 +15,24 @@ const QrCodeGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
   };
 
   useEffect(() => {
-    if (qrRef.current && typeof QRCode !== 'undefined') {
-        // Clear previous
-        qrRef.current.innerHTML = '';
-        
-        try {
-            const qr = new QRCode(qrRef.current, {
-                text: text || " ",
-                width: 256,
-                height: 256,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-            setQrCodeObj(qr);
-        } catch(e) {
-            console.error("QR Error", e);
-        }
-    }
-  }, []);
+    if (!qrRef.current || typeof QRCode === 'undefined') return;
 
-  useEffect(() => {
-      if (qrCodeObj && text) {
-          try {
-            qrCodeObj.clear();
-            qrCodeObj.makeCode(text);
-          } catch(e) {}
-      }
-  }, [text, qrCodeObj]);
+    // Clear previous
+    qrRef.current.innerHTML = '';
+
+    try {
+        new QRCode(qrRef.current, {
+            text: text || " ",
+            width: 256,
+            height: 256,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+    } catch(e) {
+        console.error("QR Error", e);
+    }
+  }, [text]);
 
   return (
     <div className="flex flex-col gap-6 h-full items-center justify-center">

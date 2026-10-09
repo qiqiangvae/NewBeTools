@@ -6,6 +6,7 @@ import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLe
 import { ToolComponentProps, Lang } from '../../types';
 import { MAX_HIGHLIGHT_SIZE, escapeHtml } from './shared/highlight';
 import { useCopy } from './shared/useCopy';
+import CopyButton from './shared/CopyButton';
 import CodeEditor from './shared/CodeEditor';
 
 declare const jsonpath: any;
@@ -173,7 +174,6 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const { copied: valueCopied, copy: copyValue } = useCopy(1000);
   const { copied: keyCopied, copy: copyKey } = useCopy(1000);
-  const { copied: objCopied, copy: copyObject } = useCopy(1500);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isObject = value !== null && typeof value === 'object';
@@ -192,14 +192,9 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [showMenu]);
 
-  const handleCopyObject = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      copyObject(typeof value === 'string' ? value : JSON.stringify(value, null, 2));
-    } catch (err) {
-      console.error('Failed to copy JSON object:', err);
-    }
-  };
+  // Serialized only when the copy button is actually used: walking a subtree on
+  // every render would tax large trees.
+  const copyObjectText = () => (typeof value === 'string' ? value : JSON.stringify(value, null, 2));
 
   if (!isObject) {
     const isString = typeof value === 'string';
@@ -359,23 +354,15 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
           <span className="text-slate-500">{openBracket}{closeBracket}</span>
           {!isLast && <span className="text-slate-500">,</span>}
         </div>
-        <button
-          onClick={handleCopyObject}
+        <CopyButton
+          text={copyObjectText}
           title={lang === 'zh' ? '复制此层 JSON' : 'Copy this JSON layer'}
-          className="opacity-0 group-hover/obj-node:opacity-100 flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-slate-700/80 hover:bg-primary-600 text-slate-300 hover:text-white transition-all cursor-pointer shadow-sm shrink-0 ml-2"
-        >
-          {objCopied ? (
-            <>
-              <IconCheck className="w-3.5 h-3.5 text-green-400" />
-              <span className="text-green-400 font-medium">{lang === 'zh' ? '已复制' : 'Copied'}</span>
-            </>
-          ) : (
-            <>
-              <IconCopy className="w-3.5 h-3.5 text-slate-300" />
-              <span>{lang === 'zh' ? '复制此层' : 'Copy layer'}</span>
-            </>
-          )}
-        </button>
+          label={lang === 'zh' ? '复制此层' : 'Copy layer'}
+          copiedLabel={lang === 'zh' ? '已复制' : 'Copied'}
+          className="opacity-0 group-hover/obj-node:opacity-100 text-[11px] px-1.5 py-0.5 rounded bg-slate-700/80 hover:bg-primary-600 text-slate-300 hover:text-white transition-all cursor-pointer shadow-sm shrink-0 ml-2"
+          iconClassName="w-3.5 h-3.5"
+          resetMs={1500}
+        />
       </div>
     );
   }
@@ -414,23 +401,15 @@ const JsonNode: React.FC<JsonNodeProps> = ({ name, value, isLast, onNavigateToTo
            </div>
          </div>
 
-         <button
-           onClick={handleCopyObject}
+         <CopyButton
+           text={copyObjectText}
            title={lang === 'zh' ? '复制此层 JSON' : 'Copy this JSON layer'}
-           className="opacity-0 group-hover/obj-header:opacity-100 flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-slate-700/80 hover:bg-primary-600 text-slate-300 hover:text-white transition-all cursor-pointer shadow-sm shrink-0 ml-2"
-         >
-           {objCopied ? (
-             <>
-               <IconCheck className="w-3.5 h-3.5 text-green-400" />
-               <span className="text-green-400 font-medium">{lang === 'zh' ? '已复制' : 'Copied'}</span>
-             </>
-           ) : (
-             <>
-               <IconCopy className="w-3.5 h-3.5 text-slate-300" />
-               <span>{lang === 'zh' ? '复制此层' : 'Copy layer'}</span>
-             </>
-           )}
-         </button>
+           label={lang === 'zh' ? '复制此层' : 'Copy layer'}
+           copiedLabel={lang === 'zh' ? '已复制' : 'Copied'}
+           className="opacity-0 group-hover/obj-header:opacity-100 text-[11px] px-1.5 py-0.5 rounded bg-slate-700/80 hover:bg-primary-600 text-slate-300 hover:text-white transition-all cursor-pointer shadow-sm shrink-0 ml-2"
+           iconClassName="w-3.5 h-3.5"
+           resetMs={1500}
+         />
        </div>
 
        {!collapsed && (
@@ -465,7 +444,6 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
   const [pathQuery, setPathQuery] = useState(state?.pathQuery || '$.');
   const [error, setError] = useState<string | null>(null);
   const [errorVisible, setErrorVisible] = useState(false);
-  const { copied, copy } = useCopy(2000);
   const [pathResult, setPathResult] = useState('');
 
   useEffect(() => {
@@ -490,17 +468,14 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
     path: lang === 'zh' ? '路径' : 'Path',
     esc: lang === 'zh' ? '转义' : 'Esc',
     unesc: lang === 'zh' ? '去转义' : 'UnEsc',
-    rmNewline: lang === 'zh' ? '去除 \\n' : 'Del \\n',
     fix: lang === 'zh' ? '自动修复' : 'Auto Fix',
     format: lang === 'zh' ? '格式化' : 'Format',
     minify: lang === 'zh' ? '压缩' : 'Minify',
     copy: lang === 'zh' ? '复制' : 'Copy',
-    copied: lang === 'zh' ? '已复制' : 'Copied',
     inputTitle: lang === 'zh' ? '输入 JSON' : 'Input JSON',
     treeTitle: lang === 'zh' ? '树形视图' : 'Tree Viewer',
     pathTitle: lang === 'zh' ? 'JSONPath 表达式' : 'JSONPath Expression',
     resultTitle: lang === 'zh' ? '提取结果' : 'Extraction Result',
-    readonly: lang === 'zh' ? '只读' : 'ReadOnly',
     placeholder: lang === 'zh' ? '在此粘贴或输入 JSON...' : 'Paste or type JSON here...',
     empty: lang === 'zh' ? '无效的 JSON' : 'Invalid JSON',
     noMatch: lang === 'zh' ? '无匹配' : 'No match',
@@ -558,7 +533,6 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
     }
     onNavigateToTool('yaml-fmt', { yamlInput: yamlString });
   };
-  const handleCopy = (text: string) => copy(text);
   const parsedJson = useMemo(() => { if (!input.trim() || input.length > MAX_HIGHLIGHT_SIZE * 2) return null; try { return JSON.parse(input); } catch { return null; } }, [input]);
 
   return (
@@ -593,7 +567,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
         <div className={`flex-1 flex flex-col gap-3 min-w-0 h-full ${viewMode === 'split' ? 'lg:flex-row' : ''}`}>
             {(viewMode === 'text' || viewMode === 'split') && (
                 <div className="flex-1 flex flex-col gap-1.5 min-w-0 h-full relative">
-                    <div className="flex justify-between items-center px-1 h-6 shrink-0"><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.inputTitle}</span><button onClick={() => handleCopy(input)} className="text-xs flex items-center gap-1 text-slate-500 hover:text-primary-400 transition-colors">{copied ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>} {t.copy}</button></div>
+                    <div className="flex justify-between items-center px-1 h-6 shrink-0"><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.inputTitle}</span><CopyButton text={input} title={t.copy} label={t.copy} className="text-xs" iconClassName="w-3 h-3" /></div>
                     <div className="flex-1 min-h-0"><JsonEditor value={input} onChange={setInput} error={!!error} errorMsg={error} placeholder={t.placeholder} lang={lang} /></div>
                     {error && errorVisible && <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-md"><div className="bg-red-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3"><IconX className="w-5 h-5 shrink-0" /><span className="flex-1 truncate font-mono text-xs">{error}</span></div></div>}
                 </div>

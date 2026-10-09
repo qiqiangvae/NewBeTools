@@ -3,7 +3,6 @@ import * as yaml from 'js-yaml';
 import { 
   IconYaml, 
   IconJson, 
-  IconCopy, 
   IconCheck, 
   IconX, 
   IconEraser, 
@@ -12,7 +11,7 @@ import {
 } from '../Icons';
 import { ToolComponentProps, Lang } from '../../types';
 import { MAX_HIGHLIGHT_SIZE, escapeHtml } from './shared/highlight';
-import { useCopy } from './shared/useCopy';
+import CopyButton from './shared/CopyButton';
 import CodeEditor, { EditorShell } from './shared/CodeEditor';
 
 interface YamlEditorProps {
@@ -150,8 +149,6 @@ const YamlTool: React.FC<ToolComponentProps> = ({
   );
   
   const [statusMsg, setStatusMsg] = useState<{ text: string; isError: boolean } | null>(null);
-  const { copied, copy } = useCopy(2000);
-  const [showErrorBanner, setShowErrorBanner] = useState<boolean>(false);
 
   // Sync state upward
   useEffect(() => {
@@ -183,19 +180,6 @@ const YamlTool: React.FC<ToolComponentProps> = ({
       return { obj: null, error: err?.message || 'Invalid YAML format', line, col };
     }
   }, [yamlInput]);
-
-  // Error banner auto-hide after 0.5s (500ms)
-  useEffect(() => {
-    if (parsedData.error) {
-      setShowErrorBanner(true);
-      const timer = setTimeout(() => {
-        setShowErrorBanner(false);
-      }, 500);
-      return () => clearTimeout(timer);
-    } else {
-      setShowErrorBanner(false);
-    }
-  }, [parsedData.error]);
 
   // Convert parsed object to formatted JSON
   const jsonOutput = useMemo(() => {
@@ -266,8 +250,6 @@ const YamlTool: React.FC<ToolComponentProps> = ({
   const handleClear = () => {
     setYamlInput('');
   };
-
-  const handleCopy = (text: string) => copy(text);
 
   const handleDownload = (filename: string, text: string) => {
     if (!text) return;
@@ -454,13 +436,13 @@ const YamlTool: React.FC<ToolComponentProps> = ({
               {t.yamlInput}
             </span>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleCopy(yamlInput)}
-                className="text-xs flex items-center gap-1 text-slate-400 hover:text-primary-400 transition-colors"
-              >
-                {copied ? <IconCheck className="w-3 h-3 text-emerald-400" /> : <IconCopy className="w-3 h-3" />}
-                <span>{t.copyYaml}</span>
-              </button>
+              <CopyButton
+                text={yamlInput}
+                title={t.copyYaml}
+                label={t.copyYaml}
+                className="text-xs text-slate-400 hover:text-primary-400"
+                iconClassName="w-3 h-3"
+              />
               <button
                 onClick={() => handleDownload('config.yaml', yamlInput)}
                 className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
@@ -491,14 +473,14 @@ const YamlTool: React.FC<ToolComponentProps> = ({
                 {t.jsonOutput}
               </span>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleCopy(jsonOutput)}
+                <CopyButton
+                  text={jsonOutput}
+                  title={t.copyJson}
+                  label={t.copyJson}
                   disabled={!jsonOutput}
-                  className="text-xs flex items-center gap-1 text-slate-400 hover:text-sky-400 disabled:opacity-40 transition-colors"
-                >
-                  <IconCopy className="w-3 h-3" />
-                  <span>{t.copyJson}</span>
-                </button>
+                  className="text-xs text-slate-400 hover:text-sky-400 disabled:opacity-40"
+                  iconClassName="w-3 h-3"
+                />
                 <button
                   onClick={() => handleDownload('converted.json', jsonOutput)}
                   disabled={!jsonOutput}
@@ -533,7 +515,7 @@ const YamlTool: React.FC<ToolComponentProps> = ({
       </div>
 
       {/* Error Banner Notification */}
-      {parsedData.error && showErrorBanner && (
+      {parsedData.error && (
         <div className="bg-red-950/80 border border-red-800/80 rounded-xl p-3 text-red-200 text-xs flex items-start gap-2.5 animate-in fade-in duration-200 shrink-0">
           <IconX className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
           <div className="flex-1 font-mono break-all leading-relaxed">

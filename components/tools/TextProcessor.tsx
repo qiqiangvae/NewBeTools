@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { IconCopy, IconCheck, IconType, IconZap, IconUndo, IconChevronDown, IconMarkdown, IconCode } from '../Icons';
+import { IconType, IconZap, IconUndo, IconChevronDown, IconMarkdown, IconCode } from '../Icons';
 import { ToolComponentProps } from '../../types';
-import { useCopy } from './shared/useCopy';
+import CopyButton from './shared/CopyButton';
 import { pill } from './shared/pill';
 
 // Access global hljs objects from CDN
@@ -13,7 +13,6 @@ interface MarkdownTheme {
   id: string;
   name: string;
   nameZh: string;
-  isDark: boolean;
   hljsUrl: string;
   bg: string;
   text: string;
@@ -35,7 +34,6 @@ const THEMES: MarkdownTheme[] = [
     id: 'github-dark',
     name: 'GitHub Dark',
     nameZh: 'GitHub 暗黑',
-    isDark: true,
     hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css',
     bg: 'bg-[#0d1117]',
     text: 'text-[#c9d1d9]',
@@ -55,7 +53,6 @@ const THEMES: MarkdownTheme[] = [
     id: 'github-light',
     name: 'GitHub Light',
     nameZh: 'GitHub 明亮',
-    isDark: false,
     hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css',
     bg: 'bg-white',
     text: 'text-slate-800',
@@ -75,7 +72,6 @@ const THEMES: MarkdownTheme[] = [
     id: 'dracula',
     name: 'Dracula',
     nameZh: '吸血鬼 (Dracula)',
-    isDark: true,
     hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/dracula.min.css',
     bg: 'bg-[#282a36]',
     text: 'text-[#f8f8f2]',
@@ -95,7 +91,6 @@ const THEMES: MarkdownTheme[] = [
     id: 'solarized-light',
     name: 'Solarized Light',
     nameZh: '护眼日光 (Solarized)',
-    isDark: false,
     hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/solarized-light.min.css',
     bg: 'bg-[#fdf6e3]',
     text: 'text-[#586e75]',
@@ -115,7 +110,6 @@ const THEMES: MarkdownTheme[] = [
     id: 'solarized-dark',
     name: 'Solarized Dark',
     nameZh: '护眼深邃 (Solarized)',
-    isDark: true,
     hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/solarized-dark.min.css',
     bg: 'bg-[#002b36]',
     text: 'text-[#839496]',
@@ -135,7 +129,6 @@ const THEMES: MarkdownTheme[] = [
     id: 'nord',
     name: 'Nord',
     nameZh: '极光冰川 (Nord)',
-    isDark: true,
     hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/nord.min.css',
     bg: 'bg-[#2e3440]',
     text: 'text-[#d8dee9]',
@@ -155,7 +148,6 @@ const THEMES: MarkdownTheme[] = [
     id: 'one-dark',
     name: 'One Dark',
     nameZh: '雅致深灰 (One Dark)',
-    isDark: true,
     hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css',
     bg: 'bg-[#282c34]',
     text: 'text-[#abb2bf]',
@@ -175,7 +167,6 @@ const THEMES: MarkdownTheme[] = [
     id: 'cyberpunk',
     name: 'Cyberpunk',
     nameZh: '赛博朋克 (Cyberpunk)',
-    isDark: true,
     hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css',
     bg: 'bg-[#0f051d]',
     text: 'text-[#00ffcc]',
@@ -195,7 +186,6 @@ const THEMES: MarkdownTheme[] = [
     id: 'sepia',
     name: 'Sepia Book',
     nameZh: '复古书香 (Sepia)',
-    isDark: false,
     hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/school-book.min.css',
     bg: 'bg-[#f4ecd8]',
     text: 'text-[#433422]',
@@ -213,9 +203,6 @@ const THEMES: MarkdownTheme[] = [
   }
 ];
 
-const getHljsThemeUrl = (themeId: string): string =>
-  (THEMES.find(t => t.id === themeId) || THEMES[0]).hljsUrl;
-
 const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChange }) => {
   const [input, setInput] = useState(state?.input || '');
   const [debouncedInput, setDebouncedInput] = useState(state?.input || '');
@@ -228,46 +215,28 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
   const [markdownThemeId, setMarkdownThemeId] = useState<string>(
     state?.markdownThemeId || 'github-dark'
   );
-  const { copied, copy } = useCopy(2000);
   
   const previewRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const scrollSource = useRef<'editor' | 'preview' | null>(null);
 
-  const handleEditorScroll = () => {
-    if (viewMode !== 'split') return;
-    if (scrollSource.current !== 'editor') return;
-    
-    const editor = editorRef.current;
-    const preview = previewRef.current;
-    if (editor && preview) {
-      const editorLimit = editor.scrollHeight - editor.clientHeight;
-      if (editorLimit > 0) {
-        const percentage = editor.scrollTop / editorLimit;
-        const previewLimit = preview.scrollHeight - preview.clientHeight;
-        preview.scrollTop = percentage * previewLimit;
-      }
-    }
+  /** Mirrors one pane's scroll percentage onto the other, for the pane the pointer last entered. */
+  const syncScroll = (
+    source: 'editor' | 'preview',
+    from: React.RefObject<HTMLElement | null>,
+    to: React.RefObject<HTMLElement | null>
+  ) => {
+    if (viewMode !== 'split' || scrollSource.current !== source) return;
+    if (!from.current || !to.current) return;
+    const fromLimit = from.current.scrollHeight - from.current.clientHeight;
+    if (fromLimit <= 0) return;
+    const toLimit = to.current.scrollHeight - to.current.clientHeight;
+    to.current.scrollTop = (from.current.scrollTop / fromLimit) * toLimit;
   };
 
-  const handlePreviewScroll = () => {
-    if (viewMode !== 'split') return;
-    if (scrollSource.current !== 'preview') return;
-    
-    const editor = editorRef.current;
-    const preview = previewRef.current;
-    if (editor && preview) {
-      const previewLimit = preview.scrollHeight - preview.clientHeight;
-      if (previewLimit > 0) {
-        const percentage = preview.scrollTop / previewLimit;
-        const editorLimit = editor.scrollHeight - editor.clientHeight;
-        editor.scrollTop = percentage * editorLimit;
-      }
-    }
-  };
+  const handleEditorScroll = () => syncScroll('editor', editorRef, previewRef);
 
-  // Track the last state sent to parent to avoid infinite loop
-  const lastReportedState = useRef<string>('');
+  const handlePreviewScroll = () => syncScroll('preview', previewRef, editorRef);
 
   // Sync external state updates (e.g., from JSON tree linkage transfer)
   useEffect(() => {
@@ -290,22 +259,9 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
     return () => clearTimeout(timer);
   }, [input]);
 
-  // Sync state back to parent ONLY when it truly changes
+  // Sync state back to parent
   useEffect(() => {
-    const nextState = { 
-      input, 
-      extraContent, 
-      quoteType, 
-      history, 
-      viewMode,
-      markdownThemeId
-    };
-    const stateStr = JSON.stringify(nextState);
-    
-    if (lastReportedState.current !== stateStr) {
-        lastReportedState.current = stateStr;
-        onStateChange?.(nextState);
-    }
+    onStateChange?.({ input, extraContent, quoteType, history, viewMode, markdownThemeId });
   }, [input, extraContent, quoteType, history, viewMode, markdownThemeId, onStateChange]);
 
   const t = {
@@ -372,8 +328,6 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
     setInput(previous);
   };
 
-  const handleCopy = () => copy(input);
-
   const currentTheme = useMemo(() => {
     return THEMES.find(t => t.id === markdownThemeId) || THEMES[0];
   }, [markdownThemeId]);
@@ -387,7 +341,7 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
       themeLink.rel = 'stylesheet';
       document.head.appendChild(themeLink);
     }
-    themeLink.href = getHljsThemeUrl(markdownThemeId);
+    themeLink.href = currentTheme.hljsUrl;
   }, [markdownThemeId]);
 
   // Apply syntax highlighting
@@ -511,10 +465,14 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
             <button onClick={handleUndo} disabled={history.length === 0} className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium border rounded transition-all ${history.length > 0 ? 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700' : 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed'}`}>
                 <IconUndo className="w-3.5 h-3.5" /> {t.undo}
             </button>
-            <button onClick={handleCopy} className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-slate-800 border border-slate-700 rounded text-slate-300 hover:text-white hover:bg-slate-700 transition-all shadow-sm">
-                {copied ? <IconCheck className="w-3.5 h-3.5" /> : <IconCopy className="w-3.5 h-3.5" />}
-                {copied ? t.copied : t.copy}
-            </button>
+            <CopyButton
+                text={input}
+                title={t.copy}
+                label={t.copy}
+                copiedLabel={t.copied}
+                className="gap-2 px-3 py-1.5 text-xs font-medium bg-slate-800 border border-slate-700 rounded text-slate-300 hover:text-white hover:bg-slate-700 transition-all shadow-sm"
+                iconClassName="w-3.5 h-3.5"
+            />
             <button onClick={() => { saveToHistory(); setInput(''); }} className="px-3 py-1.5 text-xs font-medium bg-red-900/20 border border-red-900/30 text-red-400 rounded hover:bg-red-900/30 transition-all">
                 {t.clear}
             </button>
