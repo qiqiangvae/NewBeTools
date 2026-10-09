@@ -15,6 +15,16 @@ dist-ssr
 # Past-session transcript archive, kept locally but out of the repo
 migrated_prompt_history/
 
+# Local secrets / credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
