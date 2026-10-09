@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
-import { useCopy } from './shared/useCopy';
 import { pill } from './shared/pill';
+import CopyButton from './shared/CopyButton';
+import { fromHex, textToHex } from './shared/hex';
 
 const UnicodeConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [mode, setMode] = useState<'unicode' | 'utf8'>('unicode');
   const [plain, setPlain] = useState('');
   const [encoded, setEncoded] = useState('');
-  const { copied, copy } = useCopy(2000);
 
   const t = {
     title: lang === 'zh' ? 'Unicode 转码' : 'Unicode Converter',
@@ -19,10 +18,8 @@ const UnicodeConverter: React.FC<ToolComponentProps> = ({ lang }) => {
     encode: lang === 'zh' ? '编码 (Encode)' : 'Encode',
     decode: lang === 'zh' ? '解码 (Decode)' : 'Decode',
     copy: lang === 'zh' ? '复制' : 'Copy',
-    copied: lang === 'zh' ? '已复制' : 'Copied',
     phPlain: lang === 'zh' ? '输入普通文本...' : 'Enter plain text...',
     phEncoded: lang === 'zh' ? '输入编码文本 (如 \\u4f60\\u597d)...' : 'Enter encoded text (e.g. \\u4f60\\u597d)...',
-    autoDecode: lang === 'zh' ? '尝试自动修正格式' : 'Try auto-fix format',
   };
 
   const handleUnicodeEncode = (str: string) => {
@@ -40,27 +37,13 @@ const UnicodeConverter: React.FC<ToolComponentProps> = ({ lang }) => {
     });
   };
 
-  const handleUtf8Encode = (str: string) => {
-    const encoder = new TextEncoder();
-    const bytes = encoder.encode(str);
-    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
-  };
+  /** Upper-case, space-separated byte pairs, e.g. "E4 BD A0". */
+  const handleUtf8Encode = (str: string) => textToHex(str, ' ', true);
 
   const handleUtf8Decode = (str: string) => {
-    // Clean up input: remove spaces, '0x', etc
-    const cleanHex = str.replace(/[\s,0x]/g, '');
-    if (cleanHex.length % 2 !== 0) return 'Invalid Hex';
-    
-    try {
-        const bytes = new Uint8Array(cleanHex.length / 2);
-        for (let i = 0; i < cleanHex.length; i += 2) {
-            bytes[i / 2] = parseInt(cleanHex.substr(i, 2), 16);
-        }
-        const decoder = new TextDecoder();
-        return decoder.decode(bytes);
-    } catch (e) {
-        return 'Decoding Error';
-    }
+    const bytes = fromHex(str);
+    if (!bytes) return 'Invalid Hex';
+    return new TextDecoder().decode(bytes);
   };
 
   const processConvert = (direction: 'toEncoded' | 'toPlain') => {
@@ -72,8 +55,6 @@ const UnicodeConverter: React.FC<ToolComponentProps> = ({ lang }) => {
           else setPlain(handleUtf8Decode(encoded));
       }
   };
-
-  const copyToClipboard = (text: string) => copy(text);
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -100,9 +81,7 @@ const UnicodeConverter: React.FC<ToolComponentProps> = ({ lang }) => {
           <div className="flex-1 flex flex-col gap-2">
               <div className="flex justify-between items-center">
                   <label className="text-sm font-medium text-slate-400">{t.plainText}</label>
-                  <button onClick={() => copyToClipboard(plain)} className="text-slate-500 hover:text-primary-400 transition-colors p-1 flex items-center gap-1 text-xs">
-                      {copied ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>} {t.copy}
-                  </button>
+                  <CopyButton text={plain} title={t.copy} label={t.copy} iconClassName="w-3 h-3" className="text-slate-500 hover:text-primary-400 p-1 text-xs" />
               </div>
               <textarea 
                   value={plain}
@@ -134,9 +113,7 @@ const UnicodeConverter: React.FC<ToolComponentProps> = ({ lang }) => {
           <div className="flex-1 flex flex-col gap-2">
               <div className="flex justify-between items-center">
                   <label className="text-sm font-medium text-slate-400">{t.encodedText}</label>
-                  <button onClick={() => copyToClipboard(encoded)} className="text-slate-500 hover:text-primary-400 transition-colors p-1 flex items-center gap-1 text-xs">
-                      {copied ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>} {t.copy}
-                  </button>
+                  <CopyButton text={encoded} title={t.copy} label={t.copy} iconClassName="w-3 h-3" className="text-slate-500 hover:text-primary-400 p-1 text-xs" />
               </div>
               <textarea 
                   value={encoded}

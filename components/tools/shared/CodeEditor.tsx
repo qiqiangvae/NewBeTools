@@ -5,8 +5,8 @@ export interface EditorShell {
   className: string;
   padding: string;
   caretColor: string;
-  /** Emitted as a ::placeholder rule; omit it to leave the browser default. */
-  placeholderColor?: string;
+  /** Emitted as a ::placeholder rule. */
+  placeholderColor: string;
   overflowY: 'scroll' | 'auto';
   focusRingClass: string;
   focusRingErrorClass: string;
@@ -112,9 +112,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     outline: 'none',
   };
 
-  const placeholderRule = shell.placeholderColor
-    ? `.code-editor-stack textarea::placeholder { color: ${shell.placeholderColor} !important; -webkit-text-fill-color: ${shell.placeholderColor} !important; }`
-    : '';
+  const placeholderRule = `.code-editor-stack textarea::placeholder { color: ${shell.placeholderColor} !important; -webkit-text-fill-color: ${shell.placeholderColor} !important; }`;
 
   return (
     <div className={shell.className}>

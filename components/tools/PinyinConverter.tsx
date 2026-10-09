@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { convertToPinyin } from '../../services/geminiService';
-import { IconSparkles, IconCopy, IconCheck } from '../Icons';
+import { IconSparkles } from '../Icons';
 import { ToolComponentProps } from '../../types';
-import { useCopy } from './shared/useCopy';
+import CopyButton from './shared/CopyButton';
 
 const PinyinConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { copied, copy } = useCopy(2000);
 
   const t = {
     title: lang === 'zh' ? '汉字转拼音' : 'Chinese to Pinyin',
@@ -38,8 +37,6 @@ const PinyinConverter: React.FC<ToolComponentProps> = ({ lang }) => {
       }
       setLoading(false);
   };
-
-  const copyToClipboard = () => copy(output);
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -81,10 +78,14 @@ const PinyinConverter: React.FC<ToolComponentProps> = ({ lang }) => {
              <div className="flex justify-between items-center">
                  <label className="text-sm text-slate-400">{t.output}</label>
                  {output && (
-                    <button onClick={copyToClipboard} className="text-primary-500 text-xs flex items-center gap-1">
-                        {copied ? <IconCheck className="w-3 h-3" /> : <IconCopy className="w-3 h-3" />}
-                        {copied ? t.copied : t.copy}
-                    </button>
+                    <CopyButton
+                        text={output}
+                        title={t.copy}
+                        label={t.copy}
+                        copiedLabel={t.copied}
+                        className="text-primary-500 text-xs"
+                        iconClassName="w-3 h-3"
+                    />
                  )}
              </div>
              <div className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-6 overflow-auto text-lg text-green-400 font-medium leading-relaxed">

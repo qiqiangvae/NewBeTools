@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { IconCopy, IconCheck, IconRefresh } from '../Icons';
+import { IconRefresh } from '../Icons';
 import { ToolComponentProps } from '../../types';
-import { useCopy } from './shared/useCopy';
+import CopyButton from './shared/CopyButton';
 
 const UuidGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
   const [uuids, setUuids] = useState<string[]>([]);
   const [count, setCount] = useState(5);
   const [hyphens, setHyphens] = useState(true);
   const [uppercase, setUppercase] = useState(false);
-  const { copied, copy } = useCopy();
 
   const t = {
     title: lang === 'zh' ? 'UUID 生成器' : 'UUID Generator',
@@ -22,19 +21,11 @@ const UuidGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
     results: lang === 'zh' ? '结果' : 'Results',
   };
 
-  const generateUuidV4 = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  };
-
   const handleGenerate = () => {
     const arr = [];
     const limit = Math.min(Math.max(count, 1), 100);
     for (let i = 0; i < limit; i++) {
-        let uuid = generateUuidV4();
+        let uuid: string = crypto.randomUUID();
         if (!hyphens) uuid = uuid.replace(/-/g, '');
         if (uppercase) uuid = uuid.toUpperCase();
         arr.push(uuid);
@@ -42,24 +33,11 @@ const UuidGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
     setUuids(arr);
   };
 
-  // Generate on mount
-  React.useEffect(() => {
-    handleGenerate();
-  }, []); // mount-only by design: count applies on Generate, not per keystroke
-
-  // Re-generate if formatting options change
+  // Runs on mount and whenever a formatting option changes.
+  // `count` is intentionally not a dependency: it applies on Generate, not per keystroke.
   React.useEffect(() => {
       handleGenerate();
   }, [hyphens, uppercase]);
-
-  const copyToClipboard = () => {
-      if (uuids.length === 0) return;
-      copy(uuids.join('\n'));
-  };
-
-  const copySingle = (uuid: string) => {
-      navigator.clipboard.writeText(uuid);
-  };
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -98,26 +76,26 @@ const UuidGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
       <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col">
           <div className="flex justify-between items-center p-3 bg-slate-800 border-b border-slate-700">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider px-2">{t.results} ({uuids.length})</span>
-              <button 
-                onClick={copyToClipboard} 
-                className="text-xs flex items-center gap-1.5 text-primary-400 hover:text-primary-300 transition-colors px-2 py-1 rounded hover:bg-slate-700"
-              >
-                 {copied ? <IconCheck className="w-3.5 h-3.5" /> : <IconCopy className="w-3.5 h-3.5" />}
-                 {copied ? t.copied : t.copy}
-              </button>
+              <CopyButton
+                text={uuids.join('\n')}
+                title={t.copy}
+                label={t.copy}
+                copiedLabel={t.copied}
+                iconClassName="w-3.5 h-3.5"
+                className="text-xs gap-1.5 text-primary-400 hover:text-primary-300 px-2 py-1 rounded hover:bg-slate-700"
+              />
           </div>
           <div className="flex-1 overflow-auto p-2">
               <ul className="flex flex-col gap-1">
                   {uuids.map((uuid, i) => (
                       <li key={i} className="group flex items-center justify-between p-3 rounded-lg hover:bg-slate-700/50 transition-colors border border-transparent hover:border-slate-700">
                           <span className="font-mono text-slate-300 text-sm sm:text-base break-all">{uuid}</span>
-                          <button 
-                            onClick={() => { copySingle(uuid); }}
-                            className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-white transition-all p-1.5 rounded-md hover:bg-slate-600"
+                          <CopyButton
+                            text={uuid}
                             title={t.copyOne}
-                          >
-                              <IconCopy className="w-4 h-4" />
-                          </button>
+                            iconClassName="w-4 h-4"
+                            className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-white transition-all p-1.5 rounded-md hover:bg-slate-600"
+                          />
                       </li>
                   ))}
               </ul>

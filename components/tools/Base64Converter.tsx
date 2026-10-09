@@ -1,26 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
-import { useCopy } from './shared/useCopy';
 import { pill } from './shared/pill';
+import CopyButton from './shared/CopyButton';
+import { textToHex, hexToText } from './shared/hex';
 
 const CHARSET_62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-
-// Helper: Text -> Hex
-const textToHex = (str: string) => {
-  const raw = new TextEncoder().encode(str);
-  return Array.from(raw).map(b => b.toString(16).padStart(2, '0')).join('');
-};
-
-// Helper: Hex -> Text
-const hexToText = (hex: string) => {
-  if (hex.length % 2 !== 0) return '';
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
-  }
-  return new TextDecoder().decode(bytes);
-};
 
 // Helper: BigInt -> Base62 String
 const toBase62 = (hex: string): string => {
@@ -84,8 +68,6 @@ const Base64Converter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [encoded, setEncoded] = useState('');
   const [mode, setMode] = useState<'encode' | 'decode'>('encode');
   const [format, setFormat] = useState<'base64' | 'base62'>('base64');
-  const { copied: copiedText, copy: copyText } = useCopy(2000);
-  const { copied: copiedEncoded, copy: copyEncoded } = useCopy(2000);
   const [dragging, setDragging] = useState(false);
   const [fileName, setFileName] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -269,10 +251,14 @@ const Base64Converter: React.FC<ToolComponentProps> = ({ lang }) => {
         <div className="relative group">
            <div className="flex justify-between mb-2">
              <label className="text-sm font-medium text-slate-300">{t.plain}</label>
-             <button onClick={() => copyText(text)} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-primary-500 flex items-center gap-1 text-xs">
-               {copiedText ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>}
-               {copiedText ? t.copied : t.copy}
-             </button>
+             <CopyButton
+               text={text}
+               title={t.copy}
+               label={t.copy}
+               copiedLabel={t.copied}
+               iconClassName="w-3 h-3"
+               className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-primary-500 text-xs"
+             />
            </div>
            <textarea
              value={text}
@@ -303,10 +289,14 @@ const Base64Converter: React.FC<ToolComponentProps> = ({ lang }) => {
                    />
                  </label>
                )}
-               <button onClick={() => copyEncoded(encoded)} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-primary-500 flex items-center gap-1 text-xs">
-                 {copiedEncoded ? <IconCheck className="w-3 h-3"/> : <IconCopy className="w-3 h-3"/>}
-                 {copiedEncoded ? t.copied : t.copy}
-               </button>
+               <CopyButton
+                 text={encoded}
+                 title={t.copy}
+                 label={t.copy}
+                 copiedLabel={t.copied}
+                 iconClassName="w-3 h-3"
+                 className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-primary-500 text-xs"
+               />
              </div>
            </div>
            <textarea

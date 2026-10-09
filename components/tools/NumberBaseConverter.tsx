@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
-import { useCopy } from './shared/useCopy';
+import CopyButton from './shared/CopyButton';
 
 type BaseKey = 'dec' | 'hex' | 'bin' | 'oct';
+
+const BASES: Record<BaseKey, number> = { dec: 10, hex: 16, bin: 2, oct: 8 };
 
 const FIELDS: { key: BaseKey; placeholder: string; uppercase?: boolean }[] = [
   { key: 'dec', placeholder: '123' },
@@ -31,50 +32,30 @@ const NumberBaseConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   };
 
   const handleChange = (val: string, type: BaseKey) => {
-    let decValue = NaN;
-
     if (!val) {
       setValues({ dec: '', hex: '', bin: '', oct: '' });
       return;
     }
 
-    try {
-      // Handle hex prefix if user types it
-      let cleanVal = val;
-      if (type === 'hex' && val.toLowerCase().startsWith('0x')) {
-          cleanVal = val.substring(2);
-      }
-
-      switch (type) {
-        case 'dec': decValue = parseInt(cleanVal, 10); break;
-        case 'hex': decValue = parseInt(cleanVal, 16); break;
-        case 'bin': decValue = parseInt(cleanVal, 2); break;
-        case 'oct': decValue = parseInt(cleanVal, 8); break;
-      }
-
-      if (isNaN(decValue)) {
-        setValues(prev => ({ ...prev, [type]: val }));
-        return;
-      }
-
-      setValues({
-        dec: decValue.toString(10),
-        hex: '0x' + decValue.toString(16).toUpperCase(),
-        bin: decValue.toString(2),
-        oct: decValue.toString(8)
-      });
-    } catch (e) {
-      console.error(e);
+    // Handle hex prefix if user types it
+    let cleanVal = val;
+    if (type === 'hex' && val.toLowerCase().startsWith('0x')) {
+        cleanVal = val.substring(2);
     }
-  };
 
-  const CopyButton = ({ text }: { text: string }) => {
-    const { copied, copy } = useCopy();
-    return (
-        <button onClick={() => copy(text)} title={t.copy} className="text-slate-500 hover:text-primary-400 transition-colors p-3 shrink-0">
-            {copied ? <IconCheck className="w-4 h-4 text-green-500" /> : <IconCopy className="w-4 h-4" />}
-        </button>
-    );
+    const decValue = parseInt(cleanVal, BASES[type]);
+
+    if (isNaN(decValue)) {
+      setValues(prev => ({ ...prev, [type]: val }));
+      return;
+    }
+
+    setValues({
+      dec: decValue.toString(10),
+      hex: '0x' + decValue.toString(16).toUpperCase(),
+      bin: decValue.toString(2),
+      oct: decValue.toString(8)
+    });
   };
 
   return (
@@ -97,7 +78,7 @@ const NumberBaseConverter: React.FC<ToolComponentProps> = ({ lang }) => {
                               className={`flex-1 bg-transparent px-4 py-3 text-slate-100 outline-none font-mono text-sm${uppercase ? ' uppercase' : ''}`}
                               spellCheck="false"
                           />
-                          <CopyButton text={values[key]} />
+                          <CopyButton text={values[key]} title={t.copy} className="text-slate-500 hover:text-primary-400 p-3 shrink-0" />
                       </div>
                   </div>
               ))}

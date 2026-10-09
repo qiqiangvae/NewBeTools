@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { IconCopy, IconCheck } from '../Icons';
-import { Lang, ToolComponentProps } from '../../types';
-import { useCopy } from './shared/useCopy';
+import { ToolComponentProps } from '../../types';
+import CopyButton from './shared/CopyButton';
+import { toHex } from './shared/hex';
 
 /** Web Crypto has no MD5, so it is implemented here (RFC 1321). */
 const MD5_SHIFTS = [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21];
@@ -44,21 +44,6 @@ const md5Hex = (text: string): string => {
 
 const ALGOS = ['MD5', 'SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'];
 
-const CopyButton: React.FC<{ text: string; lang: Lang }> = ({ text, lang }) => {
-  const { copied, copy } = useCopy(2000);
-
-  return (
-    <button
-      onClick={() => copy(text)}
-      disabled={!text}
-      className="text-slate-500 hover:text-primary-400 p-2 transition-colors disabled:opacity-30"
-      title={lang === 'zh' ? '复制' : 'Copy'}
-    >
-      {copied ? <IconCheck className="w-4 h-4 text-green-500"/> : <IconCopy className="w-4 h-4"/>}
-    </button>
-  );
-};
-
 const HashGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
   const [input, setInput] = useState('');
   const [hashes, setHashes] = useState<Record<string, string>>({});
@@ -79,9 +64,7 @@ const HashGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
                 return;
             }
             const hashBuffer = await crypto.subtle.digest(algo, msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            newHashes[algo] = hashHex;
+            newHashes[algo] = toHex(new Uint8Array(hashBuffer));
         } catch (error) {
             console.error(`Hashing failed for ${algo}`, error);
             newHashes[algo] = 'Error';
@@ -129,7 +112,12 @@ const HashGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
                            className="flex-1 bg-transparent border-none text-slate-200 px-4 py-3 outline-none font-mono text-xs sm:text-sm text-green-400"
                        />
                        <div className="pr-2 bg-slate-900 flex items-center">
-                           <CopyButton text={hashes[algo]} lang={lang} />
+                           <CopyButton
+                               text={hashes[algo]}
+                               title={lang === 'zh' ? '复制' : 'Copy'}
+                               disabled={!hashes[algo]}
+                               className="text-slate-500 hover:text-primary-400 p-2"
+                           />
                        </div>
                    </div>
                </div>

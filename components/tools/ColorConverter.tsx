@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
-import { useCopy } from './shared/useCopy';
+import CopyButton from './shared/CopyButton';
 
 const PALETTES: { en: string; zh: string; hex: string }[] = [
   { en: 'Slate', zh: '石板灰', hex: '#64748b' },
@@ -86,19 +85,6 @@ const ColorConverter: React.FC<ToolComponentProps> = ({ lang }) => {
     { label: t.cssVar, value: `--color: ${hex};`, copy: true },
   ];
 
-  const CopyButton = ({ text }: { text: string }) => {
-    const { copied, copy } = useCopy();
-    return (
-        <button 
-            onClick={() => copy(text)} 
-            title={t.copy}
-            className="p-2 text-slate-500 hover:text-primary-400 transition-colors shrink-0"
-        >
-            {copied ? <IconCheck className="w-4 h-4 text-green-500" /> : <IconCopy className="w-4 h-4" />}
-        </button>
-    );
-  };
-
   return (
     <div className="flex flex-col gap-6 h-full">
        <div className="flex justify-between items-center">
@@ -155,7 +141,7 @@ const ColorConverter: React.FC<ToolComponentProps> = ({ lang }) => {
                             placeholder="#000000"
                             spellCheck="false"
                         />
-                        <CopyButton text={hex} />
+                        <CopyButton text={hex} title={t.copy} className="p-2 text-slate-500 hover:text-primary-400 shrink-0" />
                     </div>
                 </div>
 
@@ -170,7 +156,7 @@ const ColorConverter: React.FC<ToolComponentProps> = ({ lang }) => {
                                 className="flex-1 bg-transparent px-4 py-3 text-slate-100 outline-none font-mono text-sm"
                                 spellCheck="false"
                             />
-                            {copy && <CopyButton text={value} />}
+                            {copy && <CopyButton text={value} title={t.copy} className="p-2 text-slate-500 hover:text-primary-400 shrink-0" />}
                         </div>
                     </div>
                 ))}

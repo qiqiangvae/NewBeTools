@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { formatCode } from '../../services/geminiService';
-import { IconSparkles, IconCopy, IconCheck } from '../Icons';
+import { IconSparkles } from '../Icons';
 import { ToolComponentProps } from '../../types';
-import { useCopy } from './shared/useCopy';
+import CopyButton from './shared/CopyButton';
 
 const CodeFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { copied, copy } = useCopy(2000);
 
   const t = {
     title: lang === 'zh' ? '代码格式化 (AI)' : 'Code Formatter (AI)',
@@ -34,17 +33,18 @@ const CodeFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
       setLoading(false);
   };
 
-  const copyToClipboard = () => copy(input);
-
   return (
     <div className="flex flex-col gap-6 h-full">
       <div className="flex justify-between items-center">
          <h2 className="text-xl font-bold text-slate-100">{t.title}</h2>
          <div className="flex gap-2">
-            <button onClick={copyToClipboard} className="px-3 py-1.5 text-sm bg-slate-800 border border-slate-700 rounded text-slate-300 hover:text-white flex items-center gap-2">
-                {copied ? <IconCheck className="w-4 h-4" /> : <IconCopy className="w-4 h-4" />}
-                {copied ? t.copied : t.copy}
-            </button>
+            <CopyButton
+                text={input}
+                title={t.copy}
+                label={t.copy}
+                copiedLabel={t.copied}
+                className="px-3 py-1.5 text-sm bg-slate-800 border border-slate-700 rounded text-slate-300 hover:text-white gap-2"
+            />
          </div>
       </div>
 

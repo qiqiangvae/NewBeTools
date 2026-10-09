@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { IconCheck, IconCopy } from '../Icons';
-import { useCopy } from './shared/useCopy';
 import { ToolComponentProps } from '../../types';
+import CopyButton from './shared/CopyButton';
+import { toHex } from './shared/hex';
 
 interface PanelProps {
   label: string;
@@ -13,20 +13,17 @@ interface PanelProps {
 }
 
 const Panel: React.FC<PanelProps> = ({ label, copyText, copyLabel, className = '', bodyClassName = 'flex-1', children }) => {
-  const { copied, copy } = useCopy(2000);
-
   return (
     <div className={`flex flex-col min-h-0 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden ${className}`}>
       <div className="flex justify-between items-center px-4 py-2 bg-slate-800/50 border-b border-slate-700">
         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</span>
-        <button
-          onClick={() => copy(copyText)}
+        <CopyButton
+          text={copyText}
           title={copyLabel}
-          aria-label={copyLabel}
-          className="text-slate-500 hover:text-primary-400 transition-colors p-1"
-        >
-          {copied ? <IconCheck className="w-3.5 h-3.5" /> : <IconCopy className="w-3.5 h-3.5" />}
-        </button>
+          ariaLabel={copyLabel}
+          iconClassName="w-3.5 h-3.5"
+          className="text-slate-500 hover:text-primary-400 p-1"
+        />
       </div>
       <div className={`overflow-auto p-4 ${bodyClassName}`}>{children}</div>
     </div>
@@ -50,7 +47,7 @@ const readSignature = (segment: string): SignatureInfo => {
     const bytes = Array.from(atob(padded), (c) => c.charCodeAt(0));
     return {
       raw: segment,
-      hex: bytes.map((b) => b.toString(16).padStart(2, '0')).join(' '),
+      hex: toHex(bytes, ' '),
       bytes: bytes.length,
       decodable: true,
     };

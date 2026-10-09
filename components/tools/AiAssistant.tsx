@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
 import { generateRegex, explainCode, convertCode } from '../../services/geminiService';
-import { IconSparkles, IconCopy, IconCheck } from '../Icons';
+import { IconSparkles } from '../Icons';
 import { ToolComponentProps } from '../../types';
-import { useCopy } from './shared/useCopy';
+import CopyButton from './shared/CopyButton';
 import { pill } from './shared/pill';
 
 type Mode = 'regex' | 'explain' | 'convert';
@@ -14,7 +14,6 @@ const AiAssistant: React.FC<ToolComponentProps> = ({ lang }) => {
   const [output, setOutput] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { copied, copy } = useCopy(2000);
 
   const t = {
      title: lang === 'zh' ? '智能开发助手' : 'Smart Developer Assistant',
@@ -31,7 +30,6 @@ const AiAssistant: React.FC<ToolComponentProps> = ({ lang }) => {
      copy: lang === 'zh' ? '复制' : 'Copy',
      copied: lang === 'zh' ? '已复制' : 'Copied',
      resultPlace: lang === 'zh' ? '结果将显示在这里...' : 'Result will appear here...',
-     thinking: lang === 'zh' ? '思考中...' : 'Thinking...',
      failed: lang === 'zh'
        ? '生成失败：缺少 API Key、请求出错或输入无法识别，请调整后重试。'
        : 'Generation failed: missing API key, request error, or unrecognized input. Adjust and try again.',
@@ -54,8 +52,6 @@ const AiAssistant: React.FC<ToolComponentProps> = ({ lang }) => {
     }
     setLoading(false);
   };
-
-  const handleCopy = () => copy(output);
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -120,10 +116,14 @@ const AiAssistant: React.FC<ToolComponentProps> = ({ lang }) => {
              <div className="flex justify-between items-center">
                 <label className="text-slate-400 text-sm">{t.output}</label>
                 {output && (
-                    <button onClick={handleCopy} className="flex items-center gap-1 text-xs text-primary-500 hover:text-primary-400">
-                        {copied ? <IconCheck className="w-3 h-3" /> : <IconCopy className="w-3 h-3" />}
-                        {copied ? t.copied : t.copy}
-                    </button>
+                    <CopyButton
+                        text={output}
+                        title={t.copy}
+                        label={t.copy}
+                        copiedLabel={t.copied}
+                        className="text-xs text-primary-500 hover:text-primary-400"
+                        iconClassName="w-3 h-3"
+                    />
                 )}
              </div>
              <div className={`flex-1 w-full bg-slate-900 rounded-lg border border-slate-700 p-4 font-mono text-sm overflow-auto ${!output ? 'flex items-center justify-center italic' : 'text-green-400'} ${error ? 'text-red-400 border-red-900' : !output ? 'text-slate-600' : ''}`}>

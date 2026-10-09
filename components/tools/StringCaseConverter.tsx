@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { IconCopy, IconCheck } from '../Icons';
 import { Lang, ToolComponentProps } from '../../types';
-import { useCopy } from './shared/useCopy';
+import CopyButton from './shared/CopyButton';
 
 type CaseType = 'camel' | 'pascal' | 'snake' | 'kebab' | 'constant' | 'lower' | 'upper' | 'sentence';
 
@@ -55,17 +54,13 @@ const transform = (text: string, type: CaseType): string => {
 };
 
 const OutputRow = ({ label, value, copyTitle }: { label: string; value: string; copyTitle: string }) => {
-  const { copied, copy } = useCopy(1500);
-
   return (
     <div className="flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-700">
       <div className="flex flex-col overflow-hidden">
           <span className="text-xs text-slate-500 uppercase font-semibold">{label}</span>
           <span className="text-slate-200 font-mono text-sm truncate pr-4">{value || '...'}</span>
       </div>
-      <button onClick={() => copy(value)} title={copyTitle} className="text-slate-500 hover:text-primary-400 p-1">
-          {copied ? <IconCheck className="w-4 h-4" /> : <IconCopy className="w-4 h-4" />}
-      </button>
+      <CopyButton text={value} title={copyTitle} className="text-slate-500 hover:text-primary-400 p-1" resetMs={1500} />
     </div>
   );
 };

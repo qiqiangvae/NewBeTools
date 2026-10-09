@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { IconClock, IconCopy, IconCheck } from '../Icons';
+import { IconClock } from '../Icons';
 import { ToolComponentProps } from '../../types';
-import { useCopy } from './shared/useCopy';
+import CopyButton from './shared/CopyButton';
 
 const TimestampConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [now, setNow] = useState(Date.now());
@@ -9,14 +9,13 @@ const TimestampConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [dateInput, setDateInput] = useState('');
   const [resultDate, setResultDate] = useState('');
   const [resultTs, setResultTs] = useState('');
-  const { copied: copiedDate, copy: copyDate } = useCopy();
-  const { copied: copiedTs, copy: copyTs } = useCopy();
 
   const t = {
     current: lang === 'zh' ? '当前时间' : 'Current Time',
     tsToDate: lang === 'zh' ? '时间戳 → 日期' : 'Timestamp → Date',
     dateToTs: lang === 'zh' ? '日期 → 时间戳' : 'Date → Timestamp',
     convert: lang === 'zh' ? '转换' : 'Convert',
+    copy: lang === 'zh' ? '复制' : 'Copy',
     result: lang === 'zh' ? '结果...' : 'Result...',
     invalidTs: lang === 'zh' ? '无效的时间戳' : 'Invalid Timestamp',
     invalidDate: lang === 'zh' ? '无效的日期' : 'Invalid Date',
@@ -100,12 +99,12 @@ const TimestampConverter: React.FC<ToolComponentProps> = ({ lang }) => {
           </div>
           <div className="bg-slate-900 rounded-lg p-4 border border-slate-800 relative min-h-[80px]">
              {resultDate && (
-                 <button 
-                   onClick={() => copyDate(resultDate)} 
+                 <CopyButton
+                   text={resultDate}
+                   title={t.copy}
+                   iconClassName="w-4 h-4"
                    className="absolute top-2 right-2 text-slate-500 hover:text-primary-400"
-                 >
-                   {copiedDate ? <IconCheck className="w-4 h-4" /> : <IconCopy className="w-4 h-4" />}
-                 </button>
+                 />
              )}
              <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap">{resultDate || t.result}</pre>
           </div>
@@ -128,12 +127,12 @@ const TimestampConverter: React.FC<ToolComponentProps> = ({ lang }) => {
           </div>
           <div className="bg-slate-900 rounded-lg p-4 border border-slate-800 relative min-h-[80px]">
              {resultTs && (
-                 <button 
-                   onClick={() => copyTs(resultTs)} 
+                 <CopyButton
+                   text={resultTs}
+                   title={t.copy}
+                   iconClassName="w-4 h-4"
                    className="absolute top-2 right-2 text-slate-500 hover:text-primary-400"
-                 >
-                   {copiedTs ? <IconCheck className="w-4 h-4" /> : <IconCopy className="w-4 h-4" />}
-                 </button>
+                 />
              )}
              <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap">{resultTs || t.result}</pre>
           </div>
