@@ -7,6 +7,7 @@ const CodeFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState('');
 
   const t = {
     title: lang === 'zh' ? '代码格式化 (AI)' : 'Code Formatter (AI)',
@@ -14,13 +15,21 @@ const CodeFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
     copied: lang === 'zh' ? '已复制' : 'Copied',
     placeholder: lang === 'zh' ? '粘贴代码 (JS, HTML, Python 等) 以格式化...' : 'Paste any code (JS, HTML, Python, etc) here to format...',
     format: lang === 'zh' ? '格式化代码' : 'Format Code',
+    failed: lang === 'zh'
+      ? '格式化失败：缺少 API Key 或请求出错，代码未改动，请稍后重试。'
+      : 'Formatting failed: missing API key or request error. Your code was left unchanged, please try again.',
   };
 
   const handleFormat = async () => {
       if (!input.trim()) return;
       setLoading(true);
+      setError('');
       const res = await formatCode(input);
-      setInput(res); // Update input in place like typical formatters
+      if (res === null) {
+          setError(t.failed);
+      } else {
+          setInput(res); // Update input in place like typical formatters
+      }
       setLoading(false);
   };
 
@@ -65,6 +74,10 @@ const CodeFormatter: React.FC<ToolComponentProps> = ({ lang }) => {
                   </>
               )}
         </button>
+
+        {error && (
+            <p className="text-sm text-red-400 bg-red-950/40 border border-red-900 rounded-lg px-3 py-2">{error}</p>
+        )}
       </div>
     </div>
   );

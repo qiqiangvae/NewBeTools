@@ -8,6 +8,7 @@ const PinyinConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [output, setOutput] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState('');
 
   const t = {
     title: lang === 'zh' ? '汉字转拼音' : 'Chinese to Pinyin',
@@ -18,13 +19,22 @@ const PinyinConverter: React.FC<ToolComponentProps> = ({ lang }) => {
     copied: lang === 'zh' ? '已复制' : 'Copied',
     ph: lang === 'zh' ? '输入中文...' : 'Enter Chinese text...',
     res: lang === 'zh' ? '结果将显示在这里...' : 'Result will appear here...',
+    failed: lang === 'zh'
+      ? '转换失败：缺少 API Key 或请求出错，请稍后重试。'
+      : 'Conversion failed: missing API key or request error. Please try again.',
   };
 
   const handleConvert = async () => {
       if (!input.trim()) return;
       setLoading(true);
+      setError('');
+      setOutput('');
       const res = await convertToPinyin(input);
-      setOutput(res);
+      if (res === null) {
+          setError(t.failed);
+      } else {
+          setOutput(res);
+      }
       setLoading(false);
   };
 
@@ -66,6 +76,10 @@ const PinyinConverter: React.FC<ToolComponentProps> = ({ lang }) => {
                   </>
               )}
           </button>
+
+          {error && (
+              <p className="text-sm text-red-400 bg-red-950/40 border border-red-900 rounded-lg px-3 py-2">{error}</p>
+          )}
 
           <div className="flex-1 flex flex-col gap-2 relative">
              <div className="flex justify-between items-center">

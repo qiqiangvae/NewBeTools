@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { generateRegex, explainCode } from '../../services/geminiService';
-import { GoogleGenAI } from "@google/genai";
+import { generateRegex, explainCode, convertCode } from '../../services/geminiService';
 import { IconSparkles, IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
 
@@ -11,6 +10,7 @@ const AiAssistant: React.FC<ToolComponentProps> = ({ lang }) => {
   const [mode, setMode] = useState<Mode>('regex');
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -30,46 +30,26 @@ const AiAssistant: React.FC<ToolComponentProps> = ({ lang }) => {
      copied: lang === 'zh' ? '已复制' : 'Copied',
      resultPlace: lang === 'zh' ? '结果将显示在这里...' : 'Result will appear here...',
      thinking: lang === 'zh' ? '思考中...' : 'Thinking...',
-  };
-
-  // Selection: 'gemini-3-pro-preview' for complex code conversion tasks.
-  const convertCode = async (code: string) => {
-    const apiKey = process.env.API_KEY || '';
-    if (!apiKey) return "API Key missing";
-    const ai = new GoogleGenAI({ apiKey });
-    try {
-        const prompt = `Convert the following code/request.
-        If it looks like a curl command, convert it to Python and JavaScript Fetch.
-        If it looks like code, translate it to the other most likely desired language or plain English explanation if vague.
-        
-        Code/Request:
-        ${code}
-        `;
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-pro-preview',
-            contents: prompt
-        });
-        return response.text?.trim() || "Failed to convert";
-    } catch(e) {
-        return "Error converting code";
-    }
+     failed: lang === 'zh'
+       ? '生成失败：缺少 API Key、请求出错或输入无法识别，请调整后重试。'
+       : 'Generation failed: missing API key, request error, or unrecognized input. Adjust and try again.',
   };
 
   const handleSubmit = async () => {
     if (!input.trim()) return;
     setLoading(true);
     setOutput('');
+    setError('');
     
-    let result = '';
-    if (mode === 'regex') {
-        result = await generateRegex(input);
-    } else if (mode === 'explain') {
-        result = await explainCode(input);
+    const result = mode === 'regex' ? await generateRegex(input)
+      : mode === 'explain' ? await explainCode(input)
+      : await convertCode(input);
+    
+    if (result === null) {
+        setError(t.failed);
     } else {
-        result = await convertCode(input);
+        setOutput(result);
     }
-    
-    setOutput(result);
     setLoading(false);
   };
 
@@ -90,19 +70,19 @@ const AiAssistant: React.FC<ToolComponentProps> = ({ lang }) => {
         
         <div className="bg-slate-800 p-1 rounded-lg flex border border-slate-700">
             <button
-                onClick={() => { setMode('regex'); setOutput(''); setInput(''); }}
+                onClick={() => { setMode('regex'); setOutput(''); setInput(''); setError(''); }}
                 className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all ${mode === 'regex' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
             >
                 {t.regex}
             </button>
             <button
-                onClick={() => { setMode('explain'); setOutput(''); setInput(''); }}
+                onClick={() => { setMode('explain'); setOutput(''); setInput(''); setError(''); }}
                 className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all ${mode === 'explain' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
             >
                 {t.explain}
             </button>
              <button
-                onClick={() => { setMode('convert'); setOutput(''); setInput(''); }}
+                onClick={() => { setMode('convert'); setOutput(''); setInput(''); setError(''); }}
                 className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all ${mode === 'convert' ? 'bg-primary-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
             >
                 {t.convert}
@@ -149,8 +129,8 @@ const AiAssistant: React.FC<ToolComponentProps> = ({ lang }) => {
                     </button>
                 )}
              </div>
-             <div className={`flex-1 w-full bg-slate-900 rounded-lg border border-slate-700 p-4 font-mono text-sm overflow-auto ${!output ? 'flex items-center justify-center text-slate-600 italic' : 'text-green-400'}`}>
-                {output || t.resultPlace}
+             <div className={`flex-1 w-full bg-slate-900 rounded-lg border border-slate-700 p-4 font-mono text-sm overflow-auto ${!output ? 'flex items-center justify-center italic' : 'text-green-400'} ${error ? 'text-red-400 border-red-900' : !output ? 'text-slate-600' : ''}`}>
+                {error || output || t.resultPlace}
              </div>
         </div>
       </div>
