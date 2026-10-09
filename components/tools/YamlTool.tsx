@@ -11,6 +11,8 @@ import {
   IconSparkles
 } from '../Icons';
 import { ToolComponentProps, Lang } from '../../types';
+import { MAX_HIGHLIGHT_SIZE, escapeHtml } from './shared/highlight';
+import CodeEditor from './shared/CodeEditor';
 
 interface YamlEditorProps {
   value: string;
@@ -20,15 +22,6 @@ interface YamlEditorProps {
   placeholder?: string;
   lang?: Lang;
   readOnly?: boolean;
-}
-
-const MAX_HIGHLIGHT_SIZE = 500000;
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }
 
 function highlightYamlValue(val: string): string {
@@ -71,7 +64,7 @@ function highlightYamlValue(val: string): string {
   return spaces + `<span class="text-emerald-300/90">${escapedContent}</span>`;
 }
 
-export function highlightYaml(text: string, errorLine?: number | null): string {
+function highlightYaml(text: string, errorLine?: number | null): string {
   if (!text) return '';
   if (text.length > MAX_HIGHLIGHT_SIZE) {
     return escapeHtml(text);
@@ -191,6 +184,17 @@ export function highlightYaml(text: string, errorLine?: number | null): string {
   return highlightedLines.join('\n');
 }
 
+/** The shared CodeEditor defaults to the JSON editor's shell; this is YAML's. */
+const YAML_SHELL: Partial<React.ComponentProps<typeof CodeEditor>> = {
+  className: 'relative w-full h-full bg-slate-900 rounded-xl border border-slate-700/80 overflow-hidden flex flex-col font-mono text-xs md:text-sm',
+  padding: '14px',
+  caretColor: '#38bdf8',
+  placeholderColor: '#64748b',
+  overflowY: 'auto',
+  focusRingClass: 'outline-none focus:ring-1 focus:ring-primary-500/40',
+  focusRingErrorClass: 'outline-none focus:ring-1 focus:ring-red-500/40',
+};
+
 const YamlEditor: React.FC<YamlEditorProps> = ({
   value,
   onChange,
@@ -201,66 +205,10 @@ const YamlEditor: React.FC<YamlEditorProps> = ({
   readOnly = false
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const preRef = useRef<HTMLPreElement>(null);
-
-  const handleScroll = () => {
-    if (textareaRef.current && preRef.current) {
-      preRef.current.scrollTop = textareaRef.current.scrollTop;
-      preRef.current.scrollLeft = textareaRef.current.scrollLeft;
-    }
-  };
 
   const highlighted = useMemo(() => {
     return highlightYaml(value, errorLine);
   }, [value, errorLine]);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (readOnly) return;
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      const textarea = textareaRef.current;
-      if (!textarea) return;
-
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-
-      if (e.shiftKey) {
-        const val = textarea.value;
-        const lineStart = val.lastIndexOf('\n', start - 1) + 1;
-        if (val.substring(lineStart, lineStart + 2) === '  ') {
-          const newValue = val.substring(0, lineStart) + val.substring(lineStart + 2);
-          onChange(newValue);
-          setTimeout(() => {
-            if (textareaRef.current) {
-              textareaRef.current.selectionStart = Math.max(lineStart, start - 2);
-              textareaRef.current.selectionEnd = Math.max(lineStart, end - 2);
-            }
-          }, 0);
-        }
-      } else {
-        if (start === end) {
-          const newValue = value.substring(0, start) + '  ' + value.substring(end);
-          onChange(newValue);
-          setTimeout(() => {
-            if (textareaRef.current) {
-              textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 2;
-            }
-          }, 0);
-        } else {
-          const lines = value.substring(start, end).split('\n');
-          const indented = lines.map(line => '  ' + line).join('\n');
-          const newValue = value.substring(0, start) + indented + value.substring(end);
-          onChange(newValue);
-          setTimeout(() => {
-            if (textareaRef.current) {
-              textareaRef.current.selectionStart = start;
-              textareaRef.current.selectionEnd = start + indented.length;
-            }
-          }, 0);
-        }
-      }
-    }
-  };
 
   const jumpToLine = () => {
     if (errorLine == null || !textareaRef.current) return;
@@ -276,66 +224,33 @@ const YamlEditor: React.FC<YamlEditorProps> = ({
     textareaRef.current.setSelectionRange(pos, pos + 1);
   };
 
-  const sharedStyles: React.CSSProperties = {
-    fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-    fontSize: '13px',
-    lineHeight: '20px',
-    padding: '14px',
-    margin: 0,
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-all',
-    boxSizing: 'border-box',
-    tabSize: 2,
-    border: 'none',
-    outline: 'none',
-  };
-
   return (
-    <div className="relative w-full h-full bg-slate-900 rounded-xl border border-slate-700/80 overflow-hidden flex flex-col font-mono text-xs md:text-sm">
-      <style>{`
-        .yaml-editor-stack { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; width: 100%; height: 100%; }
-        .yaml-editor-stack textarea, .yaml-editor-stack pre { grid-area: 1 / 1 / 2 / 2; width: 100% !important; height: 100% !important; overflow-y: auto !important; }
-        .yaml-editor-stack textarea { background: transparent !important; color: transparent !important; -webkit-text-fill-color: transparent !important; caret-color: #38bdf8 !important; z-index: 2; }
-        .yaml-editor-stack textarea::placeholder { color: #64748b !important; -webkit-text-fill-color: #64748b !important; }
-        .yaml-editor-stack pre { z-index: 1; pointer-events: none; user-select: none; }
-      `}</style>
-      <div className="yaml-editor-stack">
-        <pre
-          ref={preRef}
-          style={sharedStyles}
-          className="m-0 text-slate-200"
-          dangerouslySetInnerHTML={{ __html: highlighted + (value.endsWith('\n') ? ' ' : '') }}
-        />
-        <textarea
-          ref={textareaRef}
-          value={value}
-          readOnly={readOnly}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onScroll={handleScroll}
-          spellCheck="false"
-          placeholder={placeholder}
-          style={sharedStyles}
-          className={`resize-none outline-none ${
-            errorLine ? 'focus:ring-1 focus:ring-red-500/40' : 'focus:ring-1 focus:ring-primary-500/40'
-          }`}
-        />
-      </div>
-      {errorLine != null && (
-        <button
-          type="button"
-          onClick={jumpToLine}
-          className="absolute bottom-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 text-xs bg-red-900/90 hover:bg-red-800 text-red-200 rounded-md border border-red-700/60 shadow-lg backdrop-blur transition-all cursor-pointer"
-        >
-          <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
-          <span>
-            {lang === 'zh'
-              ? `错误行 ${errorLine}${errorCol != null ? ` : 列 ${errorCol}` : ''}`
-              : `Line ${errorLine}${errorCol != null ? ` : Col ${errorCol}` : ''}`}
-          </span>
-        </button>
-      )}
-    </div>
+    <CodeEditor
+      {...YAML_SHELL}
+      value={value}
+      onChange={onChange}
+      highlighted={highlighted}
+      placeholder={placeholder}
+      readOnly={readOnly}
+      hasError={!!errorLine}
+      textareaRef={textareaRef}
+      footer={
+        errorLine != null && (
+          <button
+            type="button"
+            onClick={jumpToLine}
+            className="absolute bottom-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 text-xs bg-red-900/90 hover:bg-red-800 text-red-200 rounded-md border border-red-700/60 shadow-lg backdrop-blur transition-all cursor-pointer"
+          >
+            <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
+            <span>
+              {lang === 'zh'
+                ? `错误行 ${errorLine}${errorCol != null ? ` : 列 ${errorCol}` : ''}`
+                : `Line ${errorLine}${errorCol != null ? ` : Col ${errorCol}` : ''}`}
+            </span>
+          </button>
+        )
+      }
+    />
   );
 };
 

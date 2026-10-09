@@ -12,6 +12,7 @@ interface MarkdownTheme {
   name: string;
   nameZh: string;
   isDark: boolean;
+  hljsUrl: string;
   bg: string;
   text: string;
   h1: string;
@@ -33,6 +34,7 @@ const THEMES: MarkdownTheme[] = [
     name: 'GitHub Dark',
     nameZh: 'GitHub 暗黑',
     isDark: true,
+    hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css',
     bg: 'bg-[#0d1117]',
     text: 'text-[#c9d1d9]',
     h1: 'text-[#f0f6fc] border-b border-[#21262d] pb-2 text-2xl font-semibold',
@@ -52,6 +54,7 @@ const THEMES: MarkdownTheme[] = [
     name: 'GitHub Light',
     nameZh: 'GitHub 明亮',
     isDark: false,
+    hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css',
     bg: 'bg-white',
     text: 'text-slate-800',
     h1: 'text-slate-900 border-b border-slate-200 pb-2 text-2xl font-semibold',
@@ -71,6 +74,7 @@ const THEMES: MarkdownTheme[] = [
     name: 'Dracula',
     nameZh: '吸血鬼 (Dracula)',
     isDark: true,
+    hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/dracula.min.css',
     bg: 'bg-[#282a36]',
     text: 'text-[#f8f8f2]',
     h1: 'text-[#ff79c6] border-b border-[#44475a] pb-2 text-2xl font-semibold',
@@ -90,6 +94,7 @@ const THEMES: MarkdownTheme[] = [
     name: 'Solarized Light',
     nameZh: '护眼日光 (Solarized)',
     isDark: false,
+    hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/solarized-light.min.css',
     bg: 'bg-[#fdf6e3]',
     text: 'text-[#586e75]',
     h1: 'text-[#cb4b16] border-b border-[#eee8d5] pb-2 text-2xl font-semibold',
@@ -109,6 +114,7 @@ const THEMES: MarkdownTheme[] = [
     name: 'Solarized Dark',
     nameZh: '护眼深邃 (Solarized)',
     isDark: true,
+    hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/solarized-dark.min.css',
     bg: 'bg-[#002b36]',
     text: 'text-[#839496]',
     h1: 'text-[#cb4b16] border-b border-[#073642] pb-2 text-2xl font-semibold',
@@ -128,6 +134,7 @@ const THEMES: MarkdownTheme[] = [
     name: 'Nord',
     nameZh: '极光冰川 (Nord)',
     isDark: true,
+    hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/nord.min.css',
     bg: 'bg-[#2e3440]',
     text: 'text-[#d8dee9]',
     h1: 'text-[#88c0d0] border-b border-[#3b4252] pb-2 text-2xl font-semibold',
@@ -147,6 +154,7 @@ const THEMES: MarkdownTheme[] = [
     name: 'One Dark',
     nameZh: '雅致深灰 (One Dark)',
     isDark: true,
+    hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css',
     bg: 'bg-[#282c34]',
     text: 'text-[#abb2bf]',
     h1: 'text-[#e06c75] border-b border-[#3e4451] pb-2 text-2xl font-semibold',
@@ -166,6 +174,7 @@ const THEMES: MarkdownTheme[] = [
     name: 'Cyberpunk',
     nameZh: '赛博朋克 (Cyberpunk)',
     isDark: true,
+    hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css',
     bg: 'bg-[#0f051d]',
     text: 'text-[#00ffcc]',
     h1: 'text-[#ff007f] border-b border-[#330066] pb-2 text-2xl font-bold tracking-wider uppercase',
@@ -185,6 +194,7 @@ const THEMES: MarkdownTheme[] = [
     name: 'Sepia Book',
     nameZh: '复古书香 (Sepia)',
     isDark: false,
+    hljsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/school-book.min.css',
     bg: 'bg-[#f4ecd8]',
     text: 'text-[#433422]',
     h1: 'text-[#5c2d12] border-b border-[#e4d7b7] pb-2 text-2xl font-serif font-bold',
@@ -201,29 +211,8 @@ const THEMES: MarkdownTheme[] = [
   }
 ];
 
-const getHljsThemeUrl = (themeId: string): string => {
-  switch (themeId) {
-    case 'github-light':
-      return 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
-    case 'dracula':
-      return 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/dracula.min.css';
-    case 'solarized-light':
-      return 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/solarized-light.min.css';
-    case 'solarized-dark':
-      return 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/solarized-dark.min.css';
-    case 'nord':
-      return 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/nord.min.css';
-    case 'one-dark':
-      return 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css';
-    case 'cyberpunk':
-      return 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css';
-    case 'sepia':
-      return 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/school-book.min.css';
-    case 'github-dark':
-    default:
-      return 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css';
-  }
-};
+const getHljsThemeUrl = (themeId: string): string =>
+  (THEMES.find(t => t.id === themeId) || THEMES[0]).hljsUrl;
 
 const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChange }) => {
   const [input, setInput] = useState(state?.input || '');
@@ -307,8 +296,7 @@ const TextProcessor: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
       quoteType, 
       history, 
       viewMode,
-      markdownThemeId,
-      isPreview: viewMode !== 'editor'
+      markdownThemeId
     };
     const stateStr = JSON.stringify(nextState);
     

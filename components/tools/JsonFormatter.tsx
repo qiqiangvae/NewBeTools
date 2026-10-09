@@ -4,11 +4,21 @@ import { jsonrepair } from 'jsonrepair';
 import * as yaml from 'js-yaml';
 import { IconCopy, IconCheck, IconX, IconSearch, IconJson, IconType, IconPanelLeft, IconEraser, IconSparkles, IconDiff, IconMenu, IconYaml } from '../Icons';
 import { ToolComponentProps, Lang } from '../../types';
+import { MAX_HIGHLIGHT_SIZE, escapeHtml } from './shared/highlight';
+import CodeEditor from './shared/CodeEditor';
 
 declare const jsonpath: any;
 
-// Performance Threshold: 500KB
-const MAX_HIGHLIGHT_SIZE = 500000;
+/** Clamp a one-character error highlight to the end of the text. */
+const errorRange = (pos: number, length: number) => {
+  let start = pos;
+  let end = pos + 1;
+  if (start >= length) {
+    start = Math.max(0, length - 1);
+    end = length;
+  }
+  return { start, end };
+};
 
 interface JsonEditorProps {
   value: string;
@@ -21,14 +31,6 @@ interface JsonEditorProps {
 
 const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMsg, placeholder, lang }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const preRef = useRef<HTMLPreElement>(null);
-
-  const handleScroll = () => {
-    if (textareaRef.current && preRef.current) {
-      preRef.current.scrollTop = textareaRef.current.scrollTop;
-      preRef.current.scrollLeft = textareaRef.current.scrollLeft;
-    }
-  };
 
   const errorPos = useMemo(() => {
     if (!error || !errorMsg) return null;
@@ -38,13 +40,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMs
     if (posMatch) {
       const pos = parseInt(posMatch[1], 10);
       if (!isNaN(pos) && pos >= 0 && pos <= value.length) {
-        let start = pos;
-        let end = pos + 1;
-        if (start >= value.length) {
-          start = Math.max(0, value.length - 1);
-          end = value.length;
-        }
-        return { start, end };
+        return errorRange(pos, value.length);
       }
     }
 
@@ -61,13 +57,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMs
         }
         pos += (colNum - 1);
         if (pos >= 0 && pos <= value.length) {
-          let start = pos;
-          let end = pos + 1;
-          if (start >= value.length) {
-            start = Math.max(0, value.length - 1);
-            end = value.length;
-          }
-          return { start, end };
+          return errorRange(pos, value.length);
         }
       }
     }
@@ -77,13 +67,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMs
     if (charMatch) {
       const pos = parseInt(charMatch[1], 10);
       if (!isNaN(pos) && pos >= 0 && pos <= value.length) {
-        let start = pos;
-        let end = pos + 1;
-        if (start >= value.length) {
-          start = Math.max(0, value.length - 1);
-          end = value.length;
-        }
-        return { start, end };
+        return errorRange(pos, value.length);
       }
     }
 
@@ -98,63 +82,16 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMs
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      const textarea = textareaRef.current;
-      if (!textarea) return;
-
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-
-      if (e.shiftKey) {
-        const val = textarea.value;
-        const lineStart = val.lastIndexOf('\n', start - 1) + 1;
-        if (val.substring(lineStart, lineStart + 2) === '  ') {
-          const newValue = val.substring(0, lineStart) + val.substring(lineStart + 2);
-          onChange(newValue);
-          setTimeout(() => {
-            if (textareaRef.current) {
-              textareaRef.current.selectionStart = Math.max(lineStart, start - 2);
-              textareaRef.current.selectionEnd = Math.max(lineStart, end - 2);
-            }
-          }, 0);
-        }
-      } else {
-        if (start === end) {
-          const newValue = value.substring(0, start) + '  ' + value.substring(end);
-          onChange(newValue);
-          setTimeout(() => {
-            if (textareaRef.current) {
-              textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 2;
-            }
-          }, 0);
-        } else {
-          const lines = value.substring(start, end).split('\n');
-          const indented = lines.map(line => '  ' + line).join('\n');
-          const newValue = value.substring(0, start) + indented + value.substring(end);
-          onChange(newValue);
-          setTimeout(() => {
-            if (textareaRef.current) {
-              textareaRef.current.selectionStart = start;
-              textareaRef.current.selectionEnd = start + indented.length;
-            }
-          }, 0);
-        }
-      }
-    }
-  };
-
   const highlighted = useMemo(() => {
     if (!value) return '';
     
     // Performance Guard: Don't highlight massive strings
     if (value.length > MAX_HIGHLIGHT_SIZE) {
-        return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return escapeHtml(value);
     }
 
     const highlightText = (text: string) => {
-      const safeHtml = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const safeHtml = escapeHtml(text);
       return safeHtml.replace(
         /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
         (match) => {
@@ -187,49 +124,35 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMs
     return highlightText(value);
   }, [value, errorPos]);
 
-  const sharedStyles: React.CSSProperties = {
-    fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-    fontSize: '13px',
-    lineHeight: '20px',
-    padding: '16px',
-    margin: 0,
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-all',
-    boxSizing: 'border-box',
-    tabSize: 2,
-    border: 'none',
-    outline: 'none',
-  };
-
   return (
-    <div className="relative w-full h-full bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-      <style>{`
-        .editor-stack { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; width: 100%; height: 100%; }
-        .editor-stack textarea, .editor-stack pre { grid-area: 1 / 1 / 2 / 2; width: 100% !important; height: 100% !important; overflow-y: scroll !important; }
-        .editor-stack textarea { background: transparent !important; color: transparent !important; -webkit-text-fill-color: transparent !important; caret-color: white !important; z-index: 2; }
-        .editor-stack pre { z-index: 1; pointer-events: none; user-select: none; }
-      `}</style>
-      <div className="editor-stack">
-        <pre ref={preRef} style={sharedStyles} className="m-0 text-slate-200" dangerouslySetInnerHTML={{ __html: highlighted + (value.endsWith('\n') ? ' ' : '') }} />
-        <textarea ref={textareaRef} value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={handleKeyDown} onScroll={handleScroll} spellCheck="false" placeholder={placeholder} style={sharedStyles} className={`resize-none ${error ? 'focus:ring-2 focus:ring-red-500/20' : 'focus:ring-2 focus:ring-primary-500/20'}`} />
-      </div>
-      {error && errorPos && (
-        <button
-          type="button"
-          onClick={handleJumpToError}
-          className="absolute bottom-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 text-xs bg-red-900/80 hover:bg-red-800 text-red-200 rounded-md border border-red-700/60 shadow-lg backdrop-blur transition-all cursor-pointer group"
-          title={lang === 'zh' ? '点击跳转到 JSON 语法错误位置' : 'Click to jump to JSON error location'}
-        >
-          <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
-          <span className="font-mono text-[11px]">{lang === 'zh' ? `定位错误 (字符 ${errorPos.start})` : `Jump to error (pos ${errorPos.start})`}</span>
-        </button>
-      )}
-      {value.length > MAX_HIGHLIGHT_SIZE && (
-        <div className="absolute top-2 right-10 z-30 bg-yellow-900/80 text-yellow-200 text-[10px] px-2 py-1 rounded border border-yellow-700/50">
-            Performance Mode (Highlighting Disabled)
-        </div>
-      )}
-    </div>
+    <CodeEditor
+      value={value}
+      onChange={onChange}
+      highlighted={highlighted}
+      placeholder={placeholder}
+      hasError={error}
+      textareaRef={textareaRef}
+      footer={
+        <>
+          {error && errorPos && (
+            <button
+              type="button"
+              onClick={handleJumpToError}
+              className="absolute bottom-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 text-xs bg-red-900/80 hover:bg-red-800 text-red-200 rounded-md border border-red-700/60 shadow-lg backdrop-blur transition-all cursor-pointer group"
+              title={lang === 'zh' ? '点击跳转到 JSON 语法错误位置' : 'Click to jump to JSON error location'}
+            >
+              <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
+              <span className="font-mono text-[11px]">{lang === 'zh' ? `定位错误 (字符 ${errorPos.start})` : `Jump to error (pos ${errorPos.start})`}</span>
+            </button>
+          )}
+          {value.length > MAX_HIGHLIGHT_SIZE && (
+            <div className="absolute top-2 right-10 z-30 bg-yellow-900/80 text-yellow-200 text-[10px] px-2 py-1 rounded border border-yellow-700/50">
+                Performance Mode (Highlighting Disabled)
+            </div>
+          )}
+        </>
+      }
+    />
   );
 };
 
@@ -692,7 +615,7 @@ const JsonFormatter: React.FC<ToolComponentProps> = ({ lang, state, onStateChang
                 <div className="flex-1 flex flex-col gap-1.5 min-w-0 h-full">
                     <div className="flex justify-between items-center px-1 h-6 shrink-0"><span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t.treeTitle}</span></div>
                     <div className="flex-1 h-full overflow-hidden bg-slate-800 rounded-xl border border-slate-700">
-                        <div className="w-full h-full overflow-auto p-4">{parsedJson ? <JsonNode value={parsedJson} isLast={true} onNavigateToTool={onNavigateToTool} lang={lang} onSendToLeftInput={setInput} /> : <div className="text-slate-500 italic text-sm">{input.length > MAX_HIGHLIGHT_SIZE * 2 ? 'Large JSON: Tree view disabled' : (input.trim() ? t.empty : 'No Data')}</div>}</div>
+                        <div className="w-full h-full overflow-auto p-4">{parsedJson ? <JsonNode value={parsedJson} isLast={true} onNavigateToTool={onNavigateToTool} lang={lang} onSendToLeftInput={setInput} /> : <div className="text-slate-500 italic text-sm">{input.length > MAX_HIGHLIGHT_SIZE * 2 ? (lang === 'zh' ? 'JSON 过大，已停用树视图' : 'Large JSON: Tree view disabled') : (input.trim() ? t.empty : (lang === 'zh' ? '无数据' : 'No Data'))}</div>}</div>
                     </div>
                 </div>
             )}
