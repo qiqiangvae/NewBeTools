@@ -25,6 +25,9 @@ const IpLookup: React.FC<ToolComponentProps> = ({ lang }) => {
      coords: lang === 'zh' ? '坐标' : 'Coordinates',
      ver: lang === 'zh' ? '版本' : 'Version',
      org: lang === 'zh' ? '组织' : 'Org',
+     ipAddr: lang === 'zh' ? 'IP 地址' : 'IP Address',
+     networkName: lang === 'zh' ? '网络' : 'Network',
+     asn: lang === 'zh' ? '自治系统号 (ASN)' : 'ASN',
   };
 
   const fetchIp = async (targetIp?: string) => {
@@ -81,10 +84,10 @@ const IpLookup: React.FC<ToolComponentProps> = ({ lang }) => {
                       <IconGlobe className="w-6 h-6 text-primary-400" />
                       <h3 className="text-lg font-semibold text-white">{t.network}</h3>
                   </div>
-                  <InfoRow label="IP Address" value={data.ip} />
-                  <InfoRow label="Network" value={data.network} />
+                  <InfoRow label={t.ipAddr} value={data.ip} />
+                  <InfoRow label={t.networkName} value={data.network} />
                   <InfoRow label={t.ver} value={data.version} />
-                  <InfoRow label="ASN" value={data.asn} />
+                  <InfoRow label={t.asn} value={data.asn} />
                   <InfoRow label={t.org} value={data.org} />
               </div>
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { IconClock, IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
+import { useCopy } from './shared/useCopy';
 
 const TimestampConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [now, setNow] = useState(Date.now());
@@ -8,7 +9,8 @@ const TimestampConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [dateInput, setDateInput] = useState('');
   const [resultDate, setResultDate] = useState('');
   const [resultTs, setResultTs] = useState('');
-  const [copied, setCopied] = useState<string | null>(null);
+  const { copied: copiedDate, copy: copyDate } = useCopy();
+  const { copied: copiedTs, copy: copyTs } = useCopy();
 
   const t = {
     current: lang === 'zh' ? '当前时间' : 'Current Time',
@@ -16,6 +18,12 @@ const TimestampConverter: React.FC<ToolComponentProps> = ({ lang }) => {
     dateToTs: lang === 'zh' ? '日期 → 时间戳' : 'Date → Timestamp',
     convert: lang === 'zh' ? '转换' : 'Convert',
     result: lang === 'zh' ? '结果...' : 'Result...',
+    invalidTs: lang === 'zh' ? '无效的时间戳' : 'Invalid Timestamp',
+    invalidDate: lang === 'zh' ? '无效的日期' : 'Invalid Date',
+    error: lang === 'zh' ? '错误' : 'Error',
+    local: lang === 'zh' ? '本地时间' : 'Local',
+    seconds: lang === 'zh' ? '秒' : 'Seconds',
+    milliseconds: lang === 'zh' ? '毫秒' : 'Milliseconds',
   };
 
   useEffect(() => {
@@ -32,12 +40,12 @@ const TimestampConverter: React.FC<ToolComponentProps> = ({ lang }) => {
       
       const date = new Date(ts);
       if (isNaN(date.getTime())) {
-        setResultDate('Invalid Timestamp');
+        setResultDate(t.invalidTs);
       } else {
-        setResultDate(date.toLocaleString() + ' (Local)\n' + date.toUTCString());
+        setResultDate(date.toLocaleString() + ` (${t.local})\n` + date.toUTCString());
       }
     } catch {
-      setResultDate('Error');
+      setResultDate(t.error);
     }
   };
 
@@ -46,20 +54,14 @@ const TimestampConverter: React.FC<ToolComponentProps> = ({ lang }) => {
     try {
       const date = new Date(dateInput);
       if (isNaN(date.getTime())) {
-        setResultTs('Invalid Date');
+        setResultTs(t.invalidDate);
       } else {
         const ts = date.getTime();
-        setResultTs(`${Math.floor(ts / 1000)} (Seconds)\n${ts} (Milliseconds)`);
+        setResultTs(`${Math.floor(ts / 1000)} (${t.seconds})\n${ts} (${t.milliseconds})`);
       }
     } catch {
-      setResultTs('Error');
+      setResultTs(t.error);
     }
-  };
-
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(id);
-    setTimeout(() => setCopied(null), 2000);
   };
 
   return (
@@ -99,10 +101,10 @@ const TimestampConverter: React.FC<ToolComponentProps> = ({ lang }) => {
           <div className="bg-slate-900 rounded-lg p-4 border border-slate-800 relative min-h-[80px]">
              {resultDate && (
                  <button 
-                   onClick={() => copyToClipboard(resultDate, 'ts-res')} 
+                   onClick={() => copyDate(resultDate)} 
                    className="absolute top-2 right-2 text-slate-500 hover:text-primary-400"
                  >
-                   {copied === 'ts-res' ? <IconCheck className="w-4 h-4" /> : <IconCopy className="w-4 h-4" />}
+                   {copiedDate ? <IconCheck className="w-4 h-4" /> : <IconCopy className="w-4 h-4" />}
                  </button>
              )}
              <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap">{resultDate || t.result}</pre>
@@ -127,10 +129,10 @@ const TimestampConverter: React.FC<ToolComponentProps> = ({ lang }) => {
           <div className="bg-slate-900 rounded-lg p-4 border border-slate-800 relative min-h-[80px]">
              {resultTs && (
                  <button 
-                   onClick={() => copyToClipboard(resultTs, 'date-res')} 
+                   onClick={() => copyTs(resultTs)} 
                    className="absolute top-2 right-2 text-slate-500 hover:text-primary-400"
                  >
-                   {copied === 'date-res' ? <IconCheck className="w-4 h-4" /> : <IconCopy className="w-4 h-4" />}
+                   {copiedTs ? <IconCheck className="w-4 h-4" /> : <IconCopy className="w-4 h-4" />}
                  </button>
              )}
              <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap">{resultTs || t.result}</pre>

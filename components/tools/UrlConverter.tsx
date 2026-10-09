@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
+import { useCopy } from './shared/useCopy';
 
 const UrlConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [activeTab, setActiveTab] = useState<'convert' | 'parse'>('convert');
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
   const [parsedUrl, setParsedUrl] = useState<any>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
 
   const t = {
     title: lang === 'zh' ? 'URL 工具' : 'URL Tools',
@@ -24,6 +25,23 @@ const UrlConverter: React.FC<ToolComponentProps> = ({ lang }) => {
     queryParams: lang === 'zh' ? '查询参数' : 'Query Params',
     resPlace: lang === 'zh' ? '结果将显示在这里...' : 'Result will appear here...',
     invalidUrl: lang === 'zh' ? '请输入有效的 URL 以解析。' : 'Enter a valid URL to parse its components.',
+    errMalformed: lang === 'zh' ? '错误：URL 编码序列无效' : 'Error: Malformed URL sequence',
+    // Parsed component labels, keyed by the parser's own field names
+    protocol: lang === 'zh' ? '协议' : 'Protocol',
+    host: lang === 'zh' ? '主机' : 'Host',
+    port: lang === 'zh' ? '端口' : 'Port',
+    path: lang === 'zh' ? '路径' : 'Path',
+    query: lang === 'zh' ? '查询' : 'Query',
+    hash: lang === 'zh' ? '锚点' : 'Hash',
+  };
+
+  const fieldLabels: Record<string, string> = {
+    Protocol: t.protocol,
+    Host: t.host,
+    Port: t.port,
+    Path: t.path,
+    Query: t.query,
+    Hash: t.hash,
   };
 
   // Convert Logic
@@ -39,7 +57,7 @@ const UrlConverter: React.FC<ToolComponentProps> = ({ lang }) => {
         setOutput(decodeURIComponent(input));
       }
     } catch (e) {
-      setOutput('Error: Malformed URL sequence');
+      setOutput(t.errMalformed);
     }
   };
 
@@ -66,13 +84,6 @@ const UrlConverter: React.FC<ToolComponentProps> = ({ lang }) => {
         setParsedUrl(null);
     }
   }, [input, activeTab]);
-
-  const handleCopy = (text: string) => {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -125,7 +136,7 @@ const UrlConverter: React.FC<ToolComponentProps> = ({ lang }) => {
                 <div className="flex justify-between items-center">
                     <label className="text-slate-400 text-sm">{t.result}</label>
                     {output && (
-                        <button onClick={() => handleCopy(output)} className="flex items-center gap-1 text-xs text-primary-500 hover:text-primary-400">
+                        <button onClick={() => copy(output)} className="flex items-center gap-1 text-xs text-primary-500 hover:text-primary-400">
                             {copied ? <IconCheck className="w-3 h-3" /> : <IconCopy className="w-3 h-3" />}
                             {copied ? t.copied : t.copy}
                         </button>
@@ -171,7 +182,7 @@ const UrlConverter: React.FC<ToolComponentProps> = ({ lang }) => {
                             }
                             return (
                                 <div key={key} className="flex flex-col gap-1">
-                                    <div className="text-xs text-slate-500 uppercase font-bold">{key}</div>
+                                    <div className="text-xs text-slate-500 uppercase font-bold">{fieldLabels[key] ?? key}</div>
                                     <div className="font-mono text-slate-300 break-all">{val as string}</div>
                                 </div>
                             );

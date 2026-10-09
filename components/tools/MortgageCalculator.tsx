@@ -1,18 +1,31 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { IconCopy, IconCheck, IconRefresh } from '../Icons';
 import { ToolComponentProps } from '../../types';
 
-export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh' }) => {
+export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh', state, onStateChange }) => {
   // Input States
-  const [currentPrincipalWan, setCurrentPrincipalWan] = useState<string>('100'); // 剩余本金 (万元)
-  const [remainingMonths, setRemainingMonths] = useState<string>('240'); // 剩余月数 (如 240月 = 20年)
-  const [annualInterestRate, setAnnualInterestRate] = useState<string>('3.85'); // 年利率 %
-  const [prepaymentAmountWan, setPrepaymentAmountWan] = useState<string>('20'); // 提前还款金额 (万元)
-  const [paymentMethod, setPaymentMethod] = useState<1 | 2>(1); // 1: 等额本息, 2: 等额本金
-  const [shortenTerm, setShortenTerm] = useState<boolean>(true); // true: 缩短年限, false: 减少月供
+  const [currentPrincipalWan, setCurrentPrincipalWan] = useState<string>(state?.currentPrincipalWan ?? '100'); // 剩余本金 (万元)
+  const [remainingMonths, setRemainingMonths] = useState<string>(state?.remainingMonths ?? '240'); // 剩余月数 (如 240月 = 20年)
+  const [annualInterestRate, setAnnualInterestRate] = useState<string>(state?.annualInterestRate ?? '3.85'); // 年利率 %
+  const [prepaymentAmountWan, setPrepaymentAmountWan] = useState<string>(state?.prepaymentAmountWan ?? '20'); // 提前还款金额 (万元)
+  const [paymentMethod, setPaymentMethod] = useState<1 | 2>(state?.paymentMethod === 2 ? 2 : 1); // 1: 等额本息, 2: 等额本金
+  const [shortenTerm, setShortenTerm] = useState<boolean>(state?.shortenTerm ?? true); // true: 缩短年限, false: 减少月供
 
   const [copied, setCopied] = useState(false);
-  const [showSchedule, setShowSchedule] = useState(false);
+  const [showSchedule, setShowSchedule] = useState<boolean>(state?.showSchedule ?? false);
+
+  // Persist inputs only (deps are the persisted fields, never `state`, so App writing the blob back cannot retrigger this).
+  useEffect(() => {
+    onStateChange?.({
+      currentPrincipalWan,
+      remainingMonths,
+      annualInterestRate,
+      prepaymentAmountWan,
+      paymentMethod,
+      shortenTerm,
+      showSchedule,
+    });
+  }, [currentPrincipalWan, remainingMonths, annualInterestRate, prepaymentAmountWan, paymentMethod, shortenTerm, showSchedule, onStateChange]);
 
   const isZh = lang === 'zh';
 
@@ -30,6 +43,11 @@ export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh' }
     method: isZh ? '还款方式' : 'Repayment Method',
     method1: isZh ? '等额本息 (每月还款额固定)' : 'Equal Principal & Interest (Fixed Monthly)',
     method2: isZh ? '等额本金 (每月还款递减)' : 'Equal Principal (Decreasing Monthly)',
+    method1Short: isZh ? '等额本息' : 'Equal Payment',
+    method2Short: isZh ? '等额本金' : 'Equal Principal',
+    firstMonth: isZh ? '首月' : 'First month',
+    lastMonth: isZh ? '末月' : 'Last month',
+    monthlyRateLabel: isZh ? '月利率' : 'Monthly rate',
     shortenOption: isZh ? '提前还款方案' : 'Prepayment Plan',
     shortenTermTrue: isZh ? '保持月供不变，缩短还款期限' : 'Keep monthly payment, shorten term',
     shortenTermFalse: isZh ? '保持还款期限，减少每月月供' : 'Keep term, reduce monthly payment',
@@ -54,6 +72,19 @@ export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh' }
     principalCol: isZh ? '本金(元)' : 'Principal',
     interestCol: isZh ? '利息(元)' : 'Interest',
     balanceCol: isZh ? '剩余本金(元)' : 'Balance',
+    copyTitle: isZh ? '【提前还贷计算结果】' : '[Mortgage Prepayment Result]',
+    copyPrincipal: isZh ? '原始剩余本金' : 'Original principal',
+    copyPrepayment: isZh ? '提前还款金额' : 'Prepayment amount',
+    copyMethod: isZh ? '还款方式' : 'Repayment method',
+    copyPlan: isZh ? '提前还款方案' : 'Prepayment plan',
+    copyNewPrincipal: isZh ? '调整后剩余本金' : 'New principal after prepayment',
+    copySavedInterest: isZh ? '节省利息总额' : 'Total interest saved',
+    copyNewTerm: isZh ? '调整后还款期限' : 'Adjusted term',
+    copyShortened: isZh ? '缩短' : 'shortened by',
+    copyNewMonthly: isZh ? '调整后月供' : 'New monthly payment',
+    copyNewFirstMonthly: isZh ? '调整后首月月供' : 'New first-month payment',
+    copyTotalInterest: isZh ? '剩余还款期总利息' : 'Total interest for remaining term',
+    copyWas: isZh ? '原为' : 'was',
   };
 
   // Convert inputs
@@ -265,20 +296,24 @@ export const MortgageCalculator: React.FC<ToolComponentProps> = ({ lang = 'zh' }
 
   const handleCopy = () => {
     if (!calcResults) return;
-    const text = `【提前还贷计算结果】
-- 原始剩余本金：${(currentPrincipal / 10000).toFixed(2)} 万元
-- 提前还款金额：${(prepaymentAmount / 10000).toFixed(2)} 万元
-- 还款方式：${paymentMethod === 1 ? '等额本息' : '等额本金'}
-- 提前还款方案：${shortenTerm ? '保持月供不变，缩短还款期限' : '保持还款期限，减少每月月供'}
-- 调整后剩余本金：${(calcResults.newPrincipal / 10000).toFixed(2)} 万元 (${calcResults.newPrincipal.toFixed(2)} 元)
-- 节省利息总额：${calcResults.interestSaved.toFixed(2)} 元 (${(calcResults.interestSaved / 10000).toFixed(2)} 万元)
-- 调整后还款期限：${calcResults.newRemainingMonths} 个月 (${(calcResults.newRemainingMonths / 12).toFixed(1)} 年)${calcResults.shortenedMonths > 0 ? ` [缩短 ${calcResults.shortenedMonths} 个月]` : ''}
-${
-  paymentMethod === 1
-    ? `- 调整后月供：${calcResults.newMonthlyPayment.toFixed(2)} 元`
-    : `- 调整后首月月供：${calcResults.newFirstMonthPayment.toFixed(2)} 元 (末月 ${calcResults.newLastMonthPayment.toFixed(2)} 元)`
-}
-- 剩余还款期总利息：${calcResults.totalInterest.toFixed(2)} 元 (原为 ${calcResults.originalTotalInterest.toFixed(2)} 元)`;
+    const wan = (v: number) => (v / 10000).toFixed(2);
+    const methodText = paymentMethod === 1 ? t.method1Short : t.method2Short;
+    const planText = shortenTerm ? t.shortenTermTrue : t.shortenTermFalse;
+    const termLine = `${calcResults.newRemainingMonths} ${t.monthsUnit} (${(calcResults.newRemainingMonths / 12).toFixed(1)} ${t.yearsUnit})`;
+    const paymentLine =
+      paymentMethod === 1
+        ? `- ${t.copyNewMonthly}: ${calcResults.newMonthlyPayment.toFixed(2)} ${t.yuan}`
+        : `- ${t.copyNewFirstMonthly}: ${calcResults.newFirstMonthPayment.toFixed(2)} ${t.yuan} (${t.lastMonth} ${calcResults.newLastMonthPayment.toFixed(2)} ${t.yuan})`;
+    const text = `${t.copyTitle}
+- ${t.copyPrincipal}: ${wan(currentPrincipal)} ${t.wan} (${currentPrincipal.toFixed(2)} ${t.yuan})
+- ${t.copyPrepayment}: ${wan(prepaymentAmount)} ${t.wan} (${prepaymentAmount.toFixed(2)} ${t.yuan})
+- ${t.copyMethod}: ${methodText}
+- ${t.copyPlan}: ${planText}
+- ${t.copyNewPrincipal}: ${wan(calcResults.newPrincipal)} ${t.wan} (${calcResults.newPrincipal.toFixed(2)} ${t.yuan})
+- ${t.copySavedInterest}: ${calcResults.interestSaved.toFixed(2)} ${t.yuan} (${wan(calcResults.interestSaved)} ${t.wan})
+- ${t.copyNewTerm}: ${termLine}${calcResults.shortenedMonths > 0 ? ` [${t.copyShortened} ${calcResults.shortenedMonths} ${t.monthsUnit}]` : ''}
+${paymentLine}
+- ${t.copyTotalInterest}: ${calcResults.totalInterest.toFixed(2)} ${t.yuan} (${t.copyWas} ${calcResults.originalTotalInterest.toFixed(2)} ${t.yuan})`;
 
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -334,7 +369,7 @@ ${
               </span>
             </div>
             <div className="text-[11px] text-emerald-100/90 font-medium">
-              {(calcResults.interestSaved / 10000).toFixed(2)} 万元 ({calcResults.originalTotalInterest > 0 ? `${((calcResults.interestSaved / calcResults.originalTotalInterest) * 100).toFixed(1)}%` : '0%'})
+              {(calcResults.interestSaved / 10000).toFixed(2)} {t.wan} ({calcResults.originalTotalInterest > 0 ? `${((calcResults.interestSaved / calcResults.originalTotalInterest) * 100).toFixed(1)}%` : '0%'})
             </div>
           </div>
 
@@ -347,7 +382,7 @@ ${
               </span>
             </div>
             <div className="text-[11px] text-slate-500 font-mono">
-              ¥ {calcResults.newPrincipal.toLocaleString()} 元
+              ¥ {calcResults.newPrincipal.toLocaleString()} {t.yuan}
             </div>
           </div>
 
@@ -364,7 +399,7 @@ ${
             </div>
             <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
               {calcResults.shortenedMonths > 0
-                ? `${t.shortenedBy} ${calcResults.shortenedMonths} ${t.monthsUnit} (${(calcResults.shortenedMonths / 12).toFixed(1)}年)`
+                ? `${t.shortenedBy} ${calcResults.shortenedMonths} ${t.monthsUnit} (${(calcResults.shortenedMonths / 12).toFixed(1)} ${t.yearsUnit})`
                 : (isZh ? '期限保持不变' : 'Term unchanged')}
             </div>
           </div>
@@ -377,14 +412,14 @@ ${
                 {paymentMethod === 1 ? (
                   `¥ ${calcResults.newMonthlyPayment.toFixed(2)}`
                 ) : (
-                  `首月 ¥ ${calcResults.newFirstMonthPayment.toFixed(2)}`
+                  `${t.firstMonth} ¥ ${calcResults.newFirstMonthPayment.toFixed(2)}`
                 )}
               </span>
             </div>
             <div className="text-[11px] text-slate-500 font-mono">
               {paymentMethod === 1
                 ? `${t.origMonthlyPayment}: ¥ ${calcResults.originalMonthlyPayment.toFixed(2)}`
-                : `末月 ¥ ${calcResults.newLastMonthPayment.toFixed(2)}`}
+                : `${t.lastMonth} ¥ ${calcResults.newLastMonthPayment.toFixed(2)}`}
             </div>
           </div>
         </div>
@@ -432,7 +467,7 @@ ${
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-primary-400'
                   }`}
                 >
-                  {val}万
+                  {isZh ? `${val}万` : `¥${(Number(val) * 10000).toLocaleString()}`}
                 </button>
               ))}
             </div>
@@ -462,10 +497,10 @@ ${
             {/* Quick Presets */}
             <div className="flex gap-1.5 flex-wrap pt-0.5">
               {[
-                { label: '10年(120期)', val: '120' },
-                { label: '15年(180期)', val: '180' },
-                { label: '20年(240期)', val: '240' },
-                { label: '30年(360期)', val: '360' },
+                { label: isZh ? '10年(120期)' : '10 yrs (120 mo)', val: '120' },
+                { label: isZh ? '15年(180期)' : '15 yrs (180 mo)', val: '180' },
+                { label: isZh ? '20年(240期)' : '20 yrs (240 mo)', val: '240' },
+                { label: isZh ? '30年(360期)' : '30 yrs (360 mo)', val: '360' },
               ].map((item) => (
                 <button
                   key={item.val}
@@ -487,7 +522,7 @@ ${
           <div className="space-y-1.5">
             <div className="flex justify-between items-center text-xs">
               <label className="font-semibold text-slate-700 dark:text-slate-300">{t.annualRate}</label>
-              <span className="text-slate-500 font-mono">月利率 {(rate / 12).toFixed(3)}%</span>
+              <span className="text-slate-500 font-mono">{t.monthlyRateLabel} {(rate / 12).toFixed(3)}%</span>
             </div>
             <div className="relative">
               <input
@@ -542,10 +577,10 @@ ${
             </div>
             <div className="flex gap-1.5 flex-wrap pt-0.5">
               {[
-                { label: '5万', val: '5' },
-                { label: '10万', val: '10' },
-                { label: '20万', val: '20' },
-                { label: '50万', val: '50' },
+                { label: isZh ? '5万' : '¥50,000', val: '5' },
+                { label: isZh ? '10万' : '¥100,000', val: '10' },
+                { label: isZh ? '20万' : '¥200,000', val: '20' },
+                { label: isZh ? '50万' : '¥500,000', val: '50' },
                 { label: '30%', val: (pWan * 0.3).toFixed(1) },
                 { label: '50%', val: (pWan * 0.5).toFixed(1) },
               ].map((item, idx) => (
@@ -578,7 +613,7 @@ ${
                     : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100'
                 }`}
               >
-                <div className="font-bold">{isZh ? '等额本息' : 'Equal Payment'}</div>
+                <div className="font-bold">{t.method1Short}</div>
                 <div className="text-[10px] opacity-75 mt-0.5">{isZh ? '每月月供金额固定' : 'Fixed payment per month'}</div>
               </button>
               <button
@@ -590,7 +625,7 @@ ${
                     : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100'
                 }`}
               >
-                <div className="font-bold">{isZh ? '等额本金' : 'Equal Principal'}</div>
+                <div className="font-bold">{t.method2Short}</div>
                 <div className="text-[10px] opacity-75 mt-0.5">{isZh ? '每月月供逐月递减' : 'Decreasing payment'}</div>
               </button>
             </div>
@@ -675,13 +710,13 @@ ${
                 <div>
                   <div className="text-slate-400 text-[11px]">{t.principal}</div>
                   <div className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                    ¥ {(currentPrincipal / 10000).toFixed(2)} 万
+                    ¥ {(currentPrincipal / 10000).toFixed(2)} {t.wan}
                   </div>
                 </div>
                 <div>
                   <div className="text-slate-400 text-[11px]">{t.remainingMonths}</div>
                   <div className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                    {months} 个月 ({(months / 12).toFixed(1)} 年)
+                    {months} {t.monthsUnit} ({(months / 12).toFixed(1)} {t.yearsUnit})
                   </div>
                 </div>
                 <div>
@@ -690,14 +725,14 @@ ${
                     {paymentMethod === 1 ? (
                       `¥ ${calcResults.originalMonthlyPayment.toFixed(2)}`
                     ) : (
-                      `首月 ¥ ${calcResults.originalFirstMonthPayment.toFixed(2)}`
+                      `${t.firstMonth} ¥ ${calcResults.originalFirstMonthPayment.toFixed(2)}`
                     )}
                   </div>
                 </div>
                 <div>
                   <div className="text-slate-400 text-[11px]">{t.origTotalInterest}</div>
                   <div className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                    ¥ {calcResults.originalTotalInterest.toFixed(2)} 元
+                    ¥ {calcResults.originalTotalInterest.toFixed(2)} {t.yuan}
                   </div>
                 </div>
               </div>
@@ -710,13 +745,13 @@ ${
                 <div>
                   <div className="text-slate-400 text-[11px]">{t.newPrincipal}</div>
                   <div className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
-                    ¥ {(calcResults.newPrincipal / 10000).toFixed(2)} 万
+                    ¥ {(calcResults.newPrincipal / 10000).toFixed(2)} {t.wan}
                   </div>
                 </div>
                 <div>
                   <div className="text-slate-400 text-[11px]">{t.newTerm}</div>
                   <div className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
-                    {calcResults.newRemainingMonths} 个月 ({(calcResults.newRemainingMonths / 12).toFixed(1)} 年)
+                    {calcResults.newRemainingMonths} {t.monthsUnit} ({(calcResults.newRemainingMonths / 12).toFixed(1)} {t.yearsUnit})
                   </div>
                 </div>
                 <div>
@@ -725,14 +760,14 @@ ${
                     {paymentMethod === 1 ? (
                       `¥ ${calcResults.newMonthlyPayment.toFixed(2)}`
                     ) : (
-                      `首月 ¥ ${calcResults.newFirstMonthPayment.toFixed(2)}`
+                      `${t.firstMonth} ¥ ${calcResults.newFirstMonthPayment.toFixed(2)}`
                     )}
                   </div>
                 </div>
                 <div>
                   <div className="text-slate-400 text-[11px]">{t.totalInterest}</div>
                   <div className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
-                    ¥ {calcResults.totalInterest.toFixed(2)} 元
+                    ¥ {calcResults.totalInterest.toFixed(2)} {t.yuan}
                   </div>
                 </div>
               </div>

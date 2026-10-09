@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IconCopy, IconCheck, IconRefresh } from '../Icons';
+import { IconCopy, IconCheck } from '../Icons';
 import { ToolComponentProps } from '../../types';
 
 const UnicodeConverter: React.FC<ToolComponentProps> = ({ lang }) => {

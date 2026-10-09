@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { IconCopy, IconCheck, IconRefresh } from '../Icons';
 import { ToolComponentProps } from '../../types';
+import { useCopy } from './shared/useCopy';
 
 const UuidGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
   const [uuids, setUuids] = useState<string[]>([]);
   const [count, setCount] = useState(5);
   const [hyphens, setHyphens] = useState(true);
   const [uppercase, setUppercase] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
 
   const t = {
     title: lang === 'zh' ? 'UUID 生成器' : 'UUID Generator',
@@ -16,7 +17,9 @@ const UuidGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
     uppercase: lang === 'zh' ? '大写' : 'Uppercase',
     generate: lang === 'zh' ? '生成 UUID' : 'Generate UUIDs',
     copy: lang === 'zh' ? '复制全部' : 'Copy All',
+    copyOne: lang === 'zh' ? '复制' : 'Copy',
     copied: lang === 'zh' ? '已复制' : 'Copied',
+    results: lang === 'zh' ? '结果' : 'Results',
   };
 
   const generateUuidV4 = () => {
@@ -42,7 +45,7 @@ const UuidGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
   // Generate on mount
   React.useEffect(() => {
     handleGenerate();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // mount-only by design: count applies on Generate, not per keystroke
 
   // Re-generate if formatting options change
   React.useEffect(() => {
@@ -51,9 +54,7 @@ const UuidGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
 
   const copyToClipboard = () => {
       if (uuids.length === 0) return;
-      navigator.clipboard.writeText(uuids.join('\n'));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      copy(uuids.join('\n'));
   };
 
   const copySingle = (uuid: string) => {
@@ -96,7 +97,7 @@ const UuidGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
 
       <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col">
           <div className="flex justify-between items-center p-3 bg-slate-800 border-b border-slate-700">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider px-2">Results ({uuids.length})</span>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider px-2">{t.results} ({uuids.length})</span>
               <button 
                 onClick={copyToClipboard} 
                 className="text-xs flex items-center gap-1.5 text-primary-400 hover:text-primary-300 transition-colors px-2 py-1 rounded hover:bg-slate-700"
@@ -113,7 +114,7 @@ const UuidGenerator: React.FC<ToolComponentProps> = ({ lang }) => {
                           <button 
                             onClick={() => { copySingle(uuid); }}
                             className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-white transition-all p-1.5 rounded-md hover:bg-slate-600"
-                            title="Copy"
+                            title={t.copyOne}
                           >
                               <IconCopy className="w-4 h-4" />
                           </button>
