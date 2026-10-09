@@ -1,40 +1,33 @@
 import React, { useRef } from 'react';
 
 /**
- * Shared shell of the textarea-based code editors: a transparent textarea
- * stacked on a highlighted <pre> overlay, with scroll sync and Tab/Shift-Tab
- * indent handling.
+ * Shell shared by the textarea code editors: a transparent textarea stacked on a
+ * highlighted <pre> overlay, with scroll sync and Tab/Shift-Tab indent handling.
+ * Callers own the highlighting and any error UI (passed through `footer`).
  *
- * The caller owns the highlighting and any error UI (passed through `footer`).
- * The shell props below default to the JSON editor's shell; other looks pass
- * their own values (see YAML_SHELL in YamlTool.tsx).
+ * The style props all default to the JSON editor's shell; YamlTool overrides them
+ * (see YAML_SHELL there), so each editor keeps its exact previous look.
  */
 export interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
-  /** Already-highlighted HTML rendered in the overlay <pre>. */
+  /** Already-highlighted HTML for the overlay <pre>. */
   highlighted: string;
   placeholder?: string;
   readOnly?: boolean;
-  /** Drives the error focus ring instead of the normal one. */
+  /** Swaps the focus ring for the error one. */
   hasError?: boolean;
   /** Caller-owned overlay UI: error banner, jump button, perf notice... */
   footer?: React.ReactNode;
-  /** Lets a caller reach the textarea, e.g. to select an error position. */
+  /** Caller-held ref, e.g. to select an error position. */
   textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
-  /** Classes of the root shell. */
   className?: string;
-  /** Padding of the editor surface. */
   padding?: string;
-  /** Caret colour of the textarea. */
   caretColor?: string;
-  /** When set, a ::placeholder rule with this colour is emitted. */
+  /** Emitted as a ::placeholder rule; omitted leaves the browser default. */
   placeholderColor?: string;
-  /** Overflow of the stacked textarea/pre layers. */
   overflowY?: 'scroll' | 'auto';
-  /** Focus-ring classes of the textarea for a valid value. */
   focusRingClass?: string;
-  /** Focus-ring classes of the textarea when `hasError`. */
   focusRingErrorClass?: string;
 }
 
@@ -47,10 +40,10 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   hasError = false,
   footer,
   textareaRef,
+  placeholderColor,
   className = 'relative w-full h-full bg-slate-800 rounded-xl border border-slate-700 overflow-hidden',
   padding = '16px',
   caretColor = 'white',
-  placeholderColor,
   overflowY = 'scroll',
   focusRingClass = 'focus:ring-2 focus:ring-primary-500/20',
   focusRingErrorClass = 'focus:ring-2 focus:ring-red-500/20',
@@ -66,51 +59,35 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     }
   };
 
+  /** Restores the caret once React has re-rendered the controlled value. */
+  const restoreSelection = (selStart: number, selEnd = selStart) => setTimeout(() => {
+    if (textarea.current) {
+      textarea.current.selectionStart = selStart;
+      textarea.current.selectionEnd = selEnd;
+    }
+  }, 0);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (readOnly) return;
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      const el = textarea.current;
-      if (!el) return;
+    if (readOnly || e.key !== 'Tab') return;
+    e.preventDefault();
+    const el = textarea.current;
+    if (!el) return;
 
-      const start = el.selectionStart;
-      const end = el.selectionEnd;
+    const { selectionStart: start, selectionEnd: end } = el;
 
-      if (e.shiftKey) {
-        const val = el.value;
-        const lineStart = val.lastIndexOf('\n', start - 1) + 1;
-        if (val.substring(lineStart, lineStart + 2) === '  ') {
-          const newValue = val.substring(0, lineStart) + val.substring(lineStart + 2);
-          onChange(newValue);
-          setTimeout(() => {
-            if (textarea.current) {
-              textarea.current.selectionStart = Math.max(lineStart, start - 2);
-              textarea.current.selectionEnd = Math.max(lineStart, end - 2);
-            }
-          }, 0);
-        }
-      } else {
-        if (start === end) {
-          const newValue = value.substring(0, start) + '  ' + value.substring(end);
-          onChange(newValue);
-          setTimeout(() => {
-            if (textarea.current) {
-              textarea.current.selectionStart = textarea.current.selectionEnd = start + 2;
-            }
-          }, 0);
-        } else {
-          const lines = value.substring(start, end).split('\n');
-          const indented = lines.map(line => '  ' + line).join('\n');
-          const newValue = value.substring(0, start) + indented + value.substring(end);
-          onChange(newValue);
-          setTimeout(() => {
-            if (textarea.current) {
-              textarea.current.selectionStart = start;
-              textarea.current.selectionEnd = start + indented.length;
-            }
-          }, 0);
-        }
-      }
+    if (e.shiftKey) {
+      const val = el.value;
+      const lineStart = val.lastIndexOf('\n', start - 1) + 1;
+      if (val.substring(lineStart, lineStart + 2) !== '  ') return;
+      onChange(val.substring(0, lineStart) + val.substring(lineStart + 2));
+      restoreSelection(Math.max(lineStart, start - 2), Math.max(lineStart, end - 2));
+    } else if (start === end) {
+      onChange(value.substring(0, start) + '  ' + value.substring(end));
+      restoreSelection(start + 2);
+    } else {
+      const indented = value.substring(start, end).split('\n').map(line => '  ' + line).join('\n');
+      onChange(value.substring(0, start) + indented + value.substring(end));
+      restoreSelection(start, start + indented.length);
     }
   };
 
