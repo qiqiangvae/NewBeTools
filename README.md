@@ -87,7 +87,7 @@
 - **图标**: 全部为 `components/Icons.tsx` 中的手写 SVG 组件
 - **核心解析库**: `js-yaml`, `jsonrepair`, `react-markdown`, `remark-gfm`
 - **包管理器**: Bun（`bun.lock`）
-- **构建部署**: Standard ESM Node.js container with Vite build pipeline
+- **构建部署**: `bun run build` 产出纯静态资源（`dist/`），交给任意静态托管 / Node 容器托管即可
 
 ---
 
@@ -100,11 +100,16 @@ bun install
 # 2. 启动开发服务器（端口 3000）
 bun run dev
 
-# 3. 构建生产包
+# 3. 构建生产包（产物为静态文件，输出到 dist/）
 bun run build
+
+# 4. 检查：类型 + 冒烟渲染
+bun run typecheck && bun run smoke
 ```
 
-AI 助手与代码格式化需要 Gemini API Key：在项目根目录创建 `.env` 并写入 `GEMINI_API_KEY=你的密钥`。Vite 会在构建时通过 `define` 把它注入 `process.env.API_KEY`，未配置时这些功能会显示缺少密钥的提示。其余工具均在浏览器本地运行，只有 AI 功能与 IP 查询会发起网络请求。
+AI 助手与代码格式化需要 Gemini API Key：复制 `.env.example` 为 `.env` 并填入 `GEMINI_API_KEY=你的密钥`。Vite 会在构建时通过 `define` 把它注入 `process.env.API_KEY`，未配置时这些功能会显示缺少密钥的提示。其余工具均在浏览器本地运行，只有 AI 功能与 IP 查询会发起网络请求。
+
+界面状态：语言、主题与侧栏折叠会记在 `localStorage`；当前工具会写进 URL 片段（如 `/#json-fmt`），因此刷新和分享链接都能回到同一个工具。
 
 ---
 
