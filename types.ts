@@ -1,5 +1,4 @@
-
-import { ReactNode } from 'react';
+import { ReactElement, ReactNode } from 'react';
 
 export enum ToolCategory {
   DEVELOPER = 'Developer',
@@ -17,12 +16,9 @@ export interface ToolDef {
   descriptionZh: string;
   category: ToolCategory;
   icon: ReactNode;
-  component: ReactNode;
+  /** A placeholder element; App injects the live props via cloneElement. */
+  component: ReactElement<ToolComponentProps>;
   keywords: string[];
-}
-
-export interface ToolState {
-  currentToolId: string | null;
 }
 
 export type Lang = 'zh' | 'en';
@@ -34,3 +30,15 @@ export interface ToolComponentProps {
   onStateChange?: (state: any) => void;
   onNavigateToTool?: (toolId: string, payload?: any) => void;
 }
+
+const CATEGORY_LABELS: Record<ToolCategory, Record<Lang, string>> = {
+  [ToolCategory.DEVELOPER]: { zh: '开发', en: 'Developer' },
+  [ToolCategory.CONVERTER]: { zh: '转换', en: 'Converter' },
+  [ToolCategory.CRYPTO]: { zh: '加密', en: 'Crypto' },
+  [ToolCategory.AI]: { zh: 'AI 助手', en: 'AI Assistant' },
+  [ToolCategory.UTILITY]: { zh: '工具', en: 'Utility' },
+};
+
+/** Localized display label for a tool category. */
+export const categoryLabel = (category: ToolCategory, lang: Lang): string =>
+  CATEGORY_LABELS[category]?.[lang] ?? category;

@@ -1,61 +1,97 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { IconCopy, IconCheck } from '../Icons';
+import { Lang, ToolComponentProps } from '../../types';
+import { useCopy } from './shared/useCopy';
 
-const PALETTES = [
-  { name: 'Slate', hex: '#64748b' },
-  { name: 'Red', hex: '#ef4444' },
-  { name: 'Orange', hex: '#f97316' },
-  { name: 'Amber', hex: '#f59e0b' },
-  { name: 'Yellow', hex: '#eab308' },
-  { name: 'Lime', hex: '#84cc16' },
-  { name: 'Green', hex: '#22c55e' },
-  { name: 'Emerald', hex: '#10b981' },
-  { name: 'Teal', hex: '#14b8a6' },
-  { name: 'Cyan', hex: '#06b6d4' },
-  { name: 'Sky', hex: '#0ea5e9' },
-  { name: 'Blue', hex: '#3b82f6' },
-  { name: 'Indigo', hex: '#6366f1' },
-  { name: 'Violet', hex: '#8b5cf6' },
-  { name: 'Purple', hex: '#a855f7' },
-  { name: 'Fuchsia', hex: '#d946ef' },
-  { name: 'Pink', hex: '#ec4899' },
-  { name: 'Rose', hex: '#f43f5e' },
-  { name: 'Black', hex: '#000000' },
-  { name: 'White', hex: '#ffffff' },
+const PALETTES: { en: string; zh: string; hex: string }[] = [
+  { en: 'Slate', zh: '石板灰', hex: '#64748b' },
+  { en: 'Red', zh: '红', hex: '#ef4444' },
+  { en: 'Orange', zh: '橙', hex: '#f97316' },
+  { en: 'Amber', zh: '琥珀', hex: '#f59e0b' },
+  { en: 'Yellow', zh: '黄', hex: '#eab308' },
+  { en: 'Lime', zh: '柠檬绿', hex: '#84cc16' },
+  { en: 'Green', zh: '绿', hex: '#22c55e' },
+  { en: 'Emerald', zh: '翠绿', hex: '#10b981' },
+  { en: 'Teal', zh: '青绿', hex: '#14b8a6' },
+  { en: 'Cyan', zh: '青色', hex: '#06b6d4' },
+  { en: 'Sky', zh: '天蓝', hex: '#0ea5e9' },
+  { en: 'Blue', zh: '蓝', hex: '#3b82f6' },
+  { en: 'Indigo', zh: '靛蓝', hex: '#6366f1' },
+  { en: 'Violet', zh: '紫罗兰', hex: '#8b5cf6' },
+  { en: 'Purple', zh: '紫', hex: '#a855f7' },
+  { en: 'Fuchsia', zh: '品红', hex: '#d946ef' },
+  { en: 'Pink', zh: '粉', hex: '#ec4899' },
+  { en: 'Rose', zh: '玫红', hex: '#f43f5e' },
+  { en: 'Black', zh: '黑', hex: '#000000' },
+  { en: 'White', zh: '白', hex: '#ffffff' },
 ];
 
-const ColorConverter: React.FC = () => {
+interface Rgb { r: number; g: number; b: number }
+
+const hexToRgb = (hex: string): Rgb | null => {
+  if (!/^#?([a-f\d]{3}|[a-f\d]{6})$/i.test(hex)) return null;
+  let h = hex.replace('#', '');
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  return {
+    r: parseInt(h.substring(0, 2), 16),
+    g: parseInt(h.substring(2, 4), 16),
+    b: parseInt(h.substring(4, 6), 16),
+  };
+};
+
+const rgbToHsl = ({ r, g, b }: Rgb): { h: number; s: number; l: number } => {
+  const rn = r / 255, gn = g / 255, bn = b / 255;
+  const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+  const l = (max + min) / 2;
+  const d = max - min;
+
+  if (d === 0) return { h: 0, s: 0, l: Math.round(l * 100) };
+
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h: number;
+  switch (max) {
+    case rn: h = (gn - bn) / d + (gn < bn ? 6 : 0); break;
+    case gn: h = (bn - rn) / d + 2; break;
+    default: h = (rn - gn) / d + 4;
+  }
+  return { h: Math.round(h * 60), s: Math.round(s * 100), l: Math.round(l * 100) };
+};
+
+const ColorConverter: React.FC<ToolComponentProps> = ({ lang }) => {
   const [hex, setHex] = useState('#3b82f6');
-  const [rgb, setRgb] = useState('rgb(59, 130, 246)');
+
+  const t = {
+    title: lang === 'zh' ? '颜色转换' : 'Color Converter',
+    pick: lang === 'zh' ? '点击取色' : 'Click to Pick Color',
+    presets: lang === 'zh' ? '预设' : 'Presets',
+    hexValue: lang === 'zh' ? 'HEX 值' : 'HEX Value',
+    rgbValue: lang === 'zh' ? 'RGB 值' : 'RGB Value',
+    hslValue: lang === 'zh' ? 'HSL 值' : 'HSL Value',
+    cssVar: lang === 'zh' ? 'CSS 变量' : 'CSS Variable',
+    invalid: lang === 'zh' ? '无效的 HEX' : 'Invalid HEX',
+    copy: lang === 'zh' ? '复制' : 'Copy',
+  };
+
+  const rgb = useMemo(() => hexToRgb(hex), [hex]);
+  const hsl = useMemo(() => (rgb ? rgbToHsl(rgb) : null), [rgb]);
 
   const handleHexChange = (val: string) => {
     // Ensure starts with #
-    let cleanHex = val.startsWith('#') ? val : '#' + val;
-    setHex(cleanHex);
-    
-    if (/^#?([a-f\d]{3}|[a-f\d]{6})$/i.test(cleanHex)) {
-        let h = cleanHex.replace('#', '');
-        if (h.length === 3) h = h.split('').map(c => c + c).join('');
-        const r = parseInt(h.substring(0, 2), 16);
-        const g = parseInt(h.substring(2, 4), 16);
-        const b = parseInt(h.substring(4, 6), 16);
-        
-        setRgb(`rgb(${r}, ${g}, ${b})`);
-    } else {
-        setRgb('Invalid HEX');
-    }
+    setHex(val.startsWith('#') ? val : '#' + val);
   };
 
+  const copyableRows = [
+    { label: t.rgbValue, value: rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : t.invalid, copy: Boolean(rgb) },
+    { label: t.hslValue, value: hsl ? `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)` : t.invalid, copy: Boolean(hsl) },
+    { label: t.cssVar, value: `--color: ${hex};`, copy: true },
+  ];
+
   const CopyButton = ({ text }: { text: string }) => {
-    const [copied, setCopied] = useState(false);
+    const { copied, copy } = useCopy();
     return (
         <button 
-            onClick={() => {
-                if (!text || text.includes('Invalid')) return;
-                navigator.clipboard.writeText(text);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-            }} 
+            onClick={() => copy(text)} 
+            title={t.copy}
             className="p-2 text-slate-500 hover:text-primary-400 transition-colors shrink-0"
         >
             {copied ? <IconCheck className="w-4 h-4 text-green-500" /> : <IconCopy className="w-4 h-4" />}
@@ -66,7 +102,7 @@ const ColorConverter: React.FC = () => {
   return (
     <div className="flex flex-col gap-6 h-full">
        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-slate-100">Color Converter</h2>
+          <h2 className="text-xl font-bold text-slate-100">{t.title}</h2>
        </div>
        
        <div className="flex flex-col gap-6">
@@ -84,21 +120,21 @@ const ColorConverter: React.FC = () => {
                     className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                   />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 pointer-events-none text-white font-bold text-sm">
-                      Click to Pick Color
+                      {t.pick}
                   </div>
                </div>
-              
+               
                {/* Popular Palettes */}
                <div className="flex-1 bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-center">
-                  <h3 className="text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">Presets</h3>
+                  <h3 className="text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">{t.presets}</h3>
                   <div className="flex flex-wrap gap-2.5">
                       {PALETTES.map((p) => (
                           <button
-                            key={p.name}
+                            key={p.hex}
                             onClick={() => handleHexChange(p.hex)}
                             className="w-7 h-7 rounded-lg border border-white/10 hover:scale-110 transition-transform focus:ring-2 focus:ring-primary-500 outline-none shadow-sm"
                             style={{ backgroundColor: p.hex }}
-                            title={`${p.name} (${p.hex})`}
+                            title={`${lang === 'zh' ? p.zh : p.en} (${p.hex})`}
                           />
                       ))}
                   </div>
@@ -109,7 +145,7 @@ const ColorConverter: React.FC = () => {
            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-5">
                 {/* HEX Input */}
                 <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">HEX Value</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">{t.hexValue}</label>
                     <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg group focus-within:ring-2 focus-within:ring-primary-500/50 transition-all">
                         <input 
                             type="text" 
@@ -123,35 +159,21 @@ const ColorConverter: React.FC = () => {
                     </div>
                 </div>
 
-                {/* RGB Display */}
-                <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">RGB Value</label>
-                     <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg group">
-                        <input 
-                            type="text" 
-                            value={rgb} 
-                            readOnly
-                            className="flex-1 bg-transparent px-4 py-3 text-slate-100 outline-none font-mono text-sm"
-                            spellCheck="false"
-                        />
-                        <CopyButton text={rgb} />
+                {copyableRows.map(({ label, value, copy }) => (
+                    <div key={label} className="flex flex-col gap-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">{label}</label>
+                        <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg group">
+                            <input 
+                                type="text" 
+                                value={value} 
+                                readOnly
+                                className="flex-1 bg-transparent px-4 py-3 text-slate-100 outline-none font-mono text-sm"
+                                spellCheck="false"
+                            />
+                            {copy && <CopyButton text={value} />}
+                        </div>
                     </div>
-                </div>
-                
-                {/* CSS Variable Display */}
-                <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">CSS Variable</label>
-                     <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg group">
-                        <input 
-                            type="text" 
-                            value={`--color: ${hex};`} 
-                            readOnly
-                            className="flex-1 bg-transparent px-4 py-3 text-slate-400 outline-none font-mono text-sm italic"
-                            spellCheck="false"
-                        />
-                        <CopyButton text={`--color: ${hex};`} />
-                    </div>
-                </div>
+                ))}
            </div>
        </div>
     </div>

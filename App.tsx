@@ -4,7 +4,8 @@ import {
   ToolCategory, 
   ToolDef,
   Lang,
-  Theme
+  Theme,
+  categoryLabel
 } from './types';
 import { 
   IconJson, 
@@ -250,7 +251,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: '二进制、八进制、十进制、十六进制相互转换。',
     category: ToolCategory.CONVERTER,
     icon: <IconBinary className="w-5 h-5" />,
-    component: <NumberBaseConverter />,
+    component: <NumberBaseConverter lang="en" />,
     keywords: ['hex', 'bin', 'dec', 'oct']
   },
   {
@@ -261,7 +262,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: '驼峰、下划线、烤串等变量命名风格转换。',
     category: ToolCategory.DEVELOPER,
     icon: <IconCase className="w-5 h-5" />,
-    component: <StringCaseConverter />,
+    component: <StringCaseConverter lang="en" />,
     keywords: ['case', 'camel']
   },
   {
@@ -272,7 +273,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: 'HEX, RGB, HSL 颜色格式互转。',
     category: ToolCategory.CONVERTER,
     icon: <IconPalette className="w-5 h-5" />,
-    component: <ColorConverter />,
+    component: <ColorConverter lang="en" />,
     keywords: ['hex', 'rgb', 'color']
   },
   {
@@ -283,7 +284,7 @@ const TOOLS: ToolDef[] = [
     descriptionZh: '存储、长度、时间等常见单位换算。',
     category: ToolCategory.UTILITY,
     icon: <IconRuler className="w-5 h-5" />,
-    component: <UnitConverter />,
+    component: <UnitConverter lang="en" />,
     keywords: ['measure']
   },
   {
@@ -353,22 +354,14 @@ const App: React.FC = () => {
     search: lang === 'zh' ? '搜索工具...' : 'Search tools...',
     home: lang === 'zh' ? '首页' : 'Home',
     welcome: lang === 'zh' ? '开发者工具箱' : 'Developer Utilities Hub',
-    desc: lang === 'zh' ? '您的必备开发瑞士军刀。包含 JSON、Base64、正则、AI 助手等多种工具。' : 'Your essential Swiss Army knife for development. Privacy-first, client-side tools for everyday tasks.',
-    [ToolCategory.DEVELOPER]: lang === 'zh' ? '开发' : 'Developer',
-    [ToolCategory.CONVERTER]: lang === 'zh' ? '转换' : 'Converter',
-    [ToolCategory.CRYPTO]: lang === 'zh' ? '加密' : 'Crypto',
-    [ToolCategory.AI]: lang === 'zh' ? 'AI 助手' : 'AI Assistant',
-    [ToolCategory.UTILITY]: lang === 'zh' ? '工具' : 'Utility',
+    desc: lang === 'zh' ? '您的必备开发瑞士军刀。包含 JSON、Base64、正则、AI 助手等多种工具。' : 'Your essential Swiss Army knife for development. Tools run in your browser; only the AI assistant and IP lookup make network calls.',
   };
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-  }, [theme]);
+    root.classList.toggle('dark', theme === 'dark');
+    root.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  }, [theme, lang]);
 
   const filteredTools = useMemo(() => {
     return TOOLS.filter(tool => {
@@ -392,12 +385,17 @@ const App: React.FC = () => {
     return groups;
   }, [filteredTools]);
 
+  const groupedToolEntries = useMemo(
+    () => Object.entries(groupedTools) as [ToolCategory, ToolDef[]][],
+    [groupedTools]
+  );
+
   const currentTool = TOOLS.find(t => t.id === currentToolId);
 
   const handleToolSelect = (id: string) => {
     setCurrentToolId(id);
     setIsSidebarOpen(false); 
-    if (window.innerWidth < 768) {
+    if (window.matchMedia('(max-width: 767px)').matches) {
         setSearchTerm('');
     }
   };
@@ -413,7 +411,8 @@ const App: React.FC = () => {
 
   const isDesktopCollapsed = !isSidebarOpen && isCollapsed;
 
-  const renderNavItem = (item: any, isHome = false) => {
+  const renderNavItem = (item: ToolDef | null) => {
+    const isHome = item === null;
     const isActive = isHome ? !currentToolId : currentToolId === item.id;
     const label = isHome ? t.home : (lang === 'zh' ? item.nameZh : item.name);
     const onClick = isHome ? handleGoHome : () => handleToolSelect(item.id);
@@ -502,18 +501,17 @@ const App: React.FC = () => {
           <div className={`flex-1 overflow-y-auto py-1 transition-all duration-300 ${isDesktopCollapsed ? 'px-0 flex flex-col items-center gap-1.5' : 'px-2'}`}>
               {isDesktopCollapsed ? (
                 <>
-                  {renderNavItem(null, true)}
+                  {renderNavItem(null)}
                   {filteredTools.map(tool => renderNavItem(tool))}
                 </>
               ) : (
                 <>
-                  {renderNavItem(null, true)}
+                  {renderNavItem(null)}
                   <div className="w-full space-y-4">
-                    {/* Fix: Explicitly cast Object.entries result to fix potential 'unknown' type inference on tools variable */}
-                    {(Object.entries(groupedTools) as [string, ToolDef[]][]).map(([cat, tools]) => (
+                    {groupedToolEntries.map(([cat, tools]) => (
                         <div key={cat} className="flex flex-col w-full">
                             <div className="px-2 mb-1 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                {t[cat as ToolCategory] || cat}
+                                {categoryLabel(cat, lang)}
                             </div>
                             <div className="w-full space-y-0.5">
                                 {tools.map(tool => renderNavItem(tool))}
@@ -561,14 +559,12 @@ const App: React.FC = () => {
                 {currentTool ? (
                     <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-300">
                          <div className="flex-1 min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm overflow-hidden flex flex-col">
-                             {React.isValidElement(currentTool.component) 
-                                ? React.cloneElement(currentTool.component as React.ReactElement<any>, { 
-                                    lang,
-                                    state: toolStates[currentTool.id],
-                                    onStateChange: handleCurrentToolStateChange,
-                                    onNavigateToTool: handleNavigateToTool
-                                  }) 
-                                : currentTool.component}
+                             {React.cloneElement(currentTool.component, {
+                                 lang,
+                                 state: toolStates[currentTool.id],
+                                 onStateChange: handleCurrentToolStateChange,
+                                 onNavigateToTool: handleNavigateToTool
+                             })}
                          </div>
                     </div>
                 ) : (
@@ -587,11 +583,11 @@ const App: React.FC = () => {
                             </p>
                         </div>
 
-                        {Object.entries(groupedTools).length > 0 ? (Object.entries(groupedTools) as [string, ToolDef[]][]).map(([cat, tools]) => (
+                        {groupedToolEntries.length > 0 ? groupedToolEntries.map(([cat, tools]) => (
                             <div key={cat} className="space-y-3">
                                 <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-1.5">
                                     <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                                        {t[cat as ToolCategory] || cat}
+                                        {categoryLabel(cat, lang)}
                                     </h3>
                                     <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded-full">
                                         {tools.length}

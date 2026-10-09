@@ -1,5 +1,5 @@
 import React from 'react';
-import { ToolDef, Lang } from '../types';
+import { ToolDef, Lang, categoryLabel } from '../types';
 
 interface ToolCardProps {
   tool: ToolDef;
@@ -8,10 +8,20 @@ interface ToolCardProps {
 }
 
 const ToolCard: React.FC<ToolCardProps> = ({ tool, onClick, lang }) => {
+  const open = () => onClick(tool.id);
+
   return (
-    <div 
-      onClick={() => onClick(tool.id)}
-      className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 hover:border-primary-500/50 rounded-lg p-3 cursor-pointer transition-all duration-200 group flex flex-col gap-2 h-full shadow-sm hover:shadow-md hover:-translate-y-0.5"
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={open}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          open();
+        }
+      }}
+      className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 hover:border-primary-500/50 rounded-lg p-3 cursor-pointer transition-all duration-200 group flex flex-col gap-2 h-full shadow-sm hover:shadow-md hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
     >
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-md bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 group-hover:scale-105 transition-transform duration-200 shrink-0">
@@ -22,7 +32,7 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, onClick, lang }) => {
             {lang === 'zh' ? tool.nameZh : tool.name}
           </h3>
           <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">
-            {tool.category}
+            {categoryLabel(tool.category, lang)}
           </span>
         </div>
       </div>
@@ -31,7 +41,7 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, onClick, lang }) => {
         {lang === 'zh' ? tool.descriptionZh : tool.description}
       </p>
 
-      {/* Keywords / Tags - Optional, can show first 2 */}
+      {/* Keywords / Tags - Optional, show the first few */}
       <div className="mt-2 flex flex-wrap gap-1.5">
          {tool.keywords.slice(0, 3).map(k => (
              <span key={k} className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400">#{k}</span>
