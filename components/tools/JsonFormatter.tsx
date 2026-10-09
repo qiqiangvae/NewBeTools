@@ -132,6 +132,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, error, errorMs
       placeholder={placeholder}
       hasError={error}
       textareaRef={textareaRef}
+      placeholderColor="#64748b"
       footer={
         <>
           {error && errorPos && (
